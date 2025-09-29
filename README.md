@@ -82,7 +82,9 @@ Name: Jarret, Role: QA/Test Engineer, Responsibilities: Test plans, unit/integra
    CREATE DATABASE voting_system;
    Update credentials in config.py (host, user, password).
 
-5. Run Application
+   Step 4: Skip for now
+
+6. Run Application
     `python server.py`   
     The app will be accessible at http://127.0.0.1:{any available port}/  
     <!-- The app will automatically select an available port if the default port is in use. -->
