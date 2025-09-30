@@ -1,8 +1,8 @@
 import pymysql.cursors
 
 DB_CONFIG = {
-    'host': 'mysql-34862870-votesystemdb.d.aivencloud.com',
-    'port': 18174,
+    'host': 'avinadmin-projectgolf.l.aivencloud.com',
+    'port': 19352,
     'user': 'avnadmin',
     'password': '***REMOVED***',
     'db': 'defaultdb',  # default database
