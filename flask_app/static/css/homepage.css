@@ -1,4 +1,484 @@
-body{
-    background-color: black;
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap');
+/* Global styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+/* Layout: make body a column flex so footer can be pushed to the bottom */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+.container {
+    max-width: 1800px; 
+    width: 100%;       
+    margin: 0 auto;    
+    padding: 0 20px;   
+}
+
+.section{
+    height: 100vh;
+}
+.nav {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 20px 50px;
+}
+
+/* Logo on left */
+.logo {
+    z-index: 1;
+}
+
+/* Logo text */
+.logoText {
+    font-size: 40px;
+    font-weight: 900;
+    color: #0b1220;
+}
+
+/* Links in center */
+.links {
+
+    padding: 5px 24px;
+    background-color: rgba(249, 249, 249, 0.6);
+
+    border-radius: 8px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 25px;
+    transition: gap 0.3s ease, font-size 0.3s ease; /* add smooth transitions */
+}
+
+/* Hamburger button (hidden on desktop) */
+.hamburger {
+    display: none; /* shown on small screens via media query */
+    background: transparent;
+    border: none;
+    padding: 10px;
+    margin-left: 16px;
+    cursor: pointer;
+    z-index: 30;
+}
+.hamburger-box {
+    width: 24px;
+    height: 18px;
+    display: inline-block;
+    position: relative;
+}
+.hamburger-inner,
+.hamburger-inner::before,
+.hamburger-inner::after {
+    width: 24px;
+    height: 2px;
+    background-color: #333;
+    position: absolute;
+    left: 0;
+    transition: transform 0.25s ease, opacity 0.2s ease;
+}
+.hamburger-inner {
+    top: 50%;
+    transform: translateY(-50%);
+}
+.hamburger-inner::before {
+    content: '';
+    top: -8px;
+}
+.hamburger-inner::after {
+    content: '';
+    top: 8px;
+}
+
+/* When hamburger is active (aria-expanded=true) transform into X */
+.hamburger[aria-expanded="true"] .hamburger-inner {
+    transform: rotate(45deg);
+}
+.hamburger[aria-expanded="true"] .hamburger-inner::before {
+    transform: rotate(90deg) translateX(0);
+    top: 0;
+}
+.hamburger[aria-expanded="true"] .hamburger-inner::after {
+    transform: rotate(90deg);
+    opacity: 0;
+}
+
+@media (max-width: 900px){
+    .links{
+        gap: 15px;
+    }
+    .links .link{
+         font-size: 16px;
+         transition: font-size 0.3s ease;
+    }
+}
+/* Link styling */
+
+.link {
+    position: relative;
+    font-size: 19px;
+    color: #333;
+    text-decoration: none;
+    background: linear-gradient(to right, #155ac2 50%, #333 50%);
+    background-size: 200% 100%;
+    background-position: 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    transition: background-position 0.5s ease;
+}
+
+.link:hover {
+    background-position: 0; 
+}
+
+.link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -2px;         
+    height: 2px;           
+    width: 100%;
+    background-color: #155ac2;
+    transform: scaleX(0); 
+    transform-origin: left; 
+    transition: transform 0.3s ease; 
+}
+
+.link:hover::after {
+    transform: scaleX(1);
+}
+
+/* CTA section on right */
+.cta {
+    margin-left: auto;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+.ctaButton {
+    padding: 12px 22px;
+    background: linear-gradient(to right, #012f94, #155ac2);
+    background-size: 200% 100%;
     color: white;
+    border: none;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-position 0.5s ease,filter 0.3s ease,transform 0.1s ease;            
+}
+
+.ctaButton:hover {
+    background-position: right center;
+    filter: brightness(1.1);
+}
+.ctaButton:active {
+    transform: scale(0.95);
+    filter: brightness(0.9);
+}
+
+.mobile-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 20px;
+    background: rgba(255,255,255,0.86); /* slightly more transparent glass */
+    backdrop-filter: blur(6px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    border-radius: 8px;
+    padding: 16px 16px;
+    /* Use transform/opacity/max-height to animate open/close (class-based) */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 180px;
+    width: 240px; /* slightly smaller width */
+    z-index: 20;
+    overflow: hidden;
+    max-height: 0; /* collapsed */
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+    transition: max-height 300ms ease, opacity 220ms ease, transform 250ms ease;
+}
+
+/* Open state — set by JS adding the `open` class */
+.mobile-menu.open {
+    max-height: 520px; /* enough to contain items */
+    opacity: 1;
+
+    transform: translateY(0);
+    pointer-events: auto;
+}
+/* decorative blob removed per user request */
+
+.mobile-link:hover {
+    background-position: 0;
+}
+
+/* Two subtle colored blobs behind the menu */
+.mobile-menu::before,
+.mobile-menu::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    filter: blur(30px);
+    opacity: 0.28;
+    pointer-events: none;
+}
+.mobile-menu::before {
+    width: 420px;
+    height: 320px;
+    right: -180px;
+    top: -80px;
+    background: radial-gradient(circle at 30% 30%, rgba(20,120,255,0.85), rgba(20,120,255,0.12) 50%, transparent 70%);
+    transform: rotate(-12deg);
+}
+.mobile-menu::after {
+    width: 380px;
+    height: 330px;
+    left: -130px;
+    bottom: -80px;
+    background: radial-gradient(circle at 60% 40%, rgba(10,200,150,0.82), rgba(10,200,150,0.12) 50%, transparent 70%);
+    transform: rotate(12deg);
+}
+.mobile-link {
+    position: relative;
+    font-size: 16px;
+    text-decoration: none;
+    /* animated gradient like desktop links */
+    background: linear-gradient(to right, #155ac2 50%, #333 50%);
+    background-size: 200% 100%;
+    background-position: 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    transition: background-position 0.5s ease;
+    outline: none;
+}
+.mobile-cta {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-direction: column; /* stack vertically */
+}
+.mobile-signup {
+    padding: 16px 18px;
+    font-size: 16px;
+}
+
+/* Center menu and links, make menu 70% of viewport width */
+@media (max-width: 800px) {
+    .mobile-menu {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%) translateY(-6px); /* keep slide translateY in closed state */
+    width: 70vw;
+    max-width: 420px;
+    padding-top: 32px; /* increased top padding so first link isn't flush */
+    }
+    .mobile-menu.open {
+        transform: translateX(-50%) translateY(0);
+        
+    }
+    .mobile-menu {
+        text-align: center;
+    }
+    .mobile-link {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding: 6px 0;
+    }
+    .mobile-link:first-of-type {
+        margin-top: 6px; /* extra space above the first link */
+    }
+    .mobile-cta .mobile-link { /* ensure login link looks like a link in stack */
+        padding: 8px 0;
+    }
+    .ctaButton.mobile-signup {
+        width: 100%;
+        padding: 18px 16px; /* slightly smaller */
+        font-size: 14px;
+    }
+}
+
+/* Divider between links and CTA */
+.mobile-divider {
+    height: 1px;
+    background: rgba(0,0,0,0.06);
+    margin: 6px 0 8px 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 800px) {
+    .links {
+        display: none; /* hide center links on mobile */
+    }
+    .cta {
+        display: none; /* hide right CTA on mobile (moved to mobile menu) */
+    }
+    .hamburger {
+        display: inline-block;
+        margin-left: auto;
+    }
+    .nav {
+        padding: 16px 20px;
+    }
+}
+
+/* footer */
+/* footer ------------------------------------------------------------- */
+footer{
+    background: linear-gradient(90deg, #010101 6%, #071927 45%, #042235 100%);
+    color: #e8f4fb;
+    padding: 72px 0 48px; /* more vertical padding to make footer longer */
+    font-size: 15px;
+}
+.footerContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+.footer {
+    display: block;
+    margin-top: auto; /* push footer to bottom when content is short */
+}
+
+/* Ensure main content area grows to fill space when present */
+main, .content, .page-content {
+    flex: 1 0 auto;
+}
+.footerInside {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 30px;
+    align-items: start;
+}
+/* column placeholders kept intentionally empty to allow future column-specific overrides */
+.footerTitle {
+    font-size: 26px;
+    margin-bottom: 16px;
+    color: #f7fbff;
+}
+.footerText {
+    color: rgba(200,215,230,0.98);
+    line-height: 1.7;
+    font-size: 17px;
+}
+.footerSubtitle, .footerCredits h3, .footerCredits {
+    color: rgba(220,230,240,0.98);
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+.footerLinks {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.footerLink {
+    display: inline-block;
+    color: rgba(190,210,230,0.95);
+    text-decoration: none;
+    margin-bottom: 8px;
+    font-size: 13px;
+    transition: color 0.18s ease, transform 0.12s ease;
+}
+.footerLink:hover {
+    color: #a8d0ff;
+    transform: translateX(4px);
+}
+.footerCredits p {
+    margin: 6px 0;
+    color: rgba(180,200,215,0.9);
+    font-size: 13px;
+}
+.footerCredits {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0 0 0;
+}
+.footerCredits li {
+    margin: 8px 0;
+    color: rgba(180,200,215,0.95);
+    font-size: 14px;
+}
+.footerSMLinks a {
+    display: inline-block;
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    text-align: center;
+    border-radius: 8px;
+    margin-right: 8px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    color: #dff6ff;
+    text-decoration: none;
+    font-size: 18px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.footerSMLinks a:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(2,40,60,0.25);
+}
+
+/* ensure SVG icons inherit color and are centered */
+.footerSMLinks svg {
+    display: inline-block;
+    vertical-align: middle;
+    width: 18px;
+    height: 18px;
+    color: inherit;
+}
+.smlink { color: inherit; }
+
+/* Footer bottom area (optional small print) */
+.footerCopyright {
+    margin-top: 18px;
+    display: flex;
+    justify-content: center;
+}
+.copyright-wrap {
+    display: inline-block; /* shrink to content width */
+    color: rgba(180,200,215,0.95);
+    font-size: 14px;
+    text-align: center;
+    padding-top: 14px;
+    position: relative;
+}
+/* top border line that is exactly the width of the copyright text */
+.copyright-wrap::before{
+    content: '';
+    display: block;
+    height: 1px;
+    width: 100%;
+    background: rgba(255,255,255,0.12);
+    position: absolute;
+    top: 0; /* line sits above the copyright text */
+    left: 0;
+    transform: translateY(-8px); /* small gap between line and text */
+}
+.copyright-wrap a.footerLink { color: rgba(200,220,240,0.95); }
+.copyright-wrap a.footerLink:hover { color: #d0eaff; }
+
+/* Responsive: stack columns on small screens */
+@media (max-width: 880px) {
+    .footerInside {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+@media (max-width: 520px) {
+    .footerInside {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+    .footerSMLinks a { width: 40px; height: 40px; line-height: 40px; }
 }
