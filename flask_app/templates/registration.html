@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Create Account</title>
+        <link rel="stylesheet" href="../static/css/registration.css">
+        <link rel="stylesheet" href="../static/css/homepage.css">
+</head>
+<body class="registration-page">
+
+    <!-- Decorative gradient background + blobs (matches Figma) -->
+    <div class="registration-bg" aria-hidden="true">
+        <div class="blob blob--top-left"></div>
+        <div class="blob blob--center"></div>
+        <div class="blob blob--green-1" aria-hidden="true"></div>
+        <div class="blob blob--green-2" aria-hidden="true"></div>
+    </div>
+
+     <main class="registration-content">
+        <div class="reg-grid">
+            <!-- Left column: illustration + caption -->
+            <div class="reg-left" aria-hidden="false">
+                <div class="left-illustration">
+                    <!-- svg from static media -->
+                        <h1 class="left-head">Secure voting for your community</h1>
+                        <p class="left-sub">Private, auditable, open-source</p>
+                        <img class="left-img" src="../static/media/undraw_secure-login_m11a.svg" alt="Secure login illustration" />
+                        <p class="left-caption">Built open — transparent by design</p>
+                </div>
+            </div>
+
+            <!-- Right card -->
+            <div class="reg-right">
+                <div class="reg-card">
+                    <div class="reg-inner">
+                        <h2 class="reg-title">Create Account</h2>
+                        <form class="reg-form" action="#" method="post" novalidate>
+                        <div class="two-col">
+                            <div class="form-field">
+                                <input id="first" name="first" />
+                                <label for="first">First Name</label>
+                            </div>
+                            <div class="form-field">
+                                <input id="last" name="last" />
+                                <label for="last">Last Name</label>
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <input id="phone" name="phone" type="tel" />
+                            <label for="phone">Phone</label>
+                        </div>
+
+                        <div class="form-field">
+                            <input id="email" name="email" class="input--tall" />
+                            <label for="email">Email</label>
+                        </div>
+
+                        <div class="form-field">
+                            <input id="password" name="password" type="password" aria-describedby="pwd-help" />
+                            <label for="password">Password</label>
+                            <div id="pwd-help" class="field-hint">Use at least 8 characters including uppercase, lowercase and a number.</div>
+                        </div>
+
+                        <div class="form-field">
+                            <input id="confirm_password" name="confirm_password" type="password" />
+                            <label for="confirm_password">Confirm Password</label>
+                        </div>
+
+                        <button class="reg-submit" type="submit">Create Account</button>
+
+                        <p class="already">Already have an account? <a href="/login">Login</a></p>
+                        </form>
+                    </div>
+
+                    <script>
+                        (function(){
+                            const form = document.querySelector('.reg-form');
+                            const pwd = document.getElementById('password');
+                            const confirm = document.getElementById('confirm_password');
+                            const errArea = document.createElement('div');
+                            errArea.setAttribute('aria-live','polite');
+                            errArea.className = 'form-errors';
+                            form.insertBefore(errArea, form.firstChild);
+
+                            function validatePassword(value){
+                                // At least 8 chars, 1 uppercase, 1 lowercase, 1 number
+                                return /(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value);
+                            }
+
+                            // inline small message next to confirm
+                            const confirmHint = document.createElement('div');
+                            confirmHint.className = 'field-error';
+                            confirmHint.style.display = 'none';
+                            confirm.parentNode.appendChild(confirmHint);
+
+                            function updateFieldValidation(){
+                                const pVal = pwd.value || '';
+                                const cVal = confirm.value || '';
+                                // password complexity
+                                if(validatePassword(pVal)){
+                                    pwd.classList.remove('input-invalid'); pwd.classList.add('input-valid');
+                                } else {
+                                    pwd.classList.remove('input-valid'); pwd.classList.add('input-invalid');
+                                }
+                                // confirm match
+                                if(cVal.length === 0){
+                                    confirm.classList.remove('input-valid','input-invalid');
+                                    confirmHint.style.display = 'none';
+                                    confirmHint.textContent = '';
+                                } else if(pVal === cVal){
+                                    confirm.classList.remove('input-invalid'); confirm.classList.add('input-valid');
+                                    confirmHint.style.display = 'none';
+                                    confirmHint.textContent = '';
+                                } else {
+                                    confirm.classList.remove('input-valid'); confirm.classList.add('input-invalid');
+                                    confirmHint.style.display = 'block';
+                                    confirmHint.textContent = 'Passwords do not match';
+                                }
+                            }
+
+                            pwd.addEventListener('input', updateFieldValidation);
+                            confirm.addEventListener('input', updateFieldValidation);
+
+                            form.addEventListener('submit', function(e){
+                                errArea.innerHTML = '';
+                                const p = pwd.value || '';
+                                const c = confirm.value || '';
+                                const errors = [];
+                                if(!validatePassword(p)){
+                                    errors.push('Password must be at least 8 characters and include uppercase, lowercase, and a number.');
+                                }
+                                if(p !== c){
+                                    errors.push('Password and confirmation do not match.');
+                                }
+                                if(errors.length){
+                                    e.preventDefault();
+                                    errArea.innerHTML = '<ul>' + errors.map(function(x){ return '<li>'+x+'</li>'; }).join('') + '</ul>';
+                                    errArea.style.display = 'block';
+                                    // focus first invalid field
+                                    if(!validatePassword(p)) pwd.focus(); else confirm.focus();
+                                } else {
+                                    errArea.style.display = 'none';
+                                }
+                            });
+                        })();
+                    </script>
+
+                    <script>
+                        // Toggle .filled class when inputs have value (for floating label support)
+                        (function(){
+                            const fields = document.querySelectorAll('.reg-form .form-field input');
+                            fields.forEach(function(inp){
+                                function toggle(){
+                                    if(inp.value && inp.value.length) inp.classList.add('filled'); else inp.classList.remove('filled');
+                                }
+                                inp.addEventListener('input', toggle);
+                                // run on load
+                                toggle();
+                            });
+                        })();
+                    </script>
+
+                </div>
+            </div>
+        </div>
+     </main>
+
+</body>
+</html>

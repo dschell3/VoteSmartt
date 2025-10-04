@@ -6,8 +6,14 @@ from flask_app.models.userModels import User
 def homepage():
     return render_template('homepage.html')
 
+@app.route('/register') # Registration page route
+def register_page():
+    return render_template('registration.html')
 
-@app.route("/register", methods=['POST']) # 
+@app.route('/login') # Login page route
+def login_page():
+    return render_template('login.html')
+@app.route("/registerRoute", methods=['POST']) # 
 def register():
      data = {
         'fn': request.form['first_name'],

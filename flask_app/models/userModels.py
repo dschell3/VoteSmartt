@@ -15,7 +15,6 @@ class User:
         self.email = data['email']
         self.password = data['password']
         self.created_at = data['created_at']
-        self.username = data['username']
         self.phone = data['phone']
         
         

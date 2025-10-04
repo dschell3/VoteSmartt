@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sign In</title>
+        <link rel="stylesheet" href="../static/css/registration.css">
+        <link rel="stylesheet" href="../static/css/homepage.css">
+</head>
+<body class="registration-page signin-page">
+
+    <!-- Decorative gradient background + blobs (matches Figma) -->
+    <div class="registration-bg" aria-hidden="true">
+        <div class="blob blob--top-left"></div>
+        <div class="blob blob--center"></div>
+        <div class="blob blob--green-1" aria-hidden="true"></div>
+        <div class="blob blob--green-2" aria-hidden="true"></div>
+    </div>
+
+     <main class="registration-content">
+        <div class="reg-grid">
+            <!-- Left column: reuse illustration from registration -->
+            <div class="reg-left" aria-hidden="false">
+                <div class="left-illustration">
+                    <h1 class="left-head">Welcome back</h1>
+                    <p class="left-sub">Sign in to continue to your community dashboard</p>
+                    <img class="left-img" src="../static/media/undraw_secure-login_m11a.svg" alt="Secure login illustration" />
+                    <p class="left-caption">Built open — transparent by design</p>
+                </div>
+            </div>
+
+            <!-- Right card -->
+            <div class="reg-right">
+                <div class="reg-card">
+                    <div class="reg-inner">
+                        <h2 class="reg-title">Sign in</h2>
+                        <form class="reg-form" action="#" method="post" novalidate>
+
+                        <div class="form-field">
+                            <input id="email" name="email" class="input--tall" />
+                            <label for="email">Email</label>
+                        </div>
+
+                        <div class="form-field">
+                            <input id="password" name="password" type="password" />
+                            <label for="password">Password</label>
+                            <div class="field-hint"><a href="/forgot" style="color:#6d28d9; text-decoration:none; font-weight:600;">Forgot password?</a></div>
+                        </div>
+
+                        <button class="reg-submit" type="submit">Sign in</button>
+
+                        <p class="already">Don't have an account? <a href="/register">Create one</a></p>
+                        </form>
+                    </div>
+
+                    <script>
+                        // Toggle .filled class when inputs have value (for floating label support)
+                        (function(){
+                            const fields = document.querySelectorAll('.reg-form .form-field input');
+                            fields.forEach(function(inp){
+                                function toggle(){
+                                    if(inp.value && inp.value.length) inp.classList.add('filled'); else inp.classList.remove('filled');
+                                }
+                                inp.addEventListener('input', toggle);
+                                // run on load
+                                toggle();
+                            });
+                        })();
+                    </script>
+
+                            <!-- Forgot password modal (opens when clicking the link) -->
+                            <div id="forgot-modal" class="modal" aria-hidden="true">
+                                <div class="modal-overlay" data-close="true"></div>
+                                <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="forgot-title">
+                                    <button class="modal-close" aria-label="Close">×</button>
+                                    <h3 id="forgot-title">Reset your password</h3>
+                                    <p class="modal-sub">Enter the email associated with your account and we'll send a reset link.</p>
+                                    <form id="forgot-form" class="modal-form" action="#" method="post">
+                                        <div class="form-field">
+                                            <input id="forgot-email" name="email" type="email" required />
+                                            <label for="forgot-email">Email</label>
+                                        </div>
+                                        <div class="form-errors" id="forgot-errors" aria-live="polite" style="display:none"></div>
+                                        <button class="reg-submit" type="submit">Send reset link</button>
+                                    </form>
+                                    <div id="forgot-success" style="display:none; margin-top:12px;">
+                                        <p>We sent a password reset link if that email exists in our system. Check your inbox.</p>
+                                        <p><a href="/login">Back to sign in</a></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                </div>
+            </div>
+        </div>
+     </main>
+
+</body>
+</html>
+
+<script>
+// Modal behavior for forgot password (vanilla)
+;(function(){
+    const openLinks = document.querySelectorAll('a[href="/forgot"], a.forgot-link');
+    const modal = document.getElementById('forgot-modal');
+    const overlay = modal && modal.querySelector('.modal-overlay');
+    const closeBtn = modal && modal.querySelector('.modal-close');
+    const form = document.getElementById('forgot-form');
+    const errors = document.getElementById('forgot-errors');
+    const success = document.getElementById('forgot-success');
+
+    function openModal(){
+        if(!modal) return;
+        modal.setAttribute('aria-hidden','false');
+        // focus the email input
+        const email = modal.querySelector('#forgot-email');
+        setTimeout(()=> email && email.focus(), 60);
+    }
+    function closeModal(){
+        if(!modal) return;
+        modal.setAttribute('aria-hidden','true');
+        // reset
+        if(form){ form.reset(); }
+        if(errors) { errors.style.display='none'; errors.innerHTML=''; }
+        if(success) { success.style.display='none'; }
+    }
+
+    openLinks.forEach(a => a.addEventListener('click', function(ev){ ev.preventDefault(); openModal(); }));
+    overlay && overlay.addEventListener('click', closeModal);
+    closeBtn && closeBtn.addEventListener('click', closeModal);
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeModal(); });
+
+    if(form){
+        form.addEventListener('submit', function(ev){
+            ev.preventDefault();
+            const email = form.querySelector('#forgot-email');
+            if(!email || !email.value || !email.checkValidity()){
+                if(errors){ errors.style.display='block'; errors.textContent = 'Please enter a valid email address.'; }
+                return;
+            }
+            // Mock success state - show message and hide form
+            form.style.display = 'none';
+            success.style.display = 'block';
+        });
+    }
+})();
+</script>
