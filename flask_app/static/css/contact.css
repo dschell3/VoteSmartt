@@ -1,0 +1,26 @@
+
+/* Contact page small overrides */
+.contact-form input[type="text"], .contact-form input[type="email"], .contact-form textarea, .contact-form input {
+  transition: box-shadow .12s ease, border-color .12s ease;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #e5e7eb; /* gray-200 */
+}
+.contact-form input:focus, .contact-form textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
+  border-bottom-color: rgba(59,130,246,0.9);
+}
+.flash { font-size: 0.95rem; }
+
+/* Make the main CTA pill larger and blue */
+.contact-form button {
+  background: #4f46e5; /* indigo-600 */
+  color: white;
+  border-radius: 9999px;
+  padding: 12px 28px;
+  font-weight: 600;
+}
+
+/* Section band tweaks */
+section.bg-gray-50 { background-image: none; }

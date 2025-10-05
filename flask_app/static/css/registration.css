@@ -22,8 +22,8 @@
     position: fixed; /* keep background fixed to viewport to avoid seams */
     top: 0; left: 0; right: 0; bottom: 0;
     z-index: 0;
-    /* Vibrant purple gradient (from Figma reference) */
-    background: radial-gradient(1200px 600px at 10% 30%, rgba(124,58,237,0.95) 0%, rgba(99,102,241,0.85) 25%, rgba(79,70,229,0.8) 55%, rgba(99,102,241,0.7) 100%), linear-gradient(180deg, #6b21a8 6%, #7c3aed 45%, #4f46e5 100%);
+    /* Vibrant bluish gradient (adjusted from purple to blue tones) */
+    background: radial-gradient(1200px 600px at 10% 30%, rgba(14,165,233,0.95) 0%, rgba(59,130,246,0.85) 25%, rgba(37,99,235,0.8) 55%, rgba(59,130,246,0.7) 100%), linear-gradient(180deg, #0369a1 6%, #0ea5e9 45%, #3b82f6 100%);
 }
 
 /* Blobs */
@@ -39,14 +39,14 @@
     height: 420px;
     left: 6%;
     top: 8%;
-    background: radial-gradient(circle at 30% 30%, rgba(99,102,241,0.20), rgba(124,58,237,0.28) 35%, transparent 70%);
+    background: radial-gradient(circle at 30% 30%, rgba(59,130,246,0.22), rgba(14,165,233,0.28) 35%, transparent 70%);
 }
 .blob--center {
     width: 520px;
     height: 520px;
     left: 20%;
     top: 36%;
-    background: radial-gradient(circle at 40% 40%, rgba(124,58,237,0.26), rgba(79,70,229,0.20) 45%, transparent 70%);
+    background: radial-gradient(circle at 40% 40%, rgba(14,165,233,0.26), rgba(37,99,235,0.20) 45%, transparent 70%);
 }
 
 /* green accent blobs */
@@ -110,6 +110,13 @@
 /* Card styling tuned to match the screenshot */
 .reg-card { width: 100%; max-width: 100%; background: #fff; border-radius: 40px 0 0 40px; padding: 48px; box-shadow: 0 20px 60px rgba(11,18,32,0.08); display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: auto; overflow-x: hidden; margin-right: 0; }
 .reg-inner { --field-w: 260px; width: calc(var(--field-w) * 2 + 18px); margin: 0 auto; max-width: 100%; box-sizing: border-box; }
+.back-btn { display: inline-block; color: #374151; text-decoration: none; font-weight: 600; margin-bottom: 12px; }
+.back-btn:hover { color: #111827; }
+
+/* Ensure back button sits correctly in compact/centered cards */
+@media (max-width: 750px) {
+    .back-btn { position: relative; left: 0; margin-left: 0; }
+}
 .reg-title { font-size: 26px; text-align: left; margin-bottom: 18px; font-weight: 800; color: #111827; }
 
 .reg-form { display: flex; flex-direction: column; gap: 18px; }
@@ -198,7 +205,7 @@ social-btn.facebook { display: inline-flex; align-items: center; justify-content
 /* slightly smaller/laptop screens (MacBook) — deepen purple and make blobs pop more */
 @media (max-width: 1440px) {
     .registration-bg {
-        background: radial-gradient(1000px 500px at 8% 28%, rgba(88,24,163,0.98) 0%, rgba(99,102,241,0.9) 25%, rgba(79,70,229,0.88) 60%, rgba(67,56,202,0.85) 100%), linear-gradient(180deg, #5b21b6 6%, #6d28d9 45%, #4f46e5 100%);
+        background: radial-gradient(1000px 500px at 8% 28%, rgba(3,105,161,0.98) 0%, rgba(59,130,246,0.9) 25%, rgba(37,99,235,0.88) 60%, rgba(59,130,246,0.85) 100%), linear-gradient(180deg, #075985 6%, #0ea5e9 45%, #3b82f6 100%);
     }
     .blob { filter: blur(40px); opacity: 0.98; }
     .blob--top-left { background: radial-gradient(circle at 30% 30%, rgba(124,58,237,0.95), rgba(99,102,241,0.6) 40%, transparent 70%); }
