@@ -6,6 +6,116 @@
         <title>Sign In</title>
         <link rel="stylesheet" href="../static/css/registration.css">
         <link rel="stylesheet" href="../static/css/homepage.css">
+        <style>
+            /* Error message styles */
+            .error-messages {
+                margin-bottom: 20px;
+            }
+            
+            .error-alert {
+                display: flex;
+                align-items: center;
+                background: rgba(220, 38, 38, 0.1);
+                border: 1px solid rgba(220, 38, 38, 0.3);
+                border-radius: 8px;
+                padding: 12px 16px;
+                margin-bottom: 10px;
+                color: #dc2626;
+                font-size: 14px;
+                animation: slideIn 0.3s ease-out;
+            }
+            
+            .error-icon {
+                margin-right: 10px;
+                font-size: 16px;
+            }
+            
+            .error-text {
+                flex: 1;
+                font-weight: 500;
+            }
+            
+            .error-close {
+                background: none;
+                border: none;
+                color: #dc2626;
+                cursor: pointer;
+                font-size: 18px;
+                font-weight: bold;
+                margin-left: 10px;
+                padding: 0;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: background-color 0.2s ease;
+            }
+            
+            .error-close:hover {
+                background-color: rgba(220, 38, 38, 0.1);
+            }
+            
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            /* Form field error states */
+            .form-field.error input {
+                border-color: #dc2626;
+                box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.1);
+            }
+            
+            .form-field.error label {
+                color: #dc2626;
+            }
+            
+            .field-error {
+                color: #dc2626;
+                font-size: 12px;
+                margin-top: 4px;
+                display: none;
+            }
+            
+            .form-field.error .field-error {
+                display: block;
+            }
+            
+            /* Loading state for submit button */
+            .reg-submit.loading {
+                opacity: 0.7;
+                cursor: not-allowed;
+                position: relative;
+            }
+            
+            .reg-submit.loading::after {
+                content: "";
+                position: absolute;
+                width: 16px;
+                height: 16px;
+                top: 50%;
+                left: 50%;
+                margin-left: -8px;
+                margin-top: -8px;
+                border: 2px solid transparent;
+                border-top: 2px solid currentColor;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
 </head>
 <body class="registration-page signin-page">
 
@@ -35,16 +145,34 @@
                     <a class="back-btn" href="/" aria-label="Back to home">← Back</a>
                     <div class="reg-inner">
                         <h2 class="reg-title">Sign in</h2>
-                        <form class="reg-form" action="/loginRoute" method="post" novalidate>
+                        
+                        <!-- Error messages display -->
+                        {% with messages = get_flashed_messages() %}
+                            {% if messages %}
+                                <div class="error-messages" id="error-messages">
+                                    {% for message in messages %}
+                                        <div class="error-alert">
+                                            <div class="error-icon">⚠️</div>
+                                            <div class="error-text">{{ message }}</div>
+                                            <button class="error-close" onclick="closeError(this)">&times;</button>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <form class="reg-form" action="/loginRoute" method="post" novalidate id="loginForm">
 
                         <div class="form-field">
-                            <input id="email" name="email" class="input--tall" />
+                            <input id="email" name="email" class="input--tall" type="email" required />
                             <label for="email">Email</label>
+                            <div class="field-error" id="email-error">Please enter a valid email address</div>
                         </div>
 
                         <div class="form-field">
-                            <input id="password" name="password" type="password" />
+                            <input id="password" name="password" type="password" required minlength="6" />
                             <label for="password">Password</label>
+                            <div class="field-error" id="password-error">Password must be at least 6 characters</div>
                             <div class="field-hint"><a href="/forgot" style="color:#6d28d9; text-decoration:none; font-weight:600;">Forgot password?</a></div>
                         </div>
 
@@ -67,6 +195,98 @@
                                 toggle();
                             });
                         })();
+
+                        // Form validation and error handling
+                        function closeError(button) {
+                            const errorAlert = button.closest('.error-alert');
+                            if (errorAlert) {
+                                errorAlert.style.opacity = '0';
+                                errorAlert.style.transform = 'translateY(-10px)';
+                                setTimeout(() => {
+                                    errorAlert.remove();
+                                    // If no more errors, hide the container
+                                    const errorContainer = document.getElementById('error-messages');
+                                    if (errorContainer && errorContainer.children.length === 0) {
+                                        errorContainer.style.display = 'none';
+                                    }
+                                }, 300);
+                            }
+                        }
+
+                        // Auto-hide error messages after 8 seconds
+                        setTimeout(() => {
+                            const errorAlerts = document.querySelectorAll('.error-alert');
+                            errorAlerts.forEach(alert => {
+                                const closeBtn = alert.querySelector('.error-close');
+                                if (closeBtn) {
+                                    closeBtn.click();
+                                }
+                            });
+                        }, 8000);
+
+                        // Form validation
+                        document.getElementById('loginForm').addEventListener('submit', function(e) {
+                            const emailField = document.getElementById('email');
+                            const passwordField = document.getElementById('password');
+                            const submitBtn = document.querySelector('.reg-submit');
+                            
+                            let isValid = true;
+
+                            // Clear previous errors
+                            document.querySelectorAll('.form-field').forEach(field => {
+                                field.classList.remove('error');
+                            });
+
+                            // Validate email
+                            if (!emailField.value) {
+                                showFieldError(emailField, 'Email is required');
+                                isValid = false;
+                            } else if (!isValidEmail(emailField.value)) {
+                                showFieldError(emailField, 'Please enter a valid email address');
+                                isValid = false;
+                            }
+
+                            // Validate password
+                            if (!passwordField.value) {
+                                showFieldError(passwordField, 'Password is required');
+                                isValid = false;
+                            } else if (passwordField.value.length < 6) {
+                                showFieldError(passwordField, 'Password must be at least 6 characters');
+                                isValid = false;
+                            }
+
+                            if (!isValid) {
+                                e.preventDefault();
+                                return false;
+                            }
+
+                            // Show loading state
+                            submitBtn.classList.add('loading');
+                            submitBtn.disabled = true;
+                        });
+
+                        function showFieldError(field, message) {
+                            const fieldContainer = field.closest('.form-field');
+                            const errorDiv = fieldContainer.querySelector('.field-error');
+                            
+                            fieldContainer.classList.add('error');
+                            if (errorDiv) {
+                                errorDiv.textContent = message;
+                            }
+                        }
+
+                        function isValidEmail(email) {
+                            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                            return emailRegex.test(email);
+                        }
+
+                        // Clear field errors on input
+                        document.querySelectorAll('.form-field input').forEach(input => {
+                            input.addEventListener('input', function() {
+                                const fieldContainer = this.closest('.form-field');
+                                fieldContainer.classList.remove('error');
+                            });
+                        });
                     </script>
 
                             <!-- Forgot password modal (opens when clicking the link) -->

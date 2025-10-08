@@ -3,12 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Event List - VoteSmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons for profile icon -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    <h4>Hi, {{ user.first_name }}</h4>
-    <form action="/logout" method='post'>
-        <input type="submit" placeholder="submit">
-    </form>
+    {% include 'navbar.html' %}
+    
+    <main class="container mx-auto px-4 py-8">
+        <h4 class="text-2xl font-semibold mb-4">Hi, {{ first_name }}!</h4>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4">Your Events</h2>
+            <p class="text-gray-600 mb-4">Welcome to your event dashboard.</p>
+            
+            <form action="/logout" method='post' class="mt-6">
+                <input type="submit" value="Logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition-colors cursor-pointer">
+            </form>
+        </div>
+    </main>
 </body>
 </html>

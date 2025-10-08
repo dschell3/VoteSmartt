@@ -6,6 +6,8 @@
     <title>VoteSmart</title>
     <script defer src="http://10.0.0.52:35729/livereload.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap");
       /* Global styles */
@@ -369,6 +371,173 @@
         filter: brightness(0.9);
       }
 
+      /* Profile dropdown styles */
+      .profile-dropdown {
+        position: relative;
+        display: inline-block;
+      }
+
+      .profile-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(21, 90, 194, 0.2);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        color: #333;
+      }
+
+      .profile-button:hover {
+        background: rgba(21, 90, 194, 0.05);
+        border-color: rgba(21, 90, 194, 0.3);
+      }
+
+      .profile-icon {
+        width: 18px;
+        height: 18px;
+        color: #155ac2;
+      }
+
+      .profile-name {
+        font-weight: 500;
+        color: #333;
+      }
+
+      .dropdown-arrow {
+        width: 14px;
+        height: 14px;
+        color: #666;
+        transition: transform 0.3s ease;
+      }
+
+      .profile-dropdown.active .dropdown-arrow {
+        transform: rotate(180deg);
+      }
+
+      .profile-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        padding: 8px 0;
+        min-width: 180px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        z-index: 100;
+      }
+
+      .profile-dropdown.active .profile-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      .profile-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        color: #333;
+        text-decoration: none;
+        font-size: 14px;
+        transition: background-color 0.2s ease;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .profile-menu-item:hover {
+        background-color: rgba(21, 90, 194, 0.05);
+      }
+
+      .menu-icon {
+        width: 16px;
+        height: 16px;
+        color: #666;
+      }
+
+      .profile-divider {
+        height: 1px;
+        background: rgba(0, 0, 0, 0.1);
+        margin: 8px 0;
+      }
+
+      .logout-form {
+        margin: 0;
+      }
+
+      .logout-btn {
+        color: #dc2626;
+      }
+
+      .logout-btn:hover {
+        background-color: rgba(220, 38, 38, 0.05);
+      }
+
+      .logout-btn .menu-icon {
+        color: #dc2626;
+      }
+
+      /* Mobile profile styles */
+      .mobile-profile {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .mobile-profile-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0;
+        color: #333;
+        font-weight: 500;
+      }
+
+      .mobile-profile-icon {
+        width: 20px;
+        height: 20px;
+        color: #155ac2;
+      }
+
+      .mobile-profile-name {
+        font-size: 16px;
+      }
+
+      .mobile-logout-form {
+        margin: 8px 0 0 0;
+        width: 100%;
+      }
+
+      .mobile-logout-btn {
+        width: 100%;
+        padding: 12px 16px;
+        background: linear-gradient(90deg, #dc2626, #ef4444);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-position 0.3s ease;
+      }
+
+      .mobile-logout-btn:hover {
+        background: linear-gradient(90deg, #b91c1c, #dc2626);
+      }
+
       .mobile-menu {
         position: absolute;
         top: calc(100% + 8px);
@@ -596,6 +765,7 @@
             aria-label="Toggle menu"
             aria-expanded="false"
             aria-controls="mobile-menu"
+            onclick="console.log('clicked')"
           >
             <span class="hamburger-box">
               <span class="hamburger-inner"></span>
@@ -607,8 +777,37 @@
             <a href="/contact" class="link">Contact</a>
           </div>
           <div class="cta">
-            <a href="/login" class="link">Log In</a>
-            <a href="/register" class="ctaButton">Sign Up</a>
+            {% if logged_in %}
+              <!-- Profile dropdown when logged in -->
+              <div class="profile-dropdown">
+                <button class="profile-button" onclick="toggleProfileDropdown()">
+                  <i data-lucide="user" class="profile-icon"></i>
+                  <span class="profile-name">{{first_name }}</span>
+                  <i data-lucide="chevron-down" class="dropdown-arrow"></i>
+                </button>
+                <div class="profile-menu" id="profileMenu">
+                  <a href="/profile" class="profile-menu-item">
+                    <i data-lucide="user" class="menu-icon"></i>
+                    Profile
+                  </a>
+                  <a href="/settings" class="profile-menu-item">
+                    <i data-lucide="settings" class="menu-icon"></i>
+                    Settings
+                  </a>
+                  <div class="profile-divider"></div>
+                  <form action="/logout" method="post" class="logout-form">
+                    <button type="submit" class="profile-menu-item logout-btn">
+                      <i data-lucide="log-out" class="menu-icon"></i>
+                      Logout
+                    </button>
+                  </form>
+                </div>
+              </div>
+            {% else %}
+              <!-- Login/Signup when not logged in -->
+              <a href="/login" class="link">Log In</a>
+              <a href="/register" class="ctaButton">Sign Up</a>
+            {% endif %}
           </div>
           <div id="mobile-menu" class="mobile-menu" hidden>
             <a href="/about" class="mobile-link firstlink">About</a>
@@ -616,8 +815,24 @@
             <a href="/contact" class="mobile-link">Contact</a>
             <div class="mobile-divider" aria-hidden="true"></div>
             <div class="mobile-cta">
-              <a href="/login" class="mobile-link">Log In</a>
-              <a href="/register" class="ctaButton mobile-signup">Sign Up</a>
+              {% if logged_in %}
+                <!-- Mobile profile section when logged in -->
+                <div class="mobile-profile">
+                  <div class="mobile-profile-info">
+                    <i data-lucide="user" class="mobile-profile-icon"></i>
+                    <span class="mobile-profile-name">{{ first_name }}</span>
+                  </div>
+                  <a href="/profile" class="mobile-link">Profile</a>
+                  <a href="/settings" class="mobile-link">Settings</a>
+                  <form action="/logout" method="post" class="mobile-logout-form">
+                    <button type="submit" class="mobile-logout-btn">Logout</button>
+                  </form>
+                </div>
+              {% else %}
+                <!-- Mobile login/signup when not logged in -->
+                <a href="/login" class="mobile-link">Log In</a>
+                <a href="/register" class="ctaButton mobile-signup">Sign Up</a>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -775,6 +990,27 @@
           );
         });
         observer.observe(mobileMenu, { childList: true, subtree: true });
+
+        // ====== Profile Dropdown ======
+        window.toggleProfileDropdown = function() {
+          const dropdown = document.querySelector('.profile-dropdown');
+          if (dropdown) {
+            dropdown.classList.toggle('active');
+          }
+        };
+
+        // Close profile dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+          const dropdown = document.querySelector('.profile-dropdown');
+          if (dropdown && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('active');
+          }
+        });
+
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
       });
     </script>
   </body>

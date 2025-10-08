@@ -6,6 +6,89 @@
         <title>Create Account</title>
         <link rel="stylesheet" href="../static/css/registration.css">
         <link rel="stylesheet" href="../static/css/homepage.css">
+        <style>
+            /* Error message styles */
+            .error-messages {
+                margin-bottom: 20px;
+            }
+            
+            .error-alert {
+                display: flex;
+                align-items: center;
+                background: rgba(220, 38, 38, 0.1);
+                border: 1px solid rgba(220, 38, 38, 0.3);
+                border-radius: 8px;
+                padding: 12px 16px;
+                margin-bottom: 10px;
+                color: #dc2626;
+                font-size: 14px;
+                animation: slideIn 0.3s ease-out;
+            }
+            
+            .error-icon {
+                margin-right: 10px;
+                font-size: 16px;
+            }
+            
+            .error-text {
+                flex: 1;
+                font-weight: 500;
+            }
+            
+            .error-close {
+                background: none;
+                border: none;
+                color: #dc2626;
+                cursor: pointer;
+                font-size: 18px;
+                font-weight: bold;
+                margin-left: 10px;
+                padding: 0;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: background-color 0.2s ease;
+            }
+            
+            .error-close:hover {
+                background-color: rgba(220, 38, 38, 0.1);
+            }
+            
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            /* Form field error states */
+            .form-field.error input {
+                border-color: #dc2626;
+                box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.1);
+            }
+            
+            .form-field.error label {
+                color: #dc2626;
+            }
+            
+            .field-error {
+                color: #dc2626;
+                font-size: 12px;
+                margin-top: 4px;
+                display: none;
+            }
+            
+            .form-field.error .field-error {
+                display: block;
+            }
+        </style>
 </head>
 <body class="registration-page">
 
@@ -36,37 +119,59 @@
                     <a class="back-btn" href="/" aria-label="Back to home">← Back</a>
                     <div class="reg-inner">
                         <h2 class="reg-title">Create Account</h2>
-                        <form class="reg-form" action="/registerRoute" method="post" novalidate>
+                        
+                        <!-- Error messages display -->
+                        {% with messages = get_flashed_messages() %}
+                            {% if messages %}
+                                <div class="error-messages" id="error-messages">
+                                    {% for message in messages %}
+                                        <div class="error-alert">
+                                            <div class="error-icon">⚠️</div>
+                                            <div class="error-text">{{ message }}</div>
+                                            <button class="error-close" onclick="closeError(this)">&times;</button>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <form class="reg-form" action="/registerRoute" method="post" novalidate id="registerForm">
                         <div class="two-col">
                             <div class="form-field">
-                                <input id="first" name="first_name" />
+                                <input id="first" name="first_name" required minlength="2" />
                                 <label for="first">First Name</label>
+                                <div class="field-error" id="first-error">First name is required</div>
                             </div>
                             <div class="form-field">
-                                <input id="last" name="last_name" />
+                                <input id="last" name="last_name" required minlength="2" />
                                 <label for="last">Last Name</label>
+                                <div class="field-error" id="last-error">Last name is required</div>
                             </div>
                         </div>
 
                         <div class="form-field">
-                            <input id="phone" name="phone" type="tel" />
+                            <input id="phone" name="phone" type="tel" required />
                             <label for="phone">Phone</label>
+                            <div class="field-error" id="phone-error">Please enter a valid phone number</div>
                         </div>
 
                         <div class="form-field">
-                            <input id="email" name="email" class="input--tall" />
+                            <input id="email" name="email" class="input--tall" type="email" required />
                             <label for="email">Email</label>
+                            <div class="field-error" id="email-error">Please enter a valid email address</div>
                         </div>
 
                         <div class="form-field">
-                            <input id="password" name="password" type="password" aria-describedby="pwd-help" />
+                            <input id="password" name="password" type="password" aria-describedby="pwd-help" required minlength="8" />
                             <label for="password">Password</label>
                             <div id="pwd-help" class="field-hint">Use at least 8 characters including uppercase, lowercase and a number.</div>
+                            <div class="field-error" id="password-error">Password must be at least 8 characters</div>
                         </div>
 
                         <div class="form-field">
-                            <input id="confirm_password" name="confirm_password" type="password" />
+                            <input id="confirm_password" name="confirm_password" type="password" required />
                             <label for="confirm_password">Confirm Password</label>
+                            <div class="field-error" id="confirm-error">Passwords do not match</div>
                         </div>
 
                         <button class="reg-submit" type="submit">Create Account</button>
@@ -76,79 +181,165 @@
                     </div>
 
                     <script>
-                        (function(){
-                            const form = document.querySelector('.reg-form');
-                            const pwd = document.getElementById('password');
-                            const confirm = document.getElementById('confirm_password');
-                            const errArea = document.createElement('div');
-                            errArea.setAttribute('aria-live','polite');
-                            errArea.className = 'form-errors';
-                            form.insertBefore(errArea, form.firstChild);
-
-                            function validatePassword(value){
-                                // At least 8 chars, 1 uppercase, 1 lowercase, 1 number
-                                return /(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value);
+                        // Form validation and error handling
+                        function closeError(button) {
+                            const errorAlert = button.closest('.error-alert');
+                            if (errorAlert) {
+                                errorAlert.style.opacity = '0';
+                                errorAlert.style.transform = 'translateY(-10px)';
+                                setTimeout(() => {
+                                    errorAlert.remove();
+                                    const errorContainer = document.getElementById('error-messages');
+                                    if (errorContainer && errorContainer.children.length === 0) {
+                                        errorContainer.style.display = 'none';
+                                    }
+                                }, 300);
                             }
+                        }
 
-                            // inline small message next to confirm
-                            const confirmHint = document.createElement('div');
-                            confirmHint.className = 'field-error';
-                            confirmHint.style.display = 'none';
-                            confirm.parentNode.appendChild(confirmHint);
-
-                            function updateFieldValidation(){
-                                const pVal = pwd.value || '';
-                                const cVal = confirm.value || '';
-                                // password complexity
-                                if(validatePassword(pVal)){
-                                    pwd.classList.remove('input-invalid'); pwd.classList.add('input-valid');
-                                } else {
-                                    pwd.classList.remove('input-valid'); pwd.classList.add('input-invalid');
-                                }
-                                // confirm match
-                                if(cVal.length === 0){
-                                    confirm.classList.remove('input-valid','input-invalid');
-                                    confirmHint.style.display = 'none';
-                                    confirmHint.textContent = '';
-                                } else if(pVal === cVal){
-                                    confirm.classList.remove('input-invalid'); confirm.classList.add('input-valid');
-                                    confirmHint.style.display = 'none';
-                                    confirmHint.textContent = '';
-                                } else {
-                                    confirm.classList.remove('input-valid'); confirm.classList.add('input-invalid');
-                                    confirmHint.style.display = 'block';
-                                    confirmHint.textContent = 'Passwords do not match';
-                                }
-                            }
-
-                            pwd.addEventListener('input', updateFieldValidation);
-                            confirm.addEventListener('input', updateFieldValidation);
-
-                            form.addEventListener('submit', function(e){
-                                errArea.innerHTML = '';
-                                const p = pwd.value || '';
-                                const c = confirm.value || '';
-                                const errors = [];
-                                if(!validatePassword(p)){
-                                    errors.push('Password must be at least 8 characters and include uppercase, lowercase, and a number.');
-                                }
-                                if(p !== c){
-                                    errors.push('Password and confirmation do not match.');
-                                }
-                                if(errors.length){
-                                    e.preventDefault();
-                                    errArea.innerHTML = '<ul>' + errors.map(function(x){ return '<li>'+x+'</li>'; }).join('') + '</ul>';
-                                    errArea.style.display = 'block';
-                                    // focus first invalid field
-                                    if(!validatePassword(p)) pwd.focus(); else confirm.focus();
-                                } else {
-                                    errArea.style.display = 'none';
+                        // Auto-hide error messages after 8 seconds
+                        setTimeout(() => {
+                            const errorAlerts = document.querySelectorAll('.error-alert');
+                            errorAlerts.forEach(alert => {
+                                const closeBtn = alert.querySelector('.error-close');
+                                if (closeBtn) {
+                                    closeBtn.click();
                                 }
                             });
-                        })();
-                    </script>
+                        }, 8000);
 
-                    <script>
+                        // Form field validation functions
+                        function validateName(value) {
+                            return value.trim().length >= 2;
+                        }
+
+                        function validateEmail(email) {
+                            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                            return emailRegex.test(email);
+                        }
+
+                        function validatePhone(phone) {
+                            const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+                            return phone.length >= 10 && phoneRegex.test(phone.replace(/[-\s\(\)]/g, ''));
+                        }
+
+                        function validatePassword(value) {
+                            // At least 8 chars, 1 uppercase, 1 lowercase, 1 number
+                            return value.length >= 8 && 
+                                   /[a-z]/.test(value) && 
+                                   /[A-Z]/.test(value) && 
+                                   /\d/.test(value);
+                        }
+
+                        function showFieldError(field, message) {
+                            const fieldContainer = field.closest('.form-field');
+                            const errorDiv = fieldContainer.querySelector('.field-error');
+                            
+                            fieldContainer.classList.add('error');
+                            if (errorDiv) {
+                                errorDiv.textContent = message;
+                            }
+                        }
+
+                        function clearFieldError(field) {
+                            const fieldContainer = field.closest('.form-field');
+                            fieldContainer.classList.remove('error');
+                        }
+
+                        // Form submission validation
+                        document.getElementById('registerForm').addEventListener('submit', function(e) {
+                            const firstName = document.getElementById('first');
+                            const lastName = document.getElementById('last');
+                            const phone = document.getElementById('phone');
+                            const email = document.getElementById('email');
+                            const password = document.getElementById('password');
+                            const confirmPassword = document.getElementById('confirm_password');
+                            
+                            let isValid = true;
+
+                            // Clear previous errors
+                            document.querySelectorAll('.form-field').forEach(field => {
+                                field.classList.remove('error');
+                            });
+
+                            // Validate first name
+                            if (!validateName(firstName.value)) {
+                                showFieldError(firstName, 'First name must be at least 2 characters');
+                                isValid = false;
+                            }
+
+                            // Validate last name
+                            if (!validateName(lastName.value)) {
+                                showFieldError(lastName, 'Last name must be at least 2 characters');
+                                isValid = false;
+                            }
+
+                            // Validate phone
+                            if (!validatePhone(phone.value)) {
+                                showFieldError(phone, 'Please enter a valid phone number');
+                                isValid = false;
+                            }
+
+                            // Validate email
+                            if (!validateEmail(email.value)) {
+                                showFieldError(email, 'Please enter a valid email address');
+                                isValid = false;
+                            }
+
+                            // Validate password
+                            if (!validatePassword(password.value)) {
+                                showFieldError(password, 'Password must be at least 8 characters with uppercase, lowercase, and number');
+                                isValid = false;
+                            }
+
+                            // Validate password confirmation
+                            if (password.value !== confirmPassword.value) {
+                                showFieldError(confirmPassword, 'Passwords do not match');
+                                isValid = false;
+                            }
+
+                            if (!isValid) {
+                                e.preventDefault();
+                                return false;
+                            }
+
+                            // Show loading state
+                            const submitBtn = document.querySelector('.reg-submit');
+                            submitBtn.style.opacity = '0.7';
+                            submitBtn.disabled = true;
+                        });
+
+                        // Real-time validation on input
+                        document.getElementById('first').addEventListener('input', function() {
+                            if (this.value.length >= 2) clearFieldError(this);
+                        });
+
+                        document.getElementById('last').addEventListener('input', function() {
+                            if (this.value.length >= 2) clearFieldError(this);
+                        });
+
+                        document.getElementById('phone').addEventListener('input', function() {
+                            if (validatePhone(this.value)) clearFieldError(this);
+                        });
+
+                        document.getElementById('email').addEventListener('input', function() {
+                            if (validateEmail(this.value)) clearFieldError(this);
+                        });
+
+                        document.getElementById('password').addEventListener('input', function() {
+                            if (validatePassword(this.value)) clearFieldError(this);
+                            // Also check confirm password if it has a value
+                            const confirm = document.getElementById('confirm_password');
+                            if (confirm.value && this.value === confirm.value) {
+                                clearFieldError(confirm);
+                            }
+                        });
+
+                        document.getElementById('confirm_password').addEventListener('input', function() {
+                            const password = document.getElementById('password');
+                            if (this.value === password.value) clearFieldError(this);
+                        });
+
                         // Toggle .filled class when inputs have value (for floating label support)
                         (function(){
                             const fields = document.querySelectorAll('.reg-form .form-field input');
@@ -157,8 +348,7 @@
                                     if(inp.value && inp.value.length) inp.classList.add('filled'); else inp.classList.remove('filled');
                                 }
                                 inp.addEventListener('input', toggle);
-                                // run on load
-                                toggle();
+                                toggle(); // run on load
                             });
                         })();
                     </script>
