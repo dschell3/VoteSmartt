@@ -14,6 +14,7 @@ DB_CONFIG = {
 
 class MySQLConnection:
     def __init__(self, db=None):
+        print("DEBUG: Connecting to DB ->", db)
         config = DB_CONFIG.copy()
         if db:
             config['db'] = db

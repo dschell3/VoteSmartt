@@ -3,6 +3,8 @@ from flask_app import app
 from flask_app.models.userModels import User
 from flask_bcrypt import Bcrypt
 
+bcrypt = Bcrypt(app)
+
 @app.route('/') # Homepage route
 def homepage():
     return render_template('homepage.html')
@@ -30,10 +32,8 @@ def contact_route():
     flash('Thanks for your message — we\'ll get back to you at {}'.format(email))
     return redirect(url_for('contact_page'))
 
-
 @app.route("/registerRoute", methods=['POST']) # 
 def register():
-    bcrypt = Bcrypt(app)
     pw_hash = bcrypt.generate_password_hash(request.form['password'])
 
     data = {
@@ -43,8 +43,40 @@ def register():
         'email': request.form['email'],
         'password': pw_hash,
         'phone': request.form['phone'],
-        'username': request.form['username']
+        
         
     }
     User.register(data)
-    return redirect('/')
+    return redirect(url_for('success'))
+
+
+@app.route('/loginRoute', methods=['POST']) # Login route
+def login():
+    data = {
+        'email': request.form['email']
+    }
+    print(data)
+    userDB = User.getUserByEmail(data)
+    if not userDB:
+        flash("Invalid email/password")
+        print("email is wrong")
+        return redirect("/login")
+    if not bcrypt.check_password_hash(userDB.password, request.form["password"]):
+        flash("Invalid Email/Password")
+        print("Password is wrong")
+        return redirect("/login")
+    session['user_id'] = userDB.user_id
+    return redirect(url_for('success'))
+
+@app.route('/success') # Success page route
+def success():
+    return render_template('success.html')
+
+
+@app.route("/logout", methods=['POST'])
+def logout():
+    session.clear()
+    return redirect("/")
+        
+        
+    
