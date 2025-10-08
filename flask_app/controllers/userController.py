@@ -70,8 +70,21 @@ def login():
 
 @app.route('/success') # Success page route
 def success():
-    return render_template('success.html')
+    loggedIn = "user_id" in session
+    if loggedIn:
+        user_id = session["user_id"]
+        user = User.getUserByID({"user_id": user_id})
+    return render_template('eventList.html', user = user)
 
+@app.route('/navComponent')
+def navComponent():
+    loggedIn = "user_id" in session
+    if loggedIn:
+        user_id = session["user_id"]
+        user = User.getUserByID({"user_id": user_id})
+        firstInitial = user.first_name[0]
+        lastInitial = user.last_name[0]
+    return render_template()
 
 @app.route("/logout", methods=['POST'])
 def logout():

@@ -12,4 +12,4 @@ def get_free_port():
 if __name__ == '__main__':
     port = get_free_port()
     print(f"Starting server on port {port}")
-    app.run(debug=True, port=port, use_reloader=False)
+    app.run(debug=True, port=port, use_reloader=True)
