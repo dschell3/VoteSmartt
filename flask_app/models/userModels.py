@@ -23,9 +23,11 @@ class User:
     @classmethod
     def register(cls, data):
         query = '''
-        INSERT INTO users
+        INSERT INTO
+        users
         (first_name, last_name, email, password, phone, created_at) 
-        VALUES (%(first_name)s, %(last_name)s, %(email)s, %(password)s, %(phone)s, NOW());
+        VALUES 
+        (%(first_name)s, %(last_name)s, %(email)s, %(password)s, %(phone)s, NOW());
         '''
         return connectToMySQL(db).query_db(query, data)
 
@@ -48,7 +50,8 @@ class User:
     def updateProfile(cls, data):
         query = """
         UPDATE users 
-        SET first_name = %(first_name)s, 
+        SET 
+            first_name = %(first_name)s, 
             last_name = %(last_name)s, 
             email = %(email)s, 
             phone = %(phone)s 
@@ -60,7 +63,8 @@ class User:
     def updatePassword(cls, data):
         query = """
         UPDATE users 
-        SET password = %(password)s 
+        SET 
+            password = %(password)s 
         WHERE user_id = %(user_id)s;
         """
         return connectToMySQL(db).query_db(query, data)
