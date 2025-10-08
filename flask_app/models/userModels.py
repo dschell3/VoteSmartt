@@ -15,8 +15,8 @@ class User:
         self.last_name = data['last_name']
         self.email = data['email']
         self.password = data['password']
-        self.created_at = data['created_at']
         self.phone = data['phone']
+        self.created_at = data['created_at']
         
         
     
@@ -43,3 +43,24 @@ class User:
         query = "SELECT * FROM users WHERE user_id = %(user_id)s;"
         result = connectToMySQL(db).query_db(query, data)
         return cls(result[0])
+    
+    @classmethod
+    def updateProfile(cls, data):
+        query = """
+        UPDATE users 
+        SET first_name = %(first_name)s, 
+            last_name = %(last_name)s, 
+            email = %(email)s, 
+            phone = %(phone)s 
+        WHERE user_id = %(user_id)s;
+        """
+        return connectToMySQL(db).query_db(query, data)
+    
+    @classmethod
+    def updatePassword(cls, data):
+        query = """
+        UPDATE users 
+        SET password = %(password)s 
+        WHERE user_id = %(user_id)s;
+        """
+        return connectToMySQL(db).query_db(query, data)

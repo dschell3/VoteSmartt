@@ -23,20 +23,30 @@ class MySQLConnection:
     def query_db(self, query, data=None):
         with self.connection.cursor() as cursor:
             try:
+                query_type = query.strip().lower()  # ✅ remove leading/trailing spaces/newlines
                 executable = cursor.execute(query, data)
-                if query.lower().startswith("select"):
-                    return cursor.fetchall()
-                elif query.lower().startswith("insert"):
+
+                if query_type.startswith("select"):
+                    result = cursor.fetchall()
+                    # print(f"DEBUG: SELECT returned {len(result)} rows")
+                    return result
+
+                elif query_type.startswith("insert"):
                     self.connection.commit()
-                    return cursor.lastrowid
+                    new_id = cursor.lastrowid
+                    print(f"DEBUG: INSERT successful, new ID = {new_id}")
+                    return new_id
+
                 else:
                     self.connection.commit()
+                    print("DEBUG: Non-SELECT/INSERT query executed successfully.")
+                    return True
+
             except Exception as e:
                 print("Database error:", e)
                 return False
             finally:
-                # Do NOT close the connection here if you plan to reuse it
-                pass
+                pass  # Connection stays open for reuse
 
 # This helper function is used in models
 def connectToMySQL(db=None):
