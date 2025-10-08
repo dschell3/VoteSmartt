@@ -43,3 +43,4 @@ class User:
         query = "SELECT * FROM users WHERE user_id = %(user_id)s;"
         result = connectToMySQL(db).query_db(query, data)
         return cls(result[0])
+
