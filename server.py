@@ -1,5 +1,5 @@
 from flask_app import app
-from flask_app.controllers import userController
+from flask_app.controllers import userController, eventsController
 from flask import Flask
 import socket
 
