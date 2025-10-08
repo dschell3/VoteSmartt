@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - VoteSmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap");
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Outfit", sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .main-content {
+            padding-top: 100px;
+            padding-bottom: 50px;
+        }
+        
+        .profile-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .profile-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 48px;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+        }
+        
+        .profile-name {
+            font-size: 32px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .profile-email {
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .profile-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .info-group {
+            background: rgba(21, 90, 194, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(21, 90, 194, 0.1);
+        }
+        
+        .info-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .profile-actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #0b3b7a, #155ac2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(21, 90, 194, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(21, 90, 194, 0.1);
+            color: #155ac2;
+            border: 1px solid rgba(21, 90, 194, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(21, 90, 194, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: rgba(220, 38, 38, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+        
+        .btn-danger:hover {
+            background: rgba(220, 38, 38, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .profile-info {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .profile-card {
+                padding: 30px 20px;
+                margin: 0 20px;
+            }
+            
+            .profile-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Include navbar -->
+    {% include 'navbar.html' %}
+    
+    <div class="main-content">
+        <div class="container mx-auto px-4">
+            <div class="max-w-2xl mx-auto">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            {{ first_name[0] if first_name else 'U' }}{{ last_name[0] if last_name else '' }}
+                        </div>
+                        <h1 class="profile-name">{{ first_name }} {{ last_name }}</h1>
+                        <p class="profile-email">{{ email }}</p>
+                    </div>
+                    
+                    <div class="profile-info">
+                        <div class="info-group">
+                            <div class="info-label">First Name</div>
+                            <div class="info-value">{{ first_name }}</div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <div class="info-label">Last Name</div>
+                            <div class="info-value">{{ last_name }}</div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <div class="info-label">Email Address</div>
+                            <div class="info-value">{{ email }}</div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <div class="info-label">Phone Number</div>
+                            <div class="info-value">{{ phone }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-actions">
+                        <a href="/settings" class="action-btn btn-primary">
+                            <i data-lucide="settings"></i>
+                            Edit Profile
+                        </a>
+                        
+                        <a href="/success" class="action-btn btn-secondary">
+                            <i data-lucide="vote"></i>
+                            View Elections
+                        </a>
+                        
+                        <form action="/logout" method="post" style="display: inline-block;">
+                            <button type="submit" class="action-btn btn-danger">
+                                <i data-lucide="log-out"></i>
+                                Sign Out
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

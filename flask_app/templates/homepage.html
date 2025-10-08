@@ -29,45 +29,8 @@
   <!-- Site-wide animated background -->
   <div id="animated-bg" class="fixed inset-0 pointer-events-none"></div>
 
-  <nav>
-        <div class="container">
-            <div class="nav">
-
-                <div class="logo"><h1 class="logoText">VoteSmartt</h1></div>
-
-                <!-- Hamburger button for mobile -->
-                <button class="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu">
-                    <span class="hamburger-box">
-                        <span class="hamburger-inner"></span>
-                    </span>
-                </button>
-
-        <div class="links">
-          <a href="/about" class="link">About</a>
-          <a href="/credits" class="link">Credits</a>
-          <a href="/contact" class="link">Contact</a>
-        </div>
-
-        <div class="cta">
-          <a href="/login" class="link">Log In</a>
-          <a href="/register" class="ctaButton">Sign Up</a>
-        </div>
-
-                <!-- Mobile menu (hidden on desktop) -->
-        <div id="mobile-menu" class="mobile-menu" hidden>
-          <a href="/about" class="mobile-link firstlink">About</a>
-          <a href="/credits" class="mobile-link">Credits</a>
-          <a href="/contact" class="mobile-link">Contact</a>
-                    <div class="mobile-divider" aria-hidden="true"></div>
-          <div class="mobile-cta">
-            <a href="/login" class="mobile-link">Log In</a>
-            <a href="/register" class="ctaButton mobile-signup">Sign Up</a>
-          </div>
-                </div>
-
-            </div>
-        </div>
-    </nav>
+  <!-- Include the dynamic navbar -->
+  {% include 'navbar.html' %}
 
     <section>
         <div class="section"></div>
