@@ -1,3 +1,8 @@
 ./DS_Store
 Procfile
-docs
+./docs
+__pycache__
+*.pyc
+env/
+.idea/
+.vscode/
