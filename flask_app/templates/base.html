@@ -93,6 +93,31 @@
             background-position: 0;
         }
 
+        /* Button styles to match links */
+        button.link {
+            border: none;
+            background: none;
+            padding: 0;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        button.ctaButton {
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        button.mobile-link {
+            border: none;
+            background: none;
+            padding: 0;
+            cursor: pointer;
+            font-family: inherit;
+            text-align: left;
+            width: 100%;
+        }
+
         /* CTA Section */
         .cta {
             display: flex;
@@ -637,8 +662,8 @@
                         </div>
                     {% else %}
                         <!-- Login/Signup when not logged in -->
-                        <a href="/login" class="link">Log In</a>
-                        <a href="/register" class="ctaButton">Sign Up</a>
+                        <button onclick="openModal('loginModal')" class="link">Log In</button>
+                        <button onclick="openModal('signupModal')" class="ctaButton">Sign Up</button>
                     {% endif %}
                 </div>
                 <div id="mobile-menu" class="mobile-menu" hidden>
@@ -661,8 +686,8 @@
                             </div>
                         {% else %}
                             <!-- Mobile login/signup when not logged in -->
-                            <a href="/login" class="mobile-link">Log In</a>
-                            <a href="/register" class="ctaButton mobile-signup">Sign Up</a>
+                            <button onclick="openModal('loginModal')" class="mobile-link">Log In</button>
+                            <button onclick="openModal('signupModal')" class="ctaButton mobile-signup">Sign Up</button>
                         {% endif %}
                     </div>
                 </div>
@@ -882,6 +907,800 @@
                 lucide.createIcons();
             }
         });
+    </script>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 w-full max-w-md mx-4 relative">
+            <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            
+            <h2 class="text-2xl font-bold text-center mb-6">Sign In</h2>
+            
+            <!-- Error messages for login -->
+            <div id="loginErrors" class="hidden mb-4"></div>
+            
+            <form id="loginForm" action="/loginRoute" method="post">
+                <div class="mb-4">
+                    <label for="loginEmail" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="loginEmail" name="email" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div class="mb-6">
+                    <label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="loginPassword" name="password" required minlength="6"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <div class="mt-2 text-right">
+                        <button type="button" onclick="switchToForgotPassword()" class="text-sm text-blue-600 hover:text-blue-800 bg-none border-none cursor-pointer">Forgot password?</button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium">
+                    Sign In
+                </button>
+            </form>
+            
+            <p class="text-center mt-6 text-sm text-gray-600">
+                Don't have an account? 
+                <button onclick="switchToSignup()" class="text-blue-600 hover:text-blue-800 font-medium">Create one</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signupModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 w-full max-w-md mx-4 relative">
+            <button onclick="closeModal('signupModal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            
+            <h2 class="text-2xl font-bold text-center mb-6">Create Account</h2>
+            
+            <!-- Error messages for signup -->
+            <div id="signupErrors" class="hidden mb-4"></div>
+            
+            <form id="signupForm" action="/registerRoute" method="post">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="signupFirstName" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                        <input type="text" id="signupFirstName" name="first_name" required minlength="2"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label for="signupLastName" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                        <input type="text" id="signupLastName" name="last_name" required minlength="2"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="signupPhone" class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                    <input type="tel" id="signupPhone" name="phone" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="signupEmail" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="signupEmail" name="email" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="signupPassword" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="signupPassword" name="password" required minlength="8"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Use at least 8 characters including uppercase, lowercase and a number.</p>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="signupConfirmPassword" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" name="confirm_password" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium">
+                    Create Account
+                </button>
+            </form>
+            
+            <p class="text-center mt-6 text-sm text-gray-600">
+                Already have an account? 
+                <button onclick="switchToLogin()" class="text-blue-600 hover:text-blue-800 font-medium">Sign in</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 w-full max-w-md mx-4 relative">
+            <button onclick="closeModal('forgotPasswordModal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            
+            <h2 class="text-2xl font-bold text-center mb-6">Reset Password</h2>
+            
+            <!-- Error/Success messages for forgot password -->
+            <div id="forgotPasswordErrors" class="hidden mb-4"></div>
+            <div id="forgotPasswordSuccess" class="hidden mb-4"></div>
+            
+            <form id="forgotPasswordForm" action="/forgotRoute" method="post">
+                <div class="mb-6">
+                    <label for="forgotEmail" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                    <input type="email" id="forgotEmail" name="email" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Enter your email address">
+                    <p class="text-xs text-gray-500 mt-2">We'll send you a link to reset your password.</p>
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium">
+                    Send Reset Link
+                </button>
+            </form>
+            
+            <p class="text-center mt-6 text-sm text-gray-600">
+                Remember your password? 
+                <button onclick="switchToLogin()" class="text-blue-600 hover:text-blue-800 font-medium">Sign in</button>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Modal functions
+        function openModal(modalId) {
+            // Clear any existing errors before opening
+            clearAllModalErrors(modalId);
+            
+            document.getElementById(modalId).classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            // Clear any error messages and field errors
+            clearAllModalErrors(modalId);
+        }
+        
+        function clearAllModalErrors(modalId) {
+            // Clear general error containers
+            document.getElementById('loginErrors').classList.add('hidden');
+            document.getElementById('signupErrors').classList.add('hidden');
+            document.getElementById('forgotPasswordErrors').classList.add('hidden');
+            document.getElementById('forgotPasswordSuccess').classList.add('hidden');
+            
+            // Clear all field-specific errors in the modal
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                // Clear field errors
+                const fieldErrors = modal.querySelectorAll('.field-error');
+                fieldErrors.forEach(error => error.remove());
+                
+                // Clear password strength indicators
+                const strengthIndicators = modal.querySelectorAll('.password-strength');
+                strengthIndicators.forEach(indicator => indicator.remove());
+                
+                // Reset field styling
+                const inputs = modal.querySelectorAll('input');
+                inputs.forEach(input => {
+                    input.classList.remove('border-red-500', 'focus:ring-red-500', 'focus:border-red-500');
+                    input.classList.add('border-gray-300', 'focus:ring-blue-500', 'focus:border-transparent');
+                });
+                
+                // Clear form values (optional - uncomment if you want to clear form data)
+                // const forms = modal.querySelectorAll('form');
+                // forms.forEach(form => form.reset());
+            }
+        }
+        
+        function switchToSignup() {
+            closeModal('loginModal');
+            openModal('signupModal');
+        }
+        
+        function switchToLogin() {
+            closeModal('signupModal');
+            closeModal('forgotPasswordModal');
+            openModal('loginModal');
+        }
+        
+        function switchToForgotPassword() {
+            closeModal('loginModal');
+            openModal('forgotPasswordModal');
+        }
+        
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'loginModal' || e.target.id === 'signupModal' || e.target.id === 'forgotPasswordModal') {
+                closeModal(e.target.id);
+            }
+        });
+        
+        // Real-time validation functions
+        function validateEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+        
+        function validatePassword(password) {
+            const requirements = {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /\d/.test(password),
+                special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+            };
+            
+            return requirements;
+        }
+        
+        function getPasswordErrorMessage(password) {
+            const requirements = validatePassword(password);
+            const missing = [];
+            
+            if (!requirements.length) missing.push('at least 8 characters');
+            if (!requirements.uppercase) missing.push('one uppercase letter');
+            if (!requirements.lowercase) missing.push('one lowercase letter');
+            if (!requirements.number) missing.push('one number');
+            if (!requirements.special) missing.push('one special character (!@#$%^&*(),.?":{}|<>)');
+            
+            if (missing.length === 0) return null;
+            
+            if (missing.length === 1) {
+                return `Password must contain ${missing[0]}`;
+            } else if (missing.length === 2) {
+                return `Password must contain ${missing[0]} and ${missing[1]}`;
+            } else {
+                return `Password must contain ${missing.slice(0, -1).join(', ')}, and ${missing[missing.length - 1]}`;
+            }
+        }
+        
+        function isPasswordValid(password) {
+            const requirements = validatePassword(password);
+            return requirements.length && requirements.uppercase && requirements.lowercase && 
+                   requirements.number && requirements.special;
+        }
+        
+        function validateField(field, errorContainerId) {
+            const fieldName = field.name;
+            const value = field.value.trim();
+            let isValid = true;
+            let errorMessage = '';
+            
+            // Clear previous field-specific errors
+            clearFieldError(field);
+            
+            switch(fieldName) {
+                case 'email':
+                    if (!value) {
+                        errorMessage = 'Email is required';
+                        isValid = false;
+                    } else if (!validateEmail(value)) {
+                        errorMessage = 'Please enter a valid email address';
+                        isValid = false;
+                    }
+                    break;
+                    
+                case 'password':
+                    if (!value) {
+                        errorMessage = 'Password is required';
+                        isValid = false;
+                    } else {
+                        const passwordError = getPasswordErrorMessage(value);
+                        if (passwordError) {
+                            errorMessage = passwordError;
+                            isValid = false;
+                        }
+                    }
+                    break;
+                    
+                case 'first_name':
+                    if (!value) {
+                        errorMessage = 'First name is required';
+                        isValid = false;
+                    } else if (value.length < 2) {
+                        errorMessage = 'First name must be at least 2 characters';
+                        isValid = false;
+                    }
+                    break;
+                    
+                case 'last_name':
+                    if (!value) {
+                        errorMessage = 'Last name is required';
+                        isValid = false;
+                    } else if (value.length < 2) {
+                        errorMessage = 'Last name must be at least 2 characters';
+                        isValid = false;
+                    }
+                    break;
+                    
+                case 'phone':
+                    if (!value) {
+                        errorMessage = 'Phone number is required';
+                        isValid = false;
+                    } else if (value.replace(/\D/g, '').length < 10) {
+                        errorMessage = 'Please enter a valid phone number (at least 10 digits)';
+                        isValid = false;
+                    }
+                    break;
+            }
+            
+            if (!isValid) {
+                showFieldError(field, errorMessage);
+            }
+            
+            return isValid;
+        }
+        
+        function showFieldError(field, message) {
+            // Add error styling to field
+            field.classList.add('border-red-500', 'focus:ring-red-500', 'focus:border-red-500');
+            field.classList.remove('border-gray-300', 'focus:ring-blue-500', 'focus:border-transparent');
+            
+            // Create or update error message
+            let errorDiv = field.parentNode.querySelector('.field-error');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'field-error text-red-600 text-xs mt-1 flex items-center';
+                field.parentNode.appendChild(errorDiv);
+            }
+            
+            errorDiv.innerHTML = `<i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>${message}`;
+            
+            // Re-initialize icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            // Auto-clear field error after 10 seconds (only if user hasn't interacted with the field)
+            const errorTimeout = setTimeout(() => {
+                if (errorDiv && errorDiv.parentNode) {
+                    clearFieldError(field);
+                }
+            }, 10000);
+            
+            // Store timeout ID on the error div so we can clear it if user interacts
+            errorDiv.setAttribute('data-timeout-id', errorTimeout);
+        }
+        
+        function showPasswordStrength(field, password) {
+            const requirements = validatePassword(password);
+            
+            // Remove existing strength indicator
+            let strengthDiv = field.parentNode.querySelector('.password-strength');
+            if (strengthDiv) {
+                strengthDiv.remove();
+            }
+            
+            if (password.length > 0) {
+                strengthDiv = document.createElement('div');
+                strengthDiv.className = 'password-strength mt-2 text-xs';
+                
+                const checks = [
+                    { check: requirements.length, text: '8+ characters' },
+                    { check: requirements.uppercase, text: 'Uppercase letter' },
+                    { check: requirements.lowercase, text: 'Lowercase letter' },
+                    { check: requirements.number, text: 'Number' },
+                    { check: requirements.special, text: 'Special character' }
+                ];
+                
+                let strengthHTML = '<div class="text-gray-600 mb-1">Password requirements:</div>';
+                checks.forEach(({ check, text }) => {
+                    const color = check ? 'text-green-600' : 'text-gray-400';
+                    const icon = check ? 'check' : 'x';
+                    strengthHTML += `<div class="${color} flex items-center">
+                        <i data-lucide="${icon}" class="w-3 h-3 mr-1"></i>${text}
+                    </div>`;
+                });
+                
+                strengthDiv.innerHTML = strengthHTML;
+                field.parentNode.appendChild(strengthDiv);
+                
+                // Re-initialize icons
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }
+        }
+        
+        function clearFieldError(field) {
+            // Remove error styling
+            field.classList.remove('border-red-500', 'focus:ring-red-500', 'focus:border-red-500');
+            field.classList.add('border-gray-300', 'focus:ring-blue-500', 'focus:border-transparent');
+            
+            // Clear any pending timeout and remove error message
+            const errorDiv = field.parentNode.querySelector('.field-error');
+            if (errorDiv) {
+                const timeoutId = errorDiv.getAttribute('data-timeout-id');
+                if (timeoutId) {
+                    clearTimeout(parseInt(timeoutId));
+                }
+                errorDiv.remove();
+            }
+            
+            // Remove password strength indicator if field is not password or if password is valid
+            if (field.name !== 'password') {
+                const strengthDiv = field.parentNode.querySelector('.password-strength');
+                if (strengthDiv) {
+                    strengthDiv.remove();
+                }
+            }
+        }
+        
+        // Add real-time validation to form fields
+        function setupRealTimeValidation() {
+            // Login form validation
+            const loginEmail = document.getElementById('loginEmail');
+            const loginPassword = document.getElementById('loginPassword');
+            
+            if (loginEmail) {
+                loginEmail.addEventListener('blur', () => validateField(loginEmail, 'loginErrors'));
+                loginEmail.addEventListener('input', () => {
+                    if (loginEmail.value.trim()) {
+                        clearFieldError(loginEmail);
+                    }
+                });
+            }
+            
+            if (loginPassword) {
+                loginPassword.addEventListener('blur', () => validateField(loginPassword, 'loginErrors'));
+                loginPassword.addEventListener('input', () => {
+                    if (loginPassword.value.trim()) {
+                        clearFieldError(loginPassword);
+                    }
+                });
+            }
+            
+            // Signup form validation
+            const signupFields = ['first_name', 'last_name', 'email', 'password', 'phone'];
+            
+            signupFields.forEach(fieldName => {
+                const field = document.querySelector(`#signupForm input[name="${fieldName}"]`);
+                if (field) {
+                    field.addEventListener('blur', () => validateField(field, 'signupErrors'));
+                    field.addEventListener('input', () => {
+                        if (field.value.trim()) {
+                            clearFieldError(field);
+                        }
+                        
+                        // Show password strength for password fields
+                        if (fieldName === 'password') {
+                            showPasswordStrength(field, field.value);
+                        }
+                    });
+                }
+            });
+            
+            // Login password field - simpler validation
+            if (loginPassword) {
+                loginPassword.addEventListener('input', () => {
+                    if (loginPassword.value.trim()) {
+                        clearFieldError(loginPassword);
+                    }
+                });
+            }
+            
+            // Forgot password validation
+            const forgotEmail = document.getElementById('forgotEmail');
+            if (forgotEmail) {
+                forgotEmail.addEventListener('blur', () => validateField(forgotEmail, 'forgotPasswordErrors'));
+                forgotEmail.addEventListener('input', () => {
+                    if (forgotEmail.value.trim()) {
+                        clearFieldError(forgotEmail);
+                    }
+                });
+            }
+        }
+        
+        // Initialize real-time validation when page loads
+        document.addEventListener('DOMContentLoaded', setupRealTimeValidation);
+        
+        // Handle form submissions with AJAX
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate all fields before submitting
+            const email = document.getElementById('loginEmail');
+            const password = document.getElementById('loginPassword');
+            
+            const emailValid = validateField(email, 'loginErrors');
+            const passwordValid = validateField(password, 'loginErrors');
+            
+            if (emailValid && passwordValid) {
+                submitLoginForm(this);
+            }
+        });
+        
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate all fields before submitting
+            const fields = this.querySelectorAll('input[required]');
+            let allValid = true;
+            
+            fields.forEach(field => {
+                const isValid = validateField(field, 'signupErrors');
+                if (!isValid) {
+                    allValid = false;
+                }
+            });
+            
+            if (allValid) {
+                submitSignupForm(this);
+            }
+        });
+        
+        document.getElementById('forgotPasswordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitForgotPasswordForm(this);
+        });
+        
+        function submitLoginForm(form) {
+            const formData = new FormData(form);
+            const button = form.querySelector('button[type="submit"]');
+            const originalText = button.textContent;
+            
+            // Show loading state
+            button.textContent = 'Signing in...';
+            button.disabled = true;
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                redirect: 'follow'
+            })
+            .then(response => {
+                console.log('Response URL:', response.url);
+                console.log('Response status:', response.status);
+                
+                // If the final URL contains success, we were redirected there
+                if (response.url.includes('/success')) {
+                    window.location.href = '/success';
+                    return null;
+                }
+                
+                // Otherwise, get the response text to check for errors
+                return response.text();
+            })
+            .then(data => {
+                if (data) {
+                    // Check if the response HTML contains success indicators
+                    if (data.includes('Welcome') || data.includes('Dashboard') || data.includes('success')) {
+                        window.location.href = '/success';
+                        return;
+                    }
+                    
+                    // Parse the response for Flash messages
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data, 'text/html');
+                    
+                    // Look for Flash message content - try multiple selectors
+                    let errors = [];
+                    
+                    // Try different flash message selectors
+                    const flashSelectors = ['.bg-red-50', '.alert-danger', '.error-alert', '.flash-error'];
+                    
+                    flashSelectors.forEach(selector => {
+                        const containers = doc.querySelectorAll(selector);
+                        containers.forEach(container => {
+                            const messageText = container.textContent.trim().replace(/\s+/g, ' ');
+                            if (messageText && !errors.includes(messageText)) {
+                                errors.push(messageText);
+                            }
+                        });
+                    });
+                    
+                    // If no flash containers found, look for specific error patterns in the HTML
+                    if (errors.length === 0) {
+                        const errorPatterns = [
+                            'Please enter both email and password',
+                            'Invalid email or password',
+                            'Please check your credentials'
+                        ];
+                        
+                        errorPatterns.forEach(pattern => {
+                            if (data.includes(pattern) && !errors.includes(pattern)) {
+                                errors.push(pattern);
+                            }
+                        });
+                    }
+                    
+                    if (errors.length > 0) {
+                        showErrors('loginErrors', errors);
+                    } else {
+                        // No errors found but no success redirect - try to go to success anyway
+                        window.location.href = '/success';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Login error:', error);
+                showErrors('loginErrors', ['An error occurred. Please try again.']);
+            })
+            .finally(() => {
+                // Reset button
+                button.textContent = originalText;
+                button.disabled = false;
+            });
+        }
+        
+        function submitSignupForm(form) {
+            const formData = new FormData(form);
+            const button = form.querySelector('button[type="submit"]');
+            const originalText = button.textContent;
+            
+            // Show loading state
+            button.textContent = 'Creating account...';
+            button.disabled = true;
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                redirect: 'follow'
+            })
+            .then(response => {
+                console.log('Response URL:', response.url);
+                console.log('Response status:', response.status);
+                
+                // If the final URL contains success, we were redirected there
+                if (response.url.includes('/success')) {
+                    window.location.href = '/success';
+                    return null;
+                }
+                
+                // Otherwise, get the response text to check for errors
+                return response.text();
+            })
+            .then(data => {
+                if (data) {
+                    // Check if the response HTML contains success indicators
+                    if (data.includes('Welcome') || data.includes('Dashboard') || data.includes('success')) {
+                        window.location.href = '/success';
+                        return;
+                    }
+                    
+                    // Parse the response for Flash messages
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data, 'text/html');
+                    
+                    // Look for Flash message content - try multiple selectors
+                    let errors = [];
+                    
+                    // Try different flash message selectors
+                    const flashSelectors = ['.bg-red-50', '.alert-danger', '.error-alert', '.flash-error'];
+                    
+                    flashSelectors.forEach(selector => {
+                        const containers = doc.querySelectorAll(selector);
+                        containers.forEach(container => {
+                            const messageText = container.textContent.trim().replace(/\s+/g, ' ');
+                            if (messageText && !errors.includes(messageText)) {
+                                errors.push(messageText);
+                            }
+                        });
+                    });
+                    
+                    // If no flash containers found, look for specific error patterns in the HTML
+                    if (errors.length === 0) {
+                        const errorPatterns = [
+                            'First name must be at least 2 characters',
+                            'Last name must be at least 2 characters',
+                            'Please enter a valid email address',
+                            'Password must be at least 8 characters',
+                            'Please enter a valid phone number',
+                            'An account with this email already exists',
+                            'Registration failed. Please try again.'
+                        ];
+                        
+                        errorPatterns.forEach(pattern => {
+                            if (data.includes(pattern) && !errors.includes(pattern)) {
+                                errors.push(pattern);
+                            }
+                        });
+                    }
+                    
+                    if (errors.length > 0) {
+                        showErrors('signupErrors', errors);
+                    } else {
+                        // No errors found but no success redirect - try to go to success anyway
+                        window.location.href = '/success';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Signup error:', error);
+                showErrors('signupErrors', ['An error occurred. Please try again.']);
+            })
+            .finally(() => {
+                // Reset button
+                button.textContent = originalText;
+                button.disabled = false;
+            });
+        }
+        
+        function showErrors(containerId, messages) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = messages.map(msg => 
+                `<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    <i data-lucide="alert-circle" class="w-4 h-4 inline mr-2"></i>${msg}
+                </div>`
+            ).join('');
+            container.classList.remove('hidden');
+            
+            // Re-initialize icons for new elements
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            // Auto-clear errors after 10 seconds
+            setTimeout(() => {
+                container.classList.add('hidden');
+                container.innerHTML = '';
+            }, 10000);
+        }
+        
+        function submitForgotPasswordForm(form) {
+            const formData = new FormData(form);
+            const button = form.querySelector('button[type="submit"]');
+            const originalText = button.textContent;
+            
+            // Show loading state
+            button.textContent = 'Sending...';
+            button.disabled = true;
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                // Check if response contains error messages or success
+                if (data.includes('error-alert') || data.includes('field-error')) {
+                    // Extract error messages from response
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data, 'text/html');
+                    const errors = doc.querySelectorAll('.error-alert .error-text');
+                    
+                    if (errors.length > 0) {
+                        showErrors('forgotPasswordErrors', Array.from(errors).map(error => error.textContent));
+                    }
+                } else {
+                    // Success - show success message
+                    showSuccess('forgotPasswordSuccess', ['Password reset link sent! Check your email for instructions.']);
+                    // Clear the form
+                    form.reset();
+                }
+            })
+            .catch(error => {
+                showErrors('forgotPasswordErrors', ['An error occurred. Please try again.']);
+            })
+            .finally(() => {
+                // Reset button
+                button.textContent = originalText;
+                button.disabled = false;
+            });
+        }
+        
+        function showSuccess(containerId, messages) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = messages.map(msg => 
+                `<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                    <i data-lucide="check-circle" class="w-4 h-4 inline mr-2"></i>${msg}
+                </div>`
+            ).join('');
+            container.classList.remove('hidden');
+            
+            // Re-initialize icons for new elements
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            // Auto-clear success messages after 10 seconds
+            setTimeout(() => {
+                container.classList.add('hidden');
+                container.innerHTML = '';
+            }, 10000);
+        }
     </script>
 
     {% block extra_js %}{% endblock %}
