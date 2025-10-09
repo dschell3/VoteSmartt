@@ -150,6 +150,7 @@ def register():
     try:
         user_id = User.register(data)
         session['user_id'] = user_id
+        session['first_name'] = first_name
         print(f"New user created with ID: {user_id}")
         return redirect(url_for('success'))
     except Exception as e:
@@ -174,6 +175,7 @@ def login():
     
     # Login successful
     session['user_id'] = user.user_id
+    session['first_name'] = user.first_name
     return redirect(url_for('success'))
 
 @app.route("/logout", methods=['POST']) # Logout handler
