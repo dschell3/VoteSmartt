@@ -2,16 +2,40 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Create Event - VoteSmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <form action="/createEventRoute" method="post" novalidate>
-    <input name="title" type ="text" />
-        <input name="start_time" type="date"/>
-        <input name="end_time" type="date"/>
-        <input name="description" type="date"/>
-        <input name="created_by" type="text"/>
-<button>submit</button>
-    </form>
+<body class="bg-gray-100">
+    <main class="container mx-auto px-4 py-8">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4">Create a New Event</h2>
+            <p class="text-gray-600 mb-4">Fill out the form below to add a new event to your dashboard.</p>
+
+            <form action="/createEventRoute" method="post" novalidate class="space-y-4">
+                <div>
+                    <label for="title" class="block font-medium mb-1">Event Title</label>
+                    <input id="title" name="title" type="text" placeholder="Enter event title" class="w-full px-4 py-2 border rounded" />
+                </div>
+
+                <div>
+                    <label for="start_time" class="block font-medium mb-1">Start Date</label>
+                    <input id="start_time" name="start_time" type="date" class="w-full px-4 py-2 border rounded" />
+                </div>
+
+                <div>
+                    <label for="end_time" class="block font-medium mb-1">End Date</label>
+                    <input id="end_time" name="end_time" type="date" class="w-full px-4 py-2 border rounded" />
+                </div>
+
+                <div>
+                    <label for="description" class="block font-medium mb-1">Description</label>
+                    <input id="description" name="description" type="text" placeholder="Enter event description" class="w-full px-4 py-2 border rounded" />
+                </div>
+
+
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors">Submit</button>
+            </form>
+        </div>
+    </main>
 </body>
 </html>

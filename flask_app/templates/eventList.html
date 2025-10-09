@@ -8,10 +8,26 @@
     <div class="bg-white p-6 rounded-lg shadow-md">
         <h2 class="text-xl font-bold mb-4">Your Events</h2>
         <p class="text-gray-600 mb-4">Welcome to your event dashboard.</p>
-        
+
         <form action="/logout" method='post' class="mt-6">
             <input type="submit" value="Logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition-colors cursor-pointer">
         </form>
+        <a href="/admin2" class="mt-4 block text-blue-600 hover:underline">Create a New Event</a>
     </div>
+
+    {% if allEvents %}
+    <div class="mt-8 grid gap-4">
+        {% for events in allEvents %}
+        <div class="bg-white p-4 rounded-lg shadow-md">
+            <h3 class="text-lg font-semibold">{{ events.title }}</h3>
+            <p class="text-gray-600">{{ events.description }}</p>
+            <p class="text-sm text-gray-500">Start: {{ events.start_time }} | End: {{ events.end_time }}</p>
+            <p class="text-sm text-gray-500">Created by: {{ events.created_by }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-gray-600 mt-4">No events found.</p>
+    {% endif %}
 </main>
 {% endblock %}
