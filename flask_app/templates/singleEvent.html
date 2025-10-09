@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title if event else 'Event' }} - VoteSmart{% endblock %}
+
+{% block extra_css %}
+/* Small scoped styles to make single event look professional */
+.event-hero { background: linear-gradient(90deg,#0b3b7a 0%,#155ac2 100%); color: white; border-radius: 12px; padding: 28px; }
+.event-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 8px 30px rgba(2,6,23,0.06); }
+.meta-pill { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:9999px; background:#f1f5f9; font-weight:600; color:#0b1220 }
+.cta-primary { background: linear-gradient(90deg,#0b3b7a,#155ac2); color:white; padding:10px 16px; border-radius:8px; font-weight:600 }
+.cta-ghost { border:1px solid rgba(11,18,32,0.06); padding:10px 14px; border-radius:8px }
+.recommendation-item { transition:transform .15s ease, box-shadow .15s ease }
+.recommendation-item:hover { transform:translateY(-4px); box-shadow:0 10px 30px rgba(2,6,23,0.06) }
+
+@media (min-width: 1024px) {
+    .event-grid { display:grid; grid-template-columns: 1fr 360px; gap:28px }
+}
+
+{% endblock %}
+
+{% block content %}
+<main class="max-w-6xl mx-auto px-6 py-12">
+    {% if not event %}
+    <div class="event-card text-center">
+        <h2 class="text-2xl font-semibold">Event not found</h2>
+        <p class="mt-3 text-slate-600">The event you're looking for doesn't exist or has been removed.</p>
+        <div class="mt-6"><a href="/eventList" class="cta-ghost">Back to events</a></div>
+    </div>
+    {% else %}
+
+    <!-- Hero -->
+    <section class="event-hero mb-8">
+        <div class="flex items-start justify-between gap-6 flex-col lg:flex-row">
+            <div class="flex-1">
+                <h1 class="text-3xl lg:text-4xl font-extrabold">{{ event.title }}</h1>
+                <p class="mt-3 text-slate-100 max-w-2xl">{{ event.description }}</p>
+
+                <div class="mt-4 flex flex-wrap items-center gap-3">
+                    <span class="meta-pill">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"></path></svg>
+                        <span id="startDisplay">&mdash;</span>
+                    </span>
+
+                    <span class="meta-pill">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h18"></path></svg>
+                        <span id="endDisplay">&mdash;</span>
+                    </span>
+
+                    <span id="liveStatus" class="meta-pill" style="background:rgba(255,255,255,0.12); color:#fff">&mdash;</span>
+                </div>
+            </div>
+
+            <div class="mt-6 lg:mt-0">
+                <div class="event-card text-right">
+                    <div class="text-sm text-slate-500">Organized by</div>
+                    <div class="mt-1 font-semibold">User #{{ event.created_by }}</div>
+                    <div class="mt-4">
+                        <div id="timerLarge" class="text-indigo-600 font-medium">&mdash;</div>
+                    </div>
+                    <div class="mt-6 flex gap-3 justify-end">
+                        <a href="/eventList" class="cta-ghost">Back</a>
+                        <a href="#" class="cta-primary">Register</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="event-grid">
+        <!-- Main content -->
+        <section>
+            <div class="event-card">
+                <h2 class="text-xl font-semibold">About this event</h2>
+                <div class="mt-4 text-slate-700 leading-relaxed">
+                    {{ event.description }}
+                </div>
+
+                <div class="mt-6">
+                    <h3 class="text-sm text-slate-500 font-semibold">Details</h3>
+                    <ul class="mt-3 space-y-3 text-sm text-slate-600">
+                        <li><strong>Start:</strong> <span id="detailStart">&mdash;</span></li>
+                        <li><strong>End:</strong> <span id="detailEnd">&mdash;</span></li>
+                        <li><strong>Status:</strong> <span id="detailStatus">&mdash;</span></li>
+                        <li><strong>Created at:</strong> {{ event.created_at or '—' }}</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Description / long copy area could include attachments, media etc. -->
+            <div class="mt-6 event-card">
+                <h3 class="text-lg font-semibold">Full description</h3>
+                <div class="mt-3 text-slate-700 leading-relaxed">
+                    {{ event.description }}
+                </div>
+            </div>
+        </section>
+
+        <!-- Sidebar: recommendations & quick actions -->
+        <aside>
+            <div class="event-card">
+                <h3 class="text-lg font-semibold">Quick actions</h3>
+                <div class="mt-3 flex flex-col gap-3">
+                    <a href="#" class="cta-primary text-center">Vote now</a>
+                    <a href="#" class="cta-ghost text-center">Share</a>
+                    <a href="#" class="cta-ghost text-center">Report</a>
+                </div>
+            </div>
+
+            <div class="mt-6 event-card">
+                <h4 class="text-lg font-semibold">You might also like</h4>
+                <div class="mt-3 space-y-3">
+                    {% if recommendations %}
+                        {% for r in recommendations %}
+                        <a href="/event/{{ r.event_id }}" class="recommendation-item block p-3 rounded-lg border border-slate-100">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1">
+                                    <div class="text-sm font-semibold text-slate-900">{{ r.title }}</div>
+                                    <div class="text-xs text-slate-500 mt-1">{{ r.description[:80] }}{% if r.description|length > 80 %}...{% endif %}</div>
+                                </div>
+                                <div class="shrink-0 text-xs text-slate-400">{{ r.status or '—' }}</div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-sm text-slate-500">No recommendations</div>
+                    {% endif %}
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    {% endif %}
+</main>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Reuse Day.js as used in other templates -->
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/customParseFormat.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/relativeTime.min.js"></script>
+    <script>
+        dayjs.extend(dayjs_plugin_customParseFormat);
+        dayjs.extend(dayjs_plugin_relativeTime);
+
+        function tryParse(raw) {
+            if (!raw) return null;
+            let d = dayjs(raw);
+            if (d.isValid()) return d;
+            const formats = ['YYYY-MM-DD HH:mm:ss','YYYY-MM-DDTHH:mm:ss','YYYY-MM-DD'];
+            for (const f of formats) {
+                d = dayjs(raw, f);
+                if (d.isValid()) return d;
+            }
+            return null;
+        }
+
+        function formatDisplay(elId, raw) {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            const d = tryParse(raw);
+            if (!d) { el.textContent = '—'; return; }
+            const hasTime = /\d{1,2}:\d{2}/.test(raw);
+            el.textContent = d.format(hasTime ? 'MMM D, YYYY · h:mm A' : 'MMM D, YYYY') + ' — ' + d.fromNow();
+        }
+
+        function computeStatus(startRaw,endRaw) {
+            const now = dayjs();
+            const start = tryParse(startRaw);
+            const end = tryParse(endRaw);
+            if (!start && !end) return 'Unknown';
+            if (start && end) {
+                if (now.isBefore(start)) return 'Waiting';
+                if (now.isAfter(end)) return 'Closed';
+                return 'Open';
+            }
+            if (start && !end) return now.isBefore(start) ? 'Waiting' : 'Open';
+            if (!start && end) return now.isAfter(end) ? 'Closed' : 'Open';
+            return 'Unknown';
+        }
+
+        document.addEventListener('DOMContentLoaded', function(){
+            const startRaw = '{{ event.start_time or "" }}';
+            const endRaw = '{{ event.end_time or "" }}';
+            formatDisplay('startDisplay', startRaw);
+            formatDisplay('endDisplay', endRaw);
+            formatDisplay('detailStart', startRaw);
+            formatDisplay('detailEnd', endRaw);
+
+            const status = computeStatus(startRaw,endRaw);
+            const statusEl = document.getElementById('liveStatus');
+            const detailStatus = document.getElementById('detailStatus');
+            if (statusEl) statusEl.textContent = status;
+            if (detailStatus) detailStatus.textContent = status;
+
+            // Start a large timer display
+            const timerEl = document.getElementById('timerLarge');
+            function tick() {
+                const now = dayjs();
+                const start = tryParse(startRaw);
+                if (!start) { if (timerEl) timerEl.textContent = '—'; return; }
+                const diff = start.diff(now);
+                if (diff > 0) {
+                    timerEl.textContent = 'Starts in ' + humanDuration(diff);
+                } else {
+                    timerEl.textContent = 'Started ' + humanDuration(-diff) + ' ago';
+                }
+            }
+
+            function humanDuration(ms) {
+                if (ms <= 0) return 'Started';
+                const sec = Math.floor(ms/1000) % 60;
+                const min = Math.floor(ms/60000) % 60;
+                const hrs = Math.floor(ms/3600000) % 24;
+                const days = Math.floor(ms/86400000);
+                if (days>0) return days + 'd ' + hrs + 'h';
+                if (hrs>0) return hrs + 'h ' + min + 'm';
+                if (min>0) return min + 'm ' + sec + 's';
+                return sec + 's';
+            }
+
+            tick();
+            setInterval(tick,1000);
+        });
+    </script>
+{% endblock %}

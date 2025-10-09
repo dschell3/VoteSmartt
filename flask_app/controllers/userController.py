@@ -49,10 +49,14 @@ def get_upcoming_elections(limit=10):
     # TODO: Replace with actual database queries when event system is expanded
     return []  # Will return list of upcoming elections
 
-def require_login(redirect_to="/login"):
+def require_login(redirect_to="/unauthorized"):
     """Helper function to check if user is logged in"""
     if "user_id" not in session:
-        flash("Please log in to access this page")
+        # Avoid showing the playful message when redirecting to the sign-in page
+        if redirect_to == "/login":
+            flash("Please log in to access this page")
+        else:
+            flash("Should you really be here? Please sign in to continue.")
         return redirect_to
     
     user_id = session["user_id"]
@@ -63,6 +67,12 @@ def require_login(redirect_to="/login"):
         return redirect_to
     
     return None  # No redirect needed
+
+
+@app.route('/unauthorized')
+def unauthorized_page():
+    user_data = get_user_session_data()
+    return render_template('unauthorized.html', **user_data)
 
 # ================================
 # PUBLIC PAGES (No login required)
@@ -89,12 +99,6 @@ def login_page():
 def contact_page():
     user_data = get_user_session_data()
     return render_template('contact.html', **user_data)
-
-# Navbar component route - DEPRECATED: Now using unified base.html template
-# @app.route('/navComponent') # Navbar component route
-# def navComponent():
-#     user_data = get_user_session_data()
-#     return render_template('navbar.html', **user_data)
 
 # ================================
 # AUTHENTICATION ROUTES
@@ -152,7 +156,7 @@ def register():
         session['user_id'] = user_id
         session['first_name'] = first_name
         print(f"New user created with ID: {user_id}")
-        return redirect(url_for('success'))
+        return redirect(url_for('eventList'))
     except Exception as e:
         flash("Registration failed. Please try again.")
         print(f"Registration error: {e}")
@@ -176,7 +180,7 @@ def login():
     # Login successful
     session['user_id'] = user.user_id
     session['first_name'] = user.first_name
-    return redirect(url_for('success'))
+    return redirect(url_for('eventList'))
 
 @app.route("/logout", methods=['POST']) # Logout handler
 def logout():
@@ -186,15 +190,6 @@ def logout():
 # ================================
 # PROTECTED PAGES (Login required)
 # ================================
-
-@app.route('/success') # Dashboard/Success page
-def success():
-    redirect_url = require_login()
-    if redirect_url:
-        return redirect(redirect_url)
-    
-    user_data = get_user_session_data()
-    return render_template('eventList.html', **user_data)
 
 @app.route('/profile') # Profile page
 def profile_page():

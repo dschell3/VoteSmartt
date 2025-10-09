@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$') 
 
-db = "votingSystem"
+db = "mydb"
 
 class User:
     def __init__(self, data):
@@ -24,7 +24,7 @@ class User:
     def register(cls, data):
         query = '''
         INSERT INTO
-        users
+        user
         (first_name, last_name, email, password, phone, created_at) 
         VALUES 
         (%(first_name)s, %(last_name)s, %(email)s, %(password)s, %(phone)s, NOW());
@@ -33,7 +33,7 @@ class User:
 
     @classmethod
     def getUserByEmail(cls, data):
-        query = "SELECT * FROM users WHERE email = %(email)s;"
+        query = "SELECT * FROM user WHERE email = %(email)s;"
         
         result = connectToMySQL(db).query_db(query, data)
         if not result:
@@ -42,14 +42,20 @@ class User:
 
     @classmethod
     def getUserByID(cls,data):
-        query = "SELECT * FROM users WHERE user_id = %(user_id)s;"
+        query = "SELECT * FROM user WHERE user_id = %(user_id)s;"
         result = connectToMySQL(db).query_db(query, data)
-        return cls(result[0])
+        # The DB layer returns False on error, [] when no rows, or a list of dicts on success.
+        if not result or result is False:
+            return None
+        try:
+            return cls(result[0])
+        except Exception:
+            return None
     
     @classmethod
     def updateProfile(cls, data):
         query = """
-        UPDATE users 
+        UPDATE user
         SET 
             first_name = %(first_name)s, 
             last_name = %(last_name)s, 
@@ -62,7 +68,7 @@ class User:
     @classmethod
     def updatePassword(cls, data):
         query = """
-        UPDATE users 
+        UPDATE user 
         SET 
             password = %(password)s 
         WHERE user_id = %(user_id)s;

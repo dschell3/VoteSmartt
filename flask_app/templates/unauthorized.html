@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Unauthorized — Access Restricted{% endblock %}
+
+{% block content %}
+<main class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-white py-24">
+  <div class="max-w-4xl w-full px-6">
+    <div class="bg-white shadow-2xl rounded-2xl p-10 text-center">
+      <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 mx-auto mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14" />
+        </svg>
+      </div>
+
+      <h1 class="text-4xl font-extrabold text-slate-900 mb-2">Whoops — Access restricted</h1>
+      <p class="text-slate-500 mb-6">It seems like you tried to open a page that requires a signed-in account. If you think you should have access, please sign in or contact an administrator.</p>
+
+      <div class="flex items-center justify-center gap-4">
+        {% if logged_in %}
+        <a href="{{ url_for('eventList') }}" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700">View Events</a>
+        <a href="/profile" class="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-slate-200 text-slate-700 font-medium hover:bg-slate-50">Go to Profile</a>
+        {% else %}
+        <a href="/login" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700">Sign In</a>
+        <a href="/register" class="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-slate-200 text-slate-700 font-medium hover:bg-slate-50">Create Account</a>
+        {% endif %}
+      </div>
+
+      <p class="mt-6 text-xs text-slate-400">Tip: If you arrived here by typing a route, double-check the URL or return to the dashboard.</p>
+    </div>
+  </div>
+</main>
+{% endblock %}

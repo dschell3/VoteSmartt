@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}404 — Page Not Found{% endblock %}
+
+{% block content %}
+<main class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-white py-24">
+  <div class="max-w-4xl w-full px-6">
+    <div class="bg-white shadow-xl rounded-2xl p-10 text-center">
+      <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-blue-700 to-indigo-600 mx-auto mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v4m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0z" />
+        </svg>
+      </div>
+
+      <h1 class="text-4xl font-extrabold text-slate-900 mb-2">404 — Page not found</h1>
+      <p class="text-slate-500 mb-6">We couldn't find the page you're looking for. It might have been moved or deleted, or the URL is mistyped.</p>
+
+      <div class="flex items-center justify-center gap-4">
+        {% if logged_in %}
+        <a href="{{ url_for('eventList') }}" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700">View Events</a>
+        <a href="/profile" class="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-slate-200 text-slate-700 font-medium hover:bg-slate-50">Go to Profile</a>
+        {% else %}
+        <a href="/" class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700">Return Home</a>
+        <button onclick="openModal('signupModal')" class="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-slate-200 text-slate-700 font-medium hover:bg-slate-50">Sign Up</button>
+        {% endif %}
+      </div>
+
+      <p class="mt-6 text-xs text-slate-400">If you think this is a mistake, contact <a href="/contact" class="text-indigo-600 hover:underline">support</a>.</p>
+    </div>
+  </div>
+</main>
+{% endblock %}

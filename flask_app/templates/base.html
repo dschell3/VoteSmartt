@@ -663,7 +663,6 @@
                         </div>
                     {% else %}
                         <!-- Login/Signup when not logged in -->
-                        <button onclick="openModal('loginModal')" class="link">Log In</button>
                         <button onclick="openModal('signupModal')" class="ctaButton">Sign Up</button>
                     {% endif %}
                 </div>
@@ -1455,9 +1454,9 @@
                 console.log('Response URL:', response.url);
                 console.log('Response status:', response.status);
                 
-                // If the final URL contains success, we were redirected there
-                if (response.url.includes('/success')) {
-                    window.location.href = '/success';
+                // If the final URL contains the event list URL, follow it
+                if (response.url.includes('/eventList')) {
+                    window.location.href = '/eventList';
                     return null;
                 }
                 
@@ -1467,8 +1466,8 @@
             .then(data => {
                 if (data) {
                     // Check if the response HTML contains success indicators
-                    if (data.includes('Welcome') || data.includes('Dashboard') || data.includes('success')) {
-                        window.location.href = '/success';
+                    if (data.includes('Welcome') || data.includes('Dashboard') || data.includes('eventList')) {
+                        window.location.href = '/eventList';
                         return;
                     }
                     
@@ -1510,8 +1509,8 @@
                     if (errors.length > 0) {
                         showErrors('loginErrors', errors);
                     } else {
-                        // No errors found but no success redirect - try to go to success anyway
-                        window.location.href = '/success';
+                        // No errors found but no eventList redirect - try to go to the events dashboard anyway
+                        window.location.href = '/eventList';
                     }
                 }
             })
@@ -1544,9 +1543,9 @@
                 console.log('Response URL:', response.url);
                 console.log('Response status:', response.status);
                 
-                // If the final URL contains success, we were redirected there
-                if (response.url.includes('/success')) {
-                    window.location.href = '/success';
+                // If the final URL contains the event list URL, follow it
+                if (response.url.includes('/eventList')) {
+                    window.location.href = '/eventList';
                     return null;
                 }
                 
@@ -1556,8 +1555,8 @@
             .then(data => {
                 if (data) {
                     // Check if the response HTML contains success indicators
-                    if (data.includes('Welcome') || data.includes('Dashboard') || data.includes('success')) {
-                        window.location.href = '/success';
+                    if (data.includes('Welcome') || data.includes('Dashboard') || data.includes('eventList')) {
+                        window.location.href = '/eventList';
                         return;
                     }
                     
@@ -1603,8 +1602,8 @@
                     if (errors.length > 0) {
                         showErrors('signupErrors', errors);
                     } else {
-                        // No errors found but no success redirect - try to go to success anyway
-                        window.location.href = '/success';
+                        // No errors found but no eventList redirect - try to go to the events dashboard anyway
+                        window.location.href = '/eventList';
                     }
                 }
             })

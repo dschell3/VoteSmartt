@@ -320,10 +320,11 @@ nav.nav-visible {
 
 /* Align hero grid items center on large screens so right illustration centers vertically */
 @media (min-width: 1024px) {
-    .hero-inner { display: grid; align-items: center; }
-    .hero { min-height: 88vh; }
-    /* nudge the floating card down a bit more to center visually */
-    .floating-card { transform: translateY(44px); }
+    /* Keep hero content-sized on large screens so it doesn't balloon with viewport height */
+    .hero-inner { display: grid; align-items: start; }
+    .hero { min-height: auto; }
+    /* modest floating card offset so it doesn't artificially increase perceived hero height */
+    .floating-card { transform: translateY(20px); }
 }
 
 /* Floating card offset to keep it visually separated from the navbar */
@@ -339,9 +340,9 @@ nav.nav-visible {
 
 /* Transitional heading between hero and How It Works section */
 .howitworks-bridge {
-    margin-top: -80px; /* pull up more to reduce gap */
+    margin-top: -8px; /* small pull-up for overlap but avoid large gaps */
     padding-top: 6px;
-    padding-bottom: 20px;
+    padding-bottom: 16px;
     pointer-events: none;
 }
 .howitworks-bridge .howitworks-title {
@@ -374,7 +375,7 @@ nav.nav-visible {
 }
 
 @media (max-width: 768px) {
-    .howitworks-bridge { margin-top: -48px; padding-top: 6px; padding-bottom: 12px; }
+    .howitworks-bridge { margin-top: -6px; padding-top: 6px; padding-bottom: 12px; }
     .howitworks-bridge .howitworks-title { font-size: 26px; font-weight: 800; }
 }
 

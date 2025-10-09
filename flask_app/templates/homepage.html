@@ -34,8 +34,8 @@
         <div class="section"></div>
     </section>
 
-    <section class="hero relative min-h-screen flex items-start overflow-hidden">
-        <div class="hero-inner relative max-w-7xl mx-auto px-6 lg:px-8 py-12 grid lg:grid-cols-2 gap-12 items-start z-10">
+    <section class="hero relative flex items-start overflow-hidden">
+    <div class="hero-inner relative max-w-7xl mx-auto px-6 lg:px-8 py-8 grid lg:grid-cols-2 gap-12 items-start z-10">
             <!-- Left Content -->
             <div class="space-y-8 opacity-0 -translate-x-12" id="left-content">
                 <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 rounded-full opacity-0 translate-y-6" id="tagline">
@@ -55,9 +55,15 @@
                 </p>
 
                 <div class="hero-ctas flex flex-col sm:flex-row gap-4">
+                    {% if logged_in %}
+                    <a href="{{ url_for('eventList') }}" class="hero-getstarted w-full sm:w-auto text-white text-lg rounded-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 active:scale-95 border-none cursor-pointer inline-flex items-center justify-center">
+                        View Events
+                    </a>
+                    {% else %}
                     <button onclick="openModal('signupModal')" class="hero-getstarted w-full sm:w-auto text-white text-lg rounded-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 active:scale-95 border-none cursor-pointer">
                         Get Started
                     </button>
+                    {% endif %}
                 </div>
 
                 <!-- Stats -->
@@ -137,7 +143,9 @@
         </div>
     </section>
 
-    <!-- Transitional heading between hero and How It Works -->
+    <!-- Fixed spacer to keep consistent gap between hero and How It Works -->
+    <!-- Responsive fixed spacer: 32px on small screens, 60px on md+ -->
+    <div class="w-full h-[32px] md:h-[60px]"></div>
     <div class="howitworks-bridge relative z-10">
         <div class="max-w-7xl mx-auto px-6 lg:px-8 text-center">
             <h2 class="howitworks-title text-4xl lg:text-5xl font-bold text-[#2D2D2D] leading-tight">
@@ -339,7 +347,11 @@
                         <div class="relative bg-gradient-to-br from-[#1A3D7C] to-[#2ECC71] rounded-3xl p-10 h-full flex flex-col justify-center items-center text-center transition-all duration-500 hover:shadow-2xl">
                             <h3 class="text-2xl font-bold text-white mb-4">Ready to Experience Secure Voting?</h3>
                             <p class="text-white/90 mb-6 text-lg">Join thousands who trust VoteSmartt</p>
+                            {% if logged_in %}
+                            <a href="{{ url_for('eventList') }}" class="bg-white inline-block text-[#1A3D7C] px-8 py-4 rounded-full font-bold hover:bg-gray-100 transition-all duration-300 hover:scale-105 shadow-lg border-none cursor-pointer">View Events</a>
+                            {% else %}
                             <button onclick="openModal('signupModal')" class="bg-white inline-block text-[#1A3D7C] px-8 py-4 rounded-full font-bold hover:bg-gray-100 transition-all duration-300 hover:scale-105 shadow-lg border-none cursor-pointer">Get Started Now</button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
