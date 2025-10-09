@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% if page_type == 'login' %}Sign In{% else %}Create Account{% endif %}</title>
+        <link rel="stylesheet" href="../static/css/registration.css">
+        <link rel="stylesheet" href="../static/css/homepage.css">
+        <style>
+            /* Error message styles */
+            .error-messages {
+                margin-bottom: 20px;
+            }
+            
+            .error-alert {
+                display: flex;
+                align-items: center;
+                background: rgba(220, 38, 38, 0.1);
+                border: 1px solid rgba(220, 38, 38, 0.3);
+                border-radius: 8px;
+                padding: 12px 16px;
+                margin-bottom: 10px;
+                color: #dc2626;
+                font-size: 14px;
+                animation: slideIn 0.3s ease-out;
+            }
+            
+            .error-icon {
+                margin-right: 10px;
+                font-size: 16px;
+            }
+            
+            .error-text {
+                flex: 1;
+                font-weight: 500;
+            }
+            
+            .error-close {
+                background: none;
+                border: none;
+                color: #dc2626;
+                cursor: pointer;
+                font-size: 18px;
+                font-weight: bold;
+                margin-left: 10px;
+                padding: 0;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: background-color 0.2s ease;
+            }
+            
+            .error-close:hover {
+                background-color: rgba(220, 38, 38, 0.1);
+            }
+            
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            /* Form field error states */
+            .form-field.error input {
+                border-color: #dc2626;
+                box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.1);
+            }
+            
+            .form-field.error label {
+                color: #dc2626;
+            }
+            
+            .field-error {
+                color: #dc2626;
+                font-size: 12px;
+                margin-top: 4px;
+                display: none;
+            }
+            
+            .form-field.error .field-error {
+                display: block;
+            }
+            
+            /* Loading state for submit button (login only) */
+            {% if page_type == 'login' %}
+            .reg-submit.loading {
+                opacity: 0.7;
+                cursor: not-allowed;
+                position: relative;
+            }
+            
+            .reg-submit.loading::after {
+                content: "";
+                position: absolute;
+                width: 16px;
+                height: 16px;
+                top: 50%;
+                left: 50%;
+                margin-left: -8px;
+                margin-top: -8px;
+                border: 2px solid transparent;
+                border-top: 2px solid currentColor;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            {% endif %}
+        </style>
+</head>
+<body class="registration-page{% if page_type == 'login' %} signin-page{% endif %}">
+
+    <!-- Decorative gradient background + blobs (matches Figma) -->
+    <div class="registration-bg" aria-hidden="true">
+        <div class="blob blob--top-left"></div>
+        <div class="blob blob--center"></div>
+        <div class="blob blob--green-1" aria-hidden="true"></div>
+        <div class="blob blob--green-2" aria-hidden="true"></div>
+    </div>
+
+     <main class="registration-content">
+        <div class="reg-grid">
+            <!-- Left column: illustration + caption -->
+            <div class="reg-left" aria-hidden="false">
+                <div class="left-illustration">
+                    {% if page_type == 'login' %}
+                        <h1 class="left-head">Welcome back</h1>
+                        <p class="left-sub">Sign in to continue to your community dashboard</p>
+                        <img class="left-img" src="../static/media/undraw_secure-login_m11a.svg" alt="Secure login illustration" />
+                        <p class="left-caption">Built open — transparent by design</p>
+                    {% else %}
+                        <h1 class="left-head">Secure voting for your community</h1>
+                        <p class="left-sub">Private, auditable, open-source</p>
+                        <img class="left-img" src="../static/media/undraw_secure-login_m11a.svg" alt="Secure login illustration" />
+                        <p class="left-caption">Built open — transparent by design</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right card -->
+            <div class="reg-right">
+                <div class="reg-card">
+                    <a class="back-btn" href="/" aria-label="Back to home">← Back</a>
+                    <div class="reg-inner">
+                        <h2 class="reg-title">{% if page_type == 'login' %}Sign in{% else %}Create Account{% endif %}</h2>
+                        
+                        <!-- Error messages display -->
+                        {% with messages = get_flashed_messages() %}
+                            {% if messages %}
+                                <div class="error-messages" id="error-messages">
+                                    {% for message in messages %}
+                                        <div class="error-alert">
+                                            <div class="error-icon">⚠️</div>
+                                            <div class="error-text">{{ message }}</div>
+                                            <button class="error-close" onclick="closeError(this)">&times;</button>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                        
+                        {% if page_type == 'login' %}
+                            <!-- LOGIN FORM -->
+                            <form class="reg-form" action="/loginRoute" method="post" novalidate id="loginForm">
+                                <div class="form-field">
+                                    <input id="email" name="email" class="input--tall" type="email" required />
+                                    <label for="email">Email</label>
+                                    <div class="field-error" id="email-error">Please enter a valid email address</div>
+                                </div>
+
+                                <div class="form-field">
+                                    <input id="password" name="password" type="password" required minlength="6" />
+                                    <label for="password">Password</label>
+                                    <div class="field-error" id="password-error">Password must be at least 6 characters</div>
+                                    <div class="field-hint"><a href="/forgot" style="color:#6d28d9; text-decoration:none; font-weight:600;">Forgot password?</a></div>
+                                </div>
+
+                                <button class="reg-submit" type="submit">Sign in</button>
+
+                                <p class="already">Don't have an account? <a href="/register">Create one</a></p>
+                            </form>
+                        {% else %}
+                            <!-- REGISTRATION FORM -->
+                            <form class="reg-form" action="/registerRoute" method="post" novalidate id="registerForm">
+                                <div class="two-col">
+                                    <div class="form-field">
+                                        <input id="first" name="first_name" required minlength="2" />
+                                        <label for="first">First Name</label>
+                                        <div class="field-error" id="first-error">First name is required</div>
+                                    </div>
+                                    <div class="form-field">
+                                        <input id="last" name="last_name" required minlength="2" />
+                                        <label for="last">Last Name</label>
+                                        <div class="field-error" id="last-error">Last name is required</div>
+                                    </div>
+                                </div>
+
+                                <div class="form-field">
+                                    <input id="phone" name="phone" type="tel" required />
+                                    <label for="phone">Phone</label>
+                                    <div class="field-error" id="phone-error">Please enter a valid phone number</div>
+                                </div>
+
+                                <div class="form-field">
+                                    <input id="email" name="email" class="input--tall" type="email" required />
+                                    <label for="email">Email</label>
+                                    <div class="field-error" id="email-error">Please enter a valid email address</div>
+                                </div>
+
+                                <div class="form-field">
+                                    <input id="password" name="password" type="password" aria-describedby="pwd-help" required minlength="8" />
+                                    <label for="password">Password</label>
+                                    <div id="pwd-help" class="field-hint">Use at least 8 characters including uppercase, lowercase and a number.</div>
+                                    <div class="field-error" id="password-error">Password must be at least 8 characters</div>
+                                </div>
+
+                                <div class="form-field">
+                                    <input id="confirm_password" name="confirm_password" type="password" required />
+                                    <label for="confirm_password">Confirm Password</label>
+                                    <div class="field-error" id="confirm-error">Passwords do not match</div>
+                                </div>
+
+                                <button class="reg-submit" type="submit">Create Account</button>
+
+                                <p class="already">Already have an account? <a href="/login">Login</a></p>
+                            </form>
+                        {% endif %}
+                    </div>
+
+                    <script>
+                        // Common functionality for both forms
+                        
+                        // Toggle .filled class when inputs have value (for floating label support)
+                        (function(){
+                            const fields = document.querySelectorAll('.reg-form .form-field input');
+                            fields.forEach(function(inp){
+                                function toggle(){
+                                    if(inp.value && inp.value.length) inp.classList.add('filled'); else inp.classList.remove('filled');
+                                }
+                                inp.addEventListener('input', toggle);
+                                // run on load
+                                toggle();
+                            });
+                        })();
+
+                        // Form validation and error handling
+                        function closeError(button) {
+                            const errorAlert = button.closest('.error-alert');
+                            if (errorAlert) {
+                                errorAlert.style.opacity = '0';
+                                errorAlert.style.transform = 'translateY(-10px)';
+                                setTimeout(() => {
+                                    errorAlert.remove();
+                                    // If no more errors, hide the container
+                                    const errorContainer = document.getElementById('error-messages');
+                                    if (errorContainer && errorContainer.children.length === 0) {
+                                        errorContainer.style.display = 'none';
+                                    }
+                                }, 300);
+                            }
+                        }
+
+                        // Auto-hide error messages after 8 seconds
+                        setTimeout(() => {
+                            const errorAlerts = document.querySelectorAll('.error-alert');
+                            errorAlerts.forEach(alert => {
+                                const closeBtn = alert.querySelector('.error-close');
+                                if (closeBtn) {
+                                    closeBtn.click();
+                                }
+                            });
+                        }, 8000);
+
+                        function showFieldError(field, message) {
+                            const fieldContainer = field.closest('.form-field');
+                            const errorDiv = fieldContainer.querySelector('.field-error');
+                            
+                            fieldContainer.classList.add('error');
+                            if (errorDiv) {
+                                errorDiv.textContent = message;
+                            }
+                        }
+
+                        function clearFieldError(field) {
+                            const fieldContainer = field.closest('.form-field');
+                            fieldContainer.classList.remove('error');
+                        }
+
+                        function isValidEmail(email) {
+                            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                            return emailRegex.test(email);
+                        }
+
+                        // Clear field errors on input
+                        document.querySelectorAll('.form-field input').forEach(input => {
+                            input.addEventListener('input', function() {
+                                const fieldContainer = this.closest('.form-field');
+                                fieldContainer.classList.remove('error');
+                            });
+                        });
+
+                        {% if page_type == 'login' %}
+                        // LOGIN-SPECIFIC VALIDATION
+                        document.getElementById('loginForm').addEventListener('submit', function(e) {
+                            const emailField = document.getElementById('email');
+                            const passwordField = document.getElementById('password');
+                            const submitBtn = document.querySelector('.reg-submit');
+                            
+                            let isValid = true;
+
+                            // Clear previous errors
+                            document.querySelectorAll('.form-field').forEach(field => {
+                                field.classList.remove('error');
+                            });
+
+                            // Validate email
+                            if (!emailField.value) {
+                                showFieldError(emailField, 'Email is required');
+                                isValid = false;
+                            } else if (!isValidEmail(emailField.value)) {
+                                showFieldError(emailField, 'Please enter a valid email address');
+                                isValid = false;
+                            }
+
+                            // Validate password
+                            if (!passwordField.value) {
+                                showFieldError(passwordField, 'Password is required');
+                                isValid = false;
+                            } else if (passwordField.value.length < 6) {
+                                showFieldError(passwordField, 'Password must be at least 6 characters');
+                                isValid = false;
+                            }
+
+                            if (!isValid) {
+                                e.preventDefault();
+                                return false;
+                            }
+
+                            // Show loading state
+                            submitBtn.classList.add('loading');
+                            submitBtn.disabled = true;
+                        });
+                        {% else %}
+                        // REGISTRATION-SPECIFIC VALIDATION
+                        function validateName(value) {
+                            return value.trim().length >= 2;
+                        }
+
+                        function validatePhone(phone) {
+                            const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+                            return phone.length >= 10 && phoneRegex.test(phone.replace(/[-\s\(\)]/g, ''));
+                        }
+
+                        function validatePassword(value) {
+                            // At least 8 chars, 1 uppercase, 1 lowercase, 1 number
+                            return value.length >= 8 && 
+                                   /[a-z]/.test(value) && 
+                                   /[A-Z]/.test(value) && 
+                                   /\d/.test(value);
+                        }
+
+                        // Form submission validation
+                        document.getElementById('registerForm').addEventListener('submit', function(e) {
+                            const firstName = document.getElementById('first');
+                            const lastName = document.getElementById('last');
+                            const phone = document.getElementById('phone');
+                            const email = document.getElementById('email');
+                            const password = document.getElementById('password');
+                            const confirmPassword = document.getElementById('confirm_password');
+                            
+                            let isValid = true;
+
+                            // Clear previous errors
+                            document.querySelectorAll('.form-field').forEach(field => {
+                                field.classList.remove('error');
+                            });
+
+                            // Validate first name
+                            if (!validateName(firstName.value)) {
+                                showFieldError(firstName, 'First name must be at least 2 characters');
+                                isValid = false;
+                            }
+
+                            // Validate last name
+                            if (!validateName(lastName.value)) {
+                                showFieldError(lastName, 'Last name must be at least 2 characters');
+                                isValid = false;
+                            }
+
+                            // Validate phone
+                            if (!validatePhone(phone.value)) {
+                                showFieldError(phone, 'Please enter a valid phone number');
+                                isValid = false;
+                            }
+
+                            // Validate email
+                            if (!isValidEmail(email.value)) {
+                                showFieldError(email, 'Please enter a valid email address');
+                                isValid = false;
+                            }
+
+                            // Validate password
+                            if (!validatePassword(password.value)) {
+                                showFieldError(password, 'Password must be at least 8 characters with uppercase, lowercase, and number');
+                                isValid = false;
+                            }
+
+                            // Validate password confirmation
+                            if (password.value !== confirmPassword.value) {
+                                showFieldError(confirmPassword, 'Passwords do not match');
+                                isValid = false;
+                            }
+
+                            if (!isValid) {
+                                e.preventDefault();
+                                return false;
+                            }
+
+                            // Show loading state
+                            const submitBtn = document.querySelector('.reg-submit');
+                            submitBtn.style.opacity = '0.7';
+                            submitBtn.disabled = true;
+                        });
+
+                        // Real-time validation on input
+                        document.getElementById('first').addEventListener('input', function() {
+                            if (this.value.length >= 2) clearFieldError(this);
+                        });
+
+                        document.getElementById('last').addEventListener('input', function() {
+                            if (this.value.length >= 2) clearFieldError(this);
+                        });
+
+                        document.getElementById('phone').addEventListener('input', function() {
+                            if (validatePhone(this.value)) clearFieldError(this);
+                        });
+
+                        document.getElementById('email').addEventListener('input', function() {
+                            if (isValidEmail(this.value)) clearFieldError(this);
+                        });
+
+                        document.getElementById('password').addEventListener('input', function() {
+                            if (validatePassword(this.value)) clearFieldError(this);
+                            // Also check confirm password if it has a value
+                            const confirm = document.getElementById('confirm_password');
+                            if (confirm.value && this.value === confirm.value) {
+                                clearFieldError(confirm);
+                            }
+                        });
+
+                        document.getElementById('confirm_password').addEventListener('input', function() {
+                            const password = document.getElementById('password');
+                            if (this.value === password.value) clearFieldError(this);
+                        });
+                        {% endif %}
+                    </script>
+
+                    {% if page_type == 'login' %}
+                    <!-- Forgot password modal (login only) -->
+                    <div id="forgot-modal" class="modal" aria-hidden="true">
+                        <div class="modal-overlay" data-close="true"></div>
+                        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="forgot-title">
+                            <button class="modal-close" aria-label="Close">×</button>
+                            <h3 id="forgot-title">Reset your password</h3>
+                            <p class="modal-sub">Enter the email associated with your account and we'll send a reset link.</p>
+                            <form id="forgot-form" class="modal-form" action="#" method="post">
+                                <div class="form-field">
+                                    <input id="forgot-email" name="email" type="email" required />
+                                    <label for="forgot-email">Email</label>
+                                </div>
+                                <div class="form-errors" id="forgot-errors" aria-live="polite" style="display:none"></div>
+                                <button class="reg-submit" type="submit">Send reset link</button>
+                            </form>
+                            <div id="forgot-success" style="display:none; margin-top:12px;">
+                                <p>We sent a password reset link if that email exists in our system. Check your inbox.</p>
+                                <p><a href="/login">Back to sign in</a></p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+     </main>
+
+</body>
+</html>
+
+{% if page_type == 'login' %}
+<script>
+// Modal behavior for forgot password (vanilla)
+;(function(){
+    const openLinks = document.querySelectorAll('a[href="/forgot"], a.forgot-link');
+    const modal = document.getElementById('forgot-modal');
+    const overlay = modal && modal.querySelector('.modal-overlay');
+    const closeBtn = modal && modal.querySelector('.modal-close');
+    const form = document.getElementById('forgot-form');
+    const errors = document.getElementById('forgot-errors');
+    const success = document.getElementById('forgot-success');
+
+    function openModal(){
+        if(!modal) return;
+        modal.setAttribute('aria-hidden','false');
+        // focus the email input
+        const email = modal.querySelector('#forgot-email');
+        setTimeout(()=> email && email.focus(), 60);
+    }
+    function closeModal(){
+        if(!modal) return;
+        modal.setAttribute('aria-hidden','true');
+        // reset
+        if(form){ form.reset(); }
+        if(errors) { errors.style.display='none'; errors.innerHTML=''; }
+        if(success) { success.style.display='none'; }
+    }
+
+    openLinks.forEach(a => a.addEventListener('click', function(ev){ ev.preventDefault(); openModal(); }));
+    overlay && overlay.addEventListener('click', closeModal);
+    closeBtn && closeBtn.addEventListener('click', closeModal);
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeModal(); });
+
+    if(form){
+        form.addEventListener('submit', function(ev){
+            ev.preventDefault();
+            const email = form.querySelector('#forgot-email');
+            if(!email || !email.value || !email.checkValidity()){
+                if(errors){ errors.style.display='block'; errors.textContent = 'Please enter a valid email address.'; }
+                return;
+            }
+            // Mock success state - show message and hide form
+            form.style.display = 'none';
+            success.style.display = 'block';
+        });
+    }
+})();
+</script>
+{% endif %}

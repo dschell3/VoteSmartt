@@ -3,19 +3,887 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}VoteSmart{% endblock %}</title>
+    <title>{% block title %}VoteSmartt{% endblock %}</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap");
+        
+        /* Global styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Outfit", sans-serif;
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        /* Layout */
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        main {
+            flex: 1 0 auto;
+        }
+
+        /* ============= NAVBAR STYLES ============= */
+        .container {
+            max-width: 1800px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .nav {
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 20px 50px;
+        }
+
+        /* Logo */
+        .logo {
+            z-index: 1;
+            padding-top: 6px;
+        }
+
+        .logoText {
+            font-size: 24px;
+            font-weight: 600;
+            color: #0b1220;
+        }
+
+        @media (max-width: 1024px) {
+            .logo {
+                padding-top: 8px;
+            }
+        }
+
+        /* Navigation Links */
+        .links {
+            display: flex;
+            gap: 32px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .link {
+            position: relative;
+            font-size: 16px;
+            text-decoration: none;
+            color: #333;
+            background: linear-gradient(to right, #155ac2 50%, #333 50%);
+            background-size: 200% 100%;
+            background-position: 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: background-position 0.5s ease;
+            outline: none;
+        }
+
+        .link:hover {
+            background-position: 0;
+        }
+
+        /* CTA Section */
+        .cta {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .ctaButton {
+            padding: 12px 24px;
+            background: linear-gradient(90deg, #0b3b7a, #155ac2);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .ctaButton:hover {
+            background: linear-gradient(90deg, #155ac2, #1d6bcf);
+        }
+
+        /* Profile Dropdown */
+        .profile-dropdown {
+            position: relative;
+        }
+
+        .profile-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .profile-button:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .profile-icon, .dropdown-arrow {
+            width: 16px;
+            height: 16px;
+        }
+
+        .profile-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .profile-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 8px 0;
+            min-width: 160px;
+            z-index: 20;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.2s ease;
+        }
+
+        .profile-dropdown.active .profile-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .profile-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            color: #333;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .profile-menu-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-icon {
+            width: 14px;
+            height: 14px;
+        }
+
+        .profile-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 4px 0;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .logout-btn {
+            color: #dc2626;
+        }
+
+        .logout-btn:hover {
+            background: rgba(220, 38, 38, 0.1);
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            margin-left: auto;
+        }
+
+        .hamburger-box {
+            width: 24px;
+            height: 18px;
+            position: relative;
+        }
+
+        .hamburger-inner {
+            display: block;
+            top: 50%;
+            margin-top: -2px;
+            width: 24px;
+            height: 2px;
+            background-color: #333;
+            border-radius: 1px;
+            position: absolute;
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        .hamburger-inner::before,
+        .hamburger-inner::after {
+            content: '';
+            display: block;
+            width: 24px;
+            height: 2px;
+            background-color: #333;
+            border-radius: 1px;
+            position: absolute;
+            transition: transform 0.15s ease-in-out, top 0.15s ease-in-out;
+        }
+
+        .hamburger-inner::before {
+            top: -6px;
+        }
+
+        .hamburger-inner::after {
+            top: 6px;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 20px;
+            background: rgba(255, 255, 255, 0.86);
+            backdrop-filter: blur(6px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 180px;
+            width: 240px;
+            z-index: 20;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transform: translateY(-6px);
+            pointer-events: none;
+            transition: max-height 300ms ease, opacity 220ms ease, transform 250ms ease;
+        }
+
+        .mobile-menu.open {
+            max-height: 520px;
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .mobile-link {
+            position: relative;
+            font-size: 16px;
+            text-decoration: none;
+            background: linear-gradient(to right, #155ac2 50%, #333 50%);
+            background-size: 200% 100%;
+            background-position: 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: background-position 0.5s ease;
+            outline: none;
+        }
+
+        .mobile-link:hover {
+            background-position: 0;
+        }
+
+        .mobile-cta {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .mobile-signup {
+            padding: 12px 16px;
+            font-size: 16px;
+            background: linear-gradient(90deg, #0b3b7a, #155ac2);
+            color: #fff;
+            border-radius: 6px;
+            border: none;
+        }
+
+        .mobile-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.06);
+            margin: 6px 0 8px 0;
+        }
+
+        .mobile-profile-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .mobile-profile-icon {
+            width: 20px;
+            height: 20px;
+            color: #155ac2;
+        }
+
+        .mobile-logout-form {
+            margin: 8px 0 0 0;
+            width: 100%;
+        }
+
+        .mobile-logout-btn {
+            width: 100%;
+            padding: 12px 16px;
+            background: linear-gradient(90deg, #dc2626, #ef4444);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-position 0.3s ease;
+        }
+
+        .mobile-logout-btn:hover {
+            background: linear-gradient(90deg, #b91c1c, #dc2626);
+        }
+
+        /* Sticky navbar */
+        nav {
+            position: sticky;
+            top: 0;
+            background: transparent;
+            z-index: 50;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border-bottom: none;
+            transition: transform 280ms ease, background-color 220ms ease, backdrop-filter 220ms ease;
+        }
+
+        .nav-hidden {
+            transform: translateY(-120%);
+            transition: transform 260ms ease;
+        }
+
+        nav.nav-visible {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(6px) saturate(1.05);
+            -webkit-backdrop-filter: blur(6px) saturate(1.05);
+            box-shadow: 0 1px 12px rgba(11, 18, 32, 0.06);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 800px) {
+            .links {
+                display: none;
+            }
+            .cta {
+                display: none;
+            }
+            .hamburger {
+                display: inline-block;
+            }
+            .nav {
+                padding: 16px 20px;
+            }
+            .mobile-menu {
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%) translateY(-6px);
+                width: 70vw;
+                max-width: 420px;
+                padding-top: 32px;
+                text-align: center;
+            }
+            .mobile-menu.open {
+                transform: translateX(-50%) translateY(0);
+            }
+            .mobile-link {
+                display: block;
+                width: 100%;
+                text-align: center;
+                padding: 6px 0;
+            }
+            .ctaButton.mobile-signup {
+                width: 100%;
+                padding: 18px 16px;
+                font-size: 14px;
+            }
+        }
+
+        /* ============= FOOTER STYLES ============= */
+        footer {
+            background: linear-gradient(90deg, #020614 6%, #0a2840 45%, #0c507a 100%);
+            color: #e8f4fb;
+            padding: 72px 0 48px;
+            font-size: 15px;
+        }
+
+        .footerContainer {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .footerInside {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .footerTitle {
+            font-size: 26px;
+            margin-bottom: 16px;
+            color: #f7fbff;
+        }
+
+        .footerText {
+            color: rgba(200, 215, 230, 0.98);
+            line-height: 1.7;
+            font-size: 17px;
+        }
+
+        .footerSubtitle,
+        .footerCredits h3,
+        .footerCredits {
+            color: rgba(220, 230, 240, 0.98);
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .footerLinks {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footerLink {
+            display: inline-block;
+            color: rgba(190, 210, 230, 0.95);
+            text-decoration: none;
+            margin-bottom: 8px;
+            font-size: 13px;
+            transition: color 0.18s ease, transform 0.12s ease;
+        }
+
+        .footerLink:hover {
+            color: #a8d0ff;
+            transform: translateX(4px);
+        }
+
+        .footerCredits {
+            list-style: none;
+            padding: 0;
+            margin: 6px 0 0 0;
+        }
+
+        .footerCredits li {
+            margin: 8px 0;
+            color: rgba(180, 200, 215, 0.95);
+            font-size: 14px;
+        }
+
+        .footerSMLinks a {
+            display: inline-block;
+            width: 44px;
+            height: 44px;
+            line-height: 44px;
+            text-align: center;
+            border-radius: 8px;
+            margin-right: 8px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+            color: #dff6ff;
+            text-decoration: none;
+            font-size: 18px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .footerSMLinks a:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(2, 40, 60, 0.25);
+        }
+
+        .footerSMLinks svg {
+            display: inline-block;
+            vertical-align: middle;
+            width: 18px;
+            height: 18px;
+            color: inherit;
+        }
+
+        .footerCopyright {
+            margin-top: 18px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .copyright-wrap {
+            display: inline-block;
+            color: rgba(180, 200, 215, 0.95);
+            font-size: 14px;
+            text-align: center;
+            padding-top: 14px;
+            position: relative;
+        }
+
+        .copyright-wrap::before {
+            content: '';
+            display: block;
+            height: 1px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.12);
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: translateY(-8px);
+        }
+
+        .copyright-wrap a.footerLink {
+            color: rgba(200, 220, 240, 0.95);
+        }
+
+        .copyright-wrap a.footerLink:hover {
+            color: #d0eaff;
+        }
+
+        /* Footer responsive */
+        @media (max-width: 880px) {
+            .footerInside {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .footerInside {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+            .footerSMLinks a {
+                width: 40px;
+                height: 40px;
+                line-height: 40px;
+            }
+        }
+
+        /* ============= CUSTOM BLOCK STYLES ============= */
+        {% block extra_css %}{% endblock %}
+    </style>
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <div class="nav">
+                <div class="logo">
+                    <h1 class="logoText">VoteSmartt</h1>
+                </div>
+                <button
+                    class="hamburger"
+                    aria-label="Toggle menu"
+                    aria-expanded="false"
+                    aria-controls="mobile-menu"
+                >
+                    <span class="hamburger-box">
+                        <span class="hamburger-inner"></span>
+                    </span>
+                </button>
+                <div class="links">
+                    <a href="/about" class="link">About</a>
+                    <a href="/credits" class="link">Credits</a>
+                    <a href="/contact" class="link">Contact</a>
+                </div>
+                <div class="cta">
+                    {% if logged_in %}
+                        <!-- Profile dropdown when logged in -->
+                        <div class="profile-dropdown">
+                            <button class="profile-button" onclick="toggleProfileDropdown()">
+                                <i data-lucide="user" class="profile-icon"></i>
+                                <span class="profile-name">{{ first_name }}</span>
+                                <i data-lucide="chevron-down" class="dropdown-arrow"></i>
+                            </button>
+                            <div class="profile-menu" id="profileMenu">
+                                <a href="/profile" class="profile-menu-item">
+                                    <i data-lucide="user" class="menu-icon"></i>
+                                    My Account
+                                </a>
+                                <div class="profile-divider"></div>
+                                <form action="/logout" method="post" class="logout-form">
+                                    <button type="submit" class="profile-menu-item logout-btn">
+                                        <i data-lucide="log-out" class="menu-icon"></i>
+                                        Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Login/Signup when not logged in -->
+                        <a href="/login" class="link">Log In</a>
+                        <a href="/register" class="ctaButton">Sign Up</a>
+                    {% endif %}
+                </div>
+                <div id="mobile-menu" class="mobile-menu" hidden>
+                    <a href="/about" class="mobile-link firstlink">About</a>
+                    <a href="/credits" class="mobile-link">Credits</a>
+                    <a href="/contact" class="mobile-link">Contact</a>
+                    <div class="mobile-divider" aria-hidden="true"></div>
+                    <div class="mobile-cta">
+                        {% if logged_in %}
+                            <!-- Mobile profile section when logged in -->
+                            <div class="mobile-profile">
+                                <div class="mobile-profile-info">
+                                    <i data-lucide="user" class="mobile-profile-icon"></i>
+                                    <span class="mobile-profile-name">{{ first_name }}</span>
+                                </div>
+                                <a href="/profile" class="mobile-link">My Account</a>
+                                <form action="/logout" method="post" class="mobile-logout-form">
+                                    <button type="submit" class="mobile-logout-btn">Logout</button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <!-- Mobile login/signup when not logged in -->
+                            <a href="/login" class="mobile-link">Log In</a>
+                            <a href="/register" class="ctaButton mobile-signup">Sign Up</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-    {% include 'navbar.html' %}
-
+    <!-- Main Content -->
     <main>
         {% block content %}{% endblock %}
     </main>
 
-    {% include 'footer.html' %}
+    <!-- Footer -->
+    <footer>
+        <div class="footerContainer">
+            <div class="footer">
+                <div class="footerInside">
+                    <div class="footer1">
+                        <h2 class="footerTitle">VoteSmartt</h2>
+                        <p class="footerText">Making voting easier and more accessible for everyone.</p>
+                    </div>
+                    <div class="footer2">
+                        <h3 class="footerSubtitle">Quick Links</h3>
+                        <ul class="footerLinks">
+                            <li><a href="/about" class="footerLink">About</a></li>
+                            <li><a href="/credits" class="footerLink">Credits</a></li>
+                            <li><a href="/contact" class="footerLink">Contact Us</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer3">
+                        <h3 class="footerSubtitle">Team members</h3>
+                        <ul class="footerCredits">
+                            <li>UX Designer</li>
+                            <li>Project Manager</li>
+                            <li>Developers</li>
+                        </ul>
+                    </div>
+                    <div class="footer4">
+                        <h3 class="footerSubtitle">Social Media</h3>
+                        <div class="footerSMLinks">
+                            <a href="#" aria-label="Twitter" class="smlink">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path d="M22 5.92c-.63.28-1.3.47-2 .56.72-.43 1.27-1.12 1.53-1.94-.68.4-1.43.7-2.22.86C18.6 4.5 17.68 4 16.66 4c-1.7 0-3.08 1.38-3.08 3.08 0 .24.03.47.08.69-2.56-.13-4.83-1.36-6.35-3.24-.27.47-.43 1.02-.43 1.6 0 1.11.56 2.09 1.42 2.67-.51-.02-.99-.16-1.41-.4v.04c0 1.52 1.08 2.79 2.51 3.08-.26.07-.53.11-.81.11-.2 0-.39-.02-.58-.06.39 1.23 1.52 2.13 2.86 2.15C9.7 18.3 8.11 19 6.36 19c-.42 0-.83-.02-1.24-.07C5.84 20 7.27 20.7 8.88 20.7c5.32 0 8.24-4.41 8.24-8.23v-.37c.56-.4 1.04-.9 1.42-1.47-.52.23-1.07.39-1.64.46z" fill="currentColor"/>
+                                </svg>
+                            </a>
+                            <a href="#" aria-label="Facebook" class="smlink">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path d="M22 12.07C22 6.48 17.52 2 12 2S2 6.48 2 12.07c0 4.99 3.66 9.13 8.44 9.92v-7.02H7.9v-2.9h2.54V9.41c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.46h-1.25c-1.23 0-1.61.77-1.61 1.56v1.87h2.74l-.44 2.9h-2.3v7.02C18.34 21.2 22 17.06 22 12.07z" fill="currentColor"/>
+                                </svg>
+                            </a>
+                            <a href="#" aria-label="Instagram" class="smlink">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm5 5.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zm4.8-.9a1.12 1.12 0 1 1-2.24 0 1.12 1.12 0 0 1 2.24 0zM12 9.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z" fill="currentColor"/>
+                                </svg>
+                            </a>
+                            <a href="#" aria-label="LinkedIn" class="smlink">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path d="M20.45 20.45h-3.6v-5.6c0-1.33-.03-3.05-1.86-3.05-1.86 0-2.15 1.45-2.15 2.95v5.7h-3.6V9h3.46v1.56h.05c.48-.9 1.66-1.86 3.42-1.86 3.66 0 4.34 2.41 4.34 5.54v6.71zM5.34 7.43a2.09 2.09 0 1 1 0-4.19 2.09 2.09 0 0 1 0 4.19zM7.14 20.45H3.54V9h3.6v11.45z" fill="currentColor"/>
+                                </svg>
+                            </a>
+                            <a href="https://github.com/Jsingh651/project-golf-electronic-voting" aria-label="GitHub" class="smlink" target="_blank" rel="noopener noreferrer">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 .5C5.73.5.9 5.33.9 11.6c0 4.67 3.03 8.63 7.24 10.03.53.1.72-.23.72-.5 0-.25-.01-.92-.01-1.8-2.95.64-3.58-1.42-3.58-1.42-.48-1.2-1.17-1.52-1.17-1.52-.96-.66.07-.64.07-.64 1.06.07 1.62 1.06 1.62 1.06.94 1.6 2.48 1.14 3.08.87.1-.68.37-1.14.67-1.4-2.36-.27-4.84-1.18-4.84-5.24 0-1.16.41-2.1 1.08-2.84-.11-.27-.47-1.37.1-2.85 0 0 .88-.28 2.88 1.08a9.49 9.49 0 0 1 2.62-.35c.89 0 1.78.12 2.62.35 2-.36 2.88-1.08 2.88-1.08.57 1.48.21 2.58.1 2.85.67.74 1.08 1.68 1.08 2.84 0 4.07-2.49 4.97-4.86 5.23.38.33.71.97.71 1.96 0 1.41-.01 2.55-.01 2.9 0 .27.19.61.73.5C19.07 20.23 22.1 16.27 22.1 11.6 22.1 5.33 17.27.5 12 .5z" fill="currentColor"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footerCopyright">
+                <div class="copyright-wrap">
+                    <span>&copy; <span id="year">2025</span> VoteSmartt — <a href="https://github.com/Jsingh651/project-golf-electronic-voting" class="footerLink" target="_blank" rel="noopener noreferrer">GitHub</a></span>
+                </div>
+            </div>
+        </div>
+    </footer>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // ====== Navbar Functionality ======
+            
+            // Hide nav while scrolling down, show on scroll up
+            (function () {
+                const nav = document.querySelector("nav");
+                if (!nav) return;
+                let lastScroll = window.scrollY;
+                let ticking = false;
+                const threshold = 1;
+
+                function onTick() {
+                    const current = window.scrollY;
+                    if (Math.abs(current - lastScroll) < threshold) {
+                        ticking = false;
+                        return;
+                    }
+
+                    if (current > lastScroll) {
+                        nav.classList.add("nav-hidden");
+                        nav.classList.remove("nav-visible");
+                    } else {
+                        nav.classList.remove("nav-hidden");
+                        if (current > 10) {
+                            nav.classList.add("nav-visible");
+                        } else {
+                            nav.classList.remove("nav-visible");
+                        }
+                    }
+
+                    lastScroll = current;
+                    ticking = false;
+                }
+
+                window.addEventListener(
+                    "scroll",
+                    function () {
+                        if (!ticking) {
+                            window.requestAnimationFrame(onTick);
+                            ticking = true;
+                        }
+                    },
+                    { passive: true }
+                );
+            })();
+
+            // ====== Mobile Menu (Hamburger) ======
+            const hamburger = document.querySelector(".hamburger");
+            const mobileMenu = document.getElementById("mobile-menu");
+
+            if (hamburger && mobileMenu) {
+                mobileMenu.hidden = true;
+                hamburger.setAttribute("aria-expanded", "false");
+
+                function openMenu() {
+                    mobileMenu.hidden = false;
+                    mobileMenu.classList.add("open");
+                    hamburger.setAttribute("aria-expanded", "true");
+                    document.documentElement.style.overflow = "hidden";
+                    const focusable = Array.from(
+                        mobileMenu.querySelectorAll(
+                            'a, button, [tabindex]:not([tabindex="-1"])'
+                        )
+                    );
+                    if (focusable[0]) focusable[0].focus();
+                }
+
+                function closeMenu() {
+                    mobileMenu.classList.remove("open");
+                    const transitionDuration = 300;
+                    setTimeout(() => {
+                        mobileMenu.hidden = true;
+                    }, transitionDuration);
+                    hamburger.setAttribute("aria-expanded", "false");
+                    document.documentElement.style.overflow = "";
+                }
+
+                hamburger.addEventListener("click", function () {
+                    const expanded = hamburger.getAttribute("aria-expanded") === "true";
+                    expanded ? closeMenu() : openMenu();
+                });
+
+                // Close when clicking outside
+                document.addEventListener("click", function (e) {
+                    if (mobileMenu.hidden) return;
+                    if (hamburger.contains(e.target) || mobileMenu.contains(e.target)) return;
+                    closeMenu();
+                });
+
+                // Close on Escape
+                document.addEventListener("keydown", function (e) {
+                    if (e.key === "Escape" && !mobileMenu.hidden) {
+                        closeMenu();
+                        hamburger.focus();
+                    }
+                });
+
+                // Close when clicking a link
+                mobileMenu.addEventListener("click", function (e) {
+                    const target = e.target.closest("a, button");
+                    if (target) closeMenu();
+                });
+
+                // Close menu when window resizes above breakpoint
+                const MOBILE_BREAKPOINT = 800;
+                window.addEventListener("resize", function () {
+                    if (window.innerWidth > MOBILE_BREAKPOINT && !mobileMenu.hidden) {
+                        closeMenu();
+                    }
+                });
+            }
+
+            // ====== Profile Dropdown ======
+            window.toggleProfileDropdown = function() {
+                const dropdown = document.querySelector('.profile-dropdown');
+                if (dropdown) {
+                    dropdown.classList.toggle('active');
+                }
+            };
+
+            // Close profile dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                const dropdown = document.querySelector('.profile-dropdown');
+                if (dropdown && !dropdown.contains(e.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
+
+            // ====== Footer Functionality ======
+            
+            // Automatically set the current year in the footer
+            const yearSpan = document.getElementById('year');
+            if (yearSpan) {
+                yearSpan.textContent = new Date().getFullYear();
+            }
+
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

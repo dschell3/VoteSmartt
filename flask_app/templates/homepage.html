@@ -1,444 +1,373 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoteSmart</title>
+{% extends "base.html" %}
+
+{% block title %}VoteSmartt — Secure Electronic Voting System{% endblock %}
+
+{% block extra_head %}
     <link rel="stylesheet" href="../static/css/homepage.css">
     <script defer src="../static/js/homepage.js"></script>
-    <script defer src="http://10.0.0.52:35729/livereload.js"></script>
-     <script src="https://cdn.tailwindcss.com"></script>
-  <!-- GSAP for animations -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    /* Extra keyframes for subtle floating animations */
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-    @keyframes float-rotate {
-      0%, 100% { transform: translateY(0) rotate(0); }
-      50% { transform: translateY(-15px) rotate(5deg); }
-    }
-  </style>
-</head>
-<body class="bg-gradient-to-br from-white via-blue-50/30 to-teal-50/40">
+    <!-- GSAP for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+        /* Extra keyframes for subtle floating animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes float-rotate {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+    </style>
+{% endblock %}
 
-  <!-- Site-wide animated background -->
-  <div id="animated-bg" class="fixed inset-0 pointer-events-none"></div>
+{% block extra_css %}
+    body {
+        background: linear-gradient(to bottom right, #ffffff 0%, rgba(239, 246, 255, 0.3) 50%, rgba(240, 253, 250, 0.4) 100%);
+    }
+{% endblock %}
 
-  <!-- Include the dynamic navbar -->
-  {% include 'navbar.html' %}
+{% block content %}
+    <!-- Site-wide animated background -->
+    <div id="animated-bg" class="fixed inset-0 pointer-events-none"></div>
 
     <section>
         <div class="section"></div>
     </section>
 
-
-  <section class="hero relative min-h-screen flex items-start overflow-hidden">
-
-  <div class="hero-inner relative max-w-7xl mx-auto px-6 lg:px-8 py-12 grid lg:grid-cols-2 gap-12 items-start z-10">
-      <!-- Left Content -->
-      <div class="space-y-8 opacity-0 -translate-x-12" id="left-content">
-        <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 rounded-full opacity-0 translate-y-6" id="tagline">
-          <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
-          <span class="text-sm font-medium text-gray-800">Secure • Transparent • Accessible</span>
-        </div>
-
-        <h1 class="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-          A Secure Electronic Voting System 
-          <span class="bg-gradient-to-r from-blue-900 to-green-500 bg-clip-text text-transparent font-bold">
-            for the Future
-          </span>
-        </h1>
-
-        <p class="text-xl text-gray-500 leading-relaxed max-w-xl">
-          Vote with confidence. Transparent, reliable, and accessible for everyone.
-        </p>
-
-  <div class="hero-ctas flex flex-col sm:flex-row gap-4">
-          <a href="/register" class="hero-getstarted w-full sm:w-auto text-white text-lg rounded-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 active:scale-95">
-            Get Started
-          </a>
-        </div>
-
-        <!-- Stats -->
-        <div class="flex gap-8 pt-8 opacity-0 translate-y-6" id="stats">
-          <div>
-            <div class="text-3xl font-bold text-blue-900">100%</div>
-            <div class="text-sm text-gray-500">Secure</div>
-          </div>
-          <div>
-            <div class="text-3xl font-bold text-blue-900">24/7</div>
-            <div class="text-sm text-gray-500">Available</div>
-          </div>
-          <div>
-            <div class="text-3xl font-bold text-blue-900">∞</div>
-            <div class="text-sm text-gray-500">Transparent</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Illustration -->
-      <div class="relative hidden lg:block opacity-0 translate-x-12" id="right-illustration">
-          <div class="relative">
-          <!-- Main Card -->
-          <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 mt-8 space-y-6 animate-[float_4s_ease-in-out_infinite] floating-card">
-            <div class="flex items-center gap-4">
-              <div class="w-16 h-16 bg-gradient-to-br from-blue-900 to-green-500 rounded-2xl flex items-center justify-center">
-                <i data-lucide="vote" class="w-8 h-8 text-white"></i>
-              </div>
-              <div>
-                <h3 class="text-xl font-bold text-gray-900">Cast Your Vote</h3>
-                <p class="text-sm text-gray-500">Quick & Easy Process</p>
-              </div>
-            </div>
-
-            <div class="space-y-3">
-              <div class="flex items-center gap-3 p-4 rounded-xl bg-white/60 hover:bg-green-500/10 transition-colors cursor-pointer border-2 border-transparent hover:border-green-500">
-                <div class="w-6 h-6 rounded-full border-2 border-blue-900"></div>
-                <span class="font-medium text-gray-800">Option A</span>
-              </div>
-              <div class="flex items-center gap-3 p-4 rounded-xl bg-white/60 hover:bg-green-500/10 transition-colors cursor-pointer border-2 border-transparent hover:border-green-500">
-                <div class="w-6 h-6 rounded-full border-2 border-blue-900"></div>
-                <span class="font-medium text-gray-800">Option B</span>
-              </div>
-              <div class="flex items-center gap-3 p-4 rounded-xl bg-white/60 hover:bg-green-500/10 transition-colors cursor-pointer border-2 border-transparent hover:border-green-500">
-                <div class="w-6 h-6 rounded-full border-2 border-blue-900"></div>
-                <span class="font-medium text-gray-800">Option C</span>
-              </div>
-            </div>
-
-            <button class="w-full btn-hero submit-btn">
-              Submit Vote
-            </button>
-          </div>
-
-          <!-- Floating Shield -->
-          <div class="absolute -top-6 -right-1 w-20 h-20 bg-gradient-to-br from-blue-900 to-blue-600 rounded-2xl shadow-xl flex items-center justify-center animate-[float-rotate_5s_ease-in-out_infinite]">
-            <i data-lucide="shield" class="w-10 h-10 text-white"></i>
-          </div>
-
-          <!-- Floating Check -->
-          <div class="absolute -bottom-4 -left-4 w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center animate-[float_3s_ease-in-out_infinite]">
-            <i data-lucide="check-circle-2" class="w-8 h-8 text-blue-900"></i>
-          </div>
-        </div>
-      
-        <!-- Right-side trust badge (under illustration) -->
-          <div class="right-badge-wrap mt-6 flex flex-col items-center">
-          <a href="https://github.com/Jsingh651/project-golf-electronic-voting" class="github-badge" target="_blank" rel="noopener noreferrer" aria-label="Open-Source on GitHub">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 .5C5.73.5.9 5.33.9 11.6c0 4.67 3.03 8.63 7.24 10.03.53.1.72-.23.72-.5 0-.25-.01-.92-.01-1.8-2.95.64-3.58-1.42-3.58-1.42-.48-1.2-1.17-1.52-1.17-1.52-.96-.66.07-.64.07-.64 1.06.07 1.62 1.06 1.62 1.06.94 1.6 2.48 1.14 3.08.87.1-.68.37-1.14.67-1.4-2.36-.27-4.84-1.18-4.84-5.24 0-1.16.41-2.1 1.08-2.84-.11-.27-.47-1.37.1-2.85 0 0 .88-.28 2.88 1.08a9.49 9.49 0 0 1 2.62-.35c.89 0 1.78.12 2.62.35 2-.36 2.88-1.08 2.88-1.08.57 1.48.21 2.58.1 2.85.67.74 1.08 1.68 1.08 2.84 0 4.07-2.49 4.97-4.86 5.23.38.33.71.97.71 1.96 0 1.41-.01 2.55-.01 2.9 0 .27.19.61.73.5C19.07 20.23 22.1 16.27 22.1 11.6 22.1 5.33 17.27.5 12 .5z" fill="currentColor"/></svg>
-            <span class="badge-text">Open-Source GitHub</span>
-          </a>
-            <span class="trust-copy mt-2 text-center">Trusted • Open audits • Community-driven</span>
-        </div>
-      </div>
-    </div>
-  </section>
-  </section>
-
-  <!-- Transitional heading between hero and How It Works (matches screenshot) -->
-  <div class="howitworks-bridge relative z-10">
-    <div class="max-w-7xl mx-auto px-6 lg:px-8 text-center">
-      <h2 class="howitworks-title text-4xl lg:text-5xl font-bold text-[#2D2D2D] leading-tight">
-        How <span class="bg-gradient-to-r from-[#1A3D7C] to-[#2ECC71] bg-clip-text text-transparent">It Works</span>
-      </h2>
-      <p class="text-xl text-[#6B7280] max-w-2xl mx-auto mt-4">Four simple steps to secure, transparent voting</p>
-    </div>
-  </div>
-
-  
-  <section class="how-it-works pt-0 pb-20 bg-transparent relative overflow-hidden">
-    <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
-      <div class="text-center mb-0 opacity-0" id="hiw-heading">
-        <h2 class="text-4xl lg:text-5xl font-bold text-[#2D2D2D] mb-0">
-          How <span class="bg-gradient-to-r from-[#1A3D7C] to-[#2ECC71] bg-clip-text text-transparent font-bold">It Works</span>
-        </h2>
-        <p class="text-xl text-[#6B7280] max-w-2xl mx-auto">Four simple steps to secure, transparent voting</p>
-      </div>
-
-      <div class="space-y-32" id="hiw-steps">
-  <!-- Step 1 -->
-  <div class="how-step flex flex-col lg:flex-row gap-12 items-center slide-left">
-          <div class="w-full lg:w-1/2">
-            <div class="relative group">
-              <div class="absolute inset-0 bg-gradient-to-br from-[#1A3D7C] to-[#2563EB] rounded-3xl transform group-hover:scale-105 transition-transform duration-500 blur-2xl opacity-20"></div>
-              <div class="relative bg-white/70 backdrop-blur-sm rounded-3xl overflow-hidden shadow-2xl p-12">
-                <img src="https://illustrations.popsy.co/amber/man-riding-a-rocket.svg" alt="Register & Verify" class="w-full h-80 object-contain" />
-                <div class="absolute top-6 left-6">
-                  <div class="w-20 h-20 bg-gradient-to-br from-[#1A3D7C] to-[#2563EB] rounded-2xl flex items-center justify-center shadow-xl">
-                    <i data-lucide="user-plus" class="w-10 h-10 text-white"></i>
-                  </div>
+    <section class="hero relative min-h-screen flex items-start overflow-hidden">
+        <div class="hero-inner relative max-w-7xl mx-auto px-6 lg:px-8 py-12 grid lg:grid-cols-2 gap-12 items-start z-10">
+            <!-- Left Content -->
+            <div class="space-y-8 opacity-0 -translate-x-12" id="left-content">
+                <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 rounded-full opacity-0 translate-y-6" id="tagline">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
+                    <span class="text-sm font-medium text-gray-800">Secure • Transparent • Accessible</span>
                 </div>
-              </div>
-            </div>
-          </div>
-          <div class="w-full lg:w-1/2 space-y-6">
-            <div class="flex items-center gap-4">
-              <span class="text-6xl font-bold bg-gradient-to-br from-[#1A3D7C] to-[#2563EB] bg-clip-text text-transparent">01</span>
-              <div class="h-1 flex-1 bg-gradient-to-r from-[#1A3D7C]/20 to-transparent rounded-full"></div>
-            </div>
-            <h3 class="text-3xl lg:text-4xl font-bold text-[#2D2D2D]">Register & Verify</h3>
-            <p class="text-lg text-[#6B7280] leading-relaxed">Create your account with secure authentication. Your identity is verified while maintaining privacy through end-to-end encryption.</p>
-          </div>
-        </div>
 
-  <!-- Step 2 -->
-  <div class="how-step flex flex-col lg:flex-row-reverse gap-12 items-center slide-right">
-          <div class="w-full lg:w-1/2">
-            <div class="relative group">
-              <div class="absolute inset-0 bg-gradient-to-br from-[#2ECC71] to-[#27AE60] rounded-3xl transform group-hover:scale-105 transition-transform duration-500 blur-2xl opacity-20"></div>
-              <div class="relative bg-white/70 backdrop-blur-sm rounded-3xl overflow-hidden shadow-2xl p-12">
-                <img src="https://illustrations.popsy.co/amber/work-from-home.svg" alt="Browse Active Polls" class="w-full h-80 object-contain" />
-                <div class="absolute top-6 left-6">
-                  <div class="w-20 h-20 bg-gradient-to-br from-[#2ECC71] to-[#27AE60] rounded-2xl flex items-center justify-center shadow-xl">
-                    <i data-lucide="vote" class="w-10 h-10 text-white"></i>
-                  </div>
+                <h1 class="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+                    A Secure Electronic Voting System 
+                    <span class="bg-gradient-to-r from-blue-900 to-green-500 bg-clip-text text-transparent font-bold">
+                        for the Future
+                    </span>
+                </h1>
+
+                <p class="text-xl text-gray-500 leading-relaxed max-w-xl">
+                    Vote with confidence. Transparent, reliable, and accessible for everyone.
+                </p>
+
+                <div class="hero-ctas flex flex-col sm:flex-row gap-4">
+                    <a href="/register" class="hero-getstarted w-full sm:w-auto text-white text-lg rounded-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 active:scale-95">
+                        Get Started
+                    </a>
                 </div>
-              </div>
-            </div>
-          </div>
-          <div class="w-full lg:w-1/2 space-y-6">
-            <div class="flex items-center gap-4">
-              <span class="text-6xl font-bold bg-gradient-to-br from-[#2ECC71] to-[#27AE60] bg-clip-text text-transparent">02</span>
-              <div class="h-1 flex-1 bg-gradient-to-r from-[#2ECC71]/20 to-transparent rounded-full"></div>
-            </div>
-            <h3 class="text-3xl lg:text-4xl font-bold text-[#2D2D2D]">Browse Active Polls</h3>
-            <p class="text-lg text-[#6B7280] leading-relaxed">View all available voting events on your personalized dashboard. Each poll includes detailed information about candidates and measures.</p>
-          </div>
-        </div>
 
-  <!-- Step 3 -->
-  <div class="how-step flex flex-col lg:flex-row gap-12 items-center slide-left">
-          <div class="w-full lg:w-1/2">
-            <div class="relative group">
-              <div class="absolute inset-0 bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] rounded-3xl transform group-hover:scale-105 transition-transform duration-500 blur-2xl opacity-20"></div>
-              <div class="relative bg-white/70 backdrop-blur-sm rounded-3xl overflow-hidden shadow-2xl p-12">
-                <img src="/static/media/undraw_voting_3ygx.svg" alt="Cast Your Vote" class="w-80 h-72 lg:h-96 object-contain mx-auto" />
-                <div class="absolute top-6 left-6">
-                  <div class="w-20 h-20 bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] rounded-2xl flex items-center justify-center shadow-xl">
-                    <i data-lucide="shield" class="w-10 h-10 text-white"></i>
-                  </div>
+                <!-- Stats -->
+                <div class="flex gap-8 pt-8 opacity-0 translate-y-6" id="stats">
+                    <div>
+                        <div class="text-3xl font-bold text-blue-900">100%</div>
+                        <div class="text-sm text-gray-500">Secure</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold text-blue-900">24/7</div>
+                        <div class="text-sm text-gray-500">Available</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold text-blue-900">∞</div>
+                        <div class="text-sm text-gray-500">Transparent</div>
+                    </div>
                 </div>
-              </div>
             </div>
-          </div>
-          <div class="w-full lg:w-1/2 space-y-6">
-            <div class="flex items-center gap-4">
-              <span class="text-6xl font-bold bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] bg-clip-text text-transparent">03</span>
-              <div class="h-1 flex-1 bg-gradient-to-r from-[#8B5CF6]/20 to-transparent rounded-full"></div>
-            </div>
-            <h3 class="text-3xl lg:text-4xl font-bold text-[#2D2D2D]">Cast Your Vote</h3>
-            <p class="text-lg text-[#6B7280] leading-relaxed">Select your choices with confidence. Our system ensures one vote per person and tamper-proof records.</p>
-          </div>
-        </div>
 
-  <!-- Step 4 -->
-  <div class="how-step flex flex-col lg:flex-row-reverse gap-12 items-center slide-right">
-          <div class="w-full lg:w-1/2">
-            <div class="relative group">
-              <div class="absolute inset-0 bg-gradient-to-br from-[#F59E0B] to-[#D97706] rounded-3xl transform group-hover:scale-105 transition-transform duration-500 blur-2xl opacity-20"></div>
-              <div class="relative bg-white/70 backdrop-blur-sm rounded-3xl overflow-hidden shadow-2xl p-12">
-                <img src="https://illustrations.popsy.co/amber/success.svg" alt="View Results" class="w-full h-80 object-contain" />
-                <div class="absolute top-6 left-6">
-                  <div class="w-20 h-20 bg-gradient-to-br from-[#F59E0B] to-[#D97706] rounded-2xl flex items-center justify-center shadow-xl">
-                    <i data-lucide="bar-chart-3" class="w-10 h-10 text-white"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="w-full lg:w-1/2 space-y-6">
-            <div class="flex items-center gap-4">
-              <span class="text-6xl font-bold bg-gradient-to-br from-[#F59E0B] to-[#D97706] bg-clip-text text-transparent">04</span>
-              <div class="h-1 flex-1 bg-gradient-to-r from-[#F59E0B]/20 to-transparent rounded-full"></div>
-            </div>
-            <h3 class="text-3xl lg:text-4xl font-bold text-[#2D2D2D]">View Results</h3>
-            <p class="text-lg text-[#6B7280] leading-relaxed">Access transparent, real-time results once voting closes. All data is publicly auditable while protecting individual voter anonymity.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Features / Why Choose VoteSmartt -->
-  <section id="features" class="py-32 bg-gradient-to-b from-teal-50/40 via-emerald-50/30 to-cyan-50/40 relative overflow-hidden pt-40">
-    <div class="relative max-w-7xl mx-auto px-6 lg:px-8 z-10">
-      <div class="text-center mb-20">
-        <h2 class="text-4xl lg:text-5xl font-bold text-[#2D2D2D] mb-6 pt-40">
-          Why Choose <span class="bg-gradient-to-r from-[#1A3D7C] to-[#2ECC71] bg-clip-text text-transparent font-bold">VoteSmartt</span>
-        </h2>
-        <p class="text-xl text-[#6B7280] max-w-2xl mx-auto">Built on the pillars of security, transparency, and accessibility</p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-6 gap-6 max-w-6xl mx-auto">
-        <!-- Large Feature -->
-        <div class="md:col-span-4 md:row-span-2">
-          <div class="relative group h-full how-step slide-left">
-            <div class="absolute inset-0 bg-gradient-to-br from-[#1A3D7C] to-[#2563EB] rounded-3xl blur-3xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
-            <div class="relative bg-white/80 backdrop-blur-sm rounded-3xl p-12 h-full flex flex-col justify-center transition-all duration-500 hover:shadow-2xl hover:bg-white/95">
-              <div class="w-24 h-24 bg-gradient-to-br from-[#1A3D7C] to-[#2563EB] rounded-3xl flex items-center justify-center mb-8 shadow-xl">
-                <i data-lucide="shield" class="w-12 h-12 text-white"></i>
-              </div>
-              <h3 class="text-4xl font-bold text-[#2D2D2D] mb-6">Secure Voting</h3>
-              <p class="text-xl text-[#6B7280] leading-relaxed mb-6">End-to-end encryption with single-vote validation ensures every ballot is protected and authentic.</p>
-              <div class="flex items-center gap-2 text-[#1A3D7C] font-semibold">
-                Learn more <span class="text-2xl">→</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- User-Friendly -->
-        <div class="md:col-span-2">
-          <div class="relative group h-full how-step slide-right">
-            <div class="absolute inset-0 bg-gradient-to-br from-[#2ECC71] to-[#27AE60] rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
-            <div class="relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 h-full flex flex-col transition-all duration-500 hover:shadow-2xl hover:bg-white/95">
-              <div class="w-16 h-16 bg-gradient-to-br from-[#2ECC71] to-[#27AE60] rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                <i data-lucide="users" class="w-8 h-8 text-white"></i>
-              </div>
-              <h3 class="text-2xl font-bold text-[#2D2D2D] mb-4">User-Friendly</h3>
-              <p class="text-[#6B7280] leading-relaxed flex-grow">Simple registration, clean dashboard, and intuitive ballots make voting accessible to everyone.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Admin Tools -->
-        <div class="md:col-span-2">
-          <div class="relative group h-full how-step slide-left">
-            <div class="absolute inset-0 bg-gradient-to-br from-[#F59E0B] to-[#D97706] rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
-            <div class="relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 h-full flex flex-col transition-all duration-500 hover:shadow-2xl hover:bg-white/95">
-              <div class="w-16 h-16 bg-gradient-to-br from-[#F59E0B] to-[#D97706] rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                <i data-lucide="settings" class="w-8 h-8 text-white"></i>
-              </div>
-              <h3 class="text-2xl font-bold text-[#2D2D2D] mb-4">Admin Tools</h3>
-              <p class="text-[#6B7280] leading-relaxed flex-grow">Comprehensive event creation and user management tools without bias or interference.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Transparent Results -->
-        <div class="md:col-span-3">
-          <div class="relative group h-full how-step slide-right">
-            <div class="absolute inset-0 bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
-            <div class="relative bg-white/80 backdrop-blur-sm rounded-3xl p-10 h-full flex items-center gap-8 transition-all duration-500 hover:shadow-2xl hover:bg-white/95">
-              <div class="w-20 h-20 bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
-                <i data-lucide="bar-chart-3" class="w-10 h-10 text-white"></i>
-              </div>
-              <div>
-                <h3 class="text-2xl font-bold text-[#2D2D2D] mb-3">Transparent Results</h3>
-                <p class="text-[#6B7280] leading-relaxed">Results visible only after voting ends, ensuring fairness and building trust in the process.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- CTA Card -->
-        <div class="md:col-span-3">
-          <div class="relative group h-full how-step slide-left">
-            <div class="absolute inset-0 bg-gradient-to-br from-[#1A3D7C] to-[#2ECC71] rounded-3xl blur-2xl opacity-30 group-hover:opacity-40 transition-opacity duration-500"></div>
-            <div class="relative bg-gradient-to-br from-[#1A3D7C] to-[#2ECC71] rounded-3xl p-10 h-full flex flex-col justify-center items-center text-center transition-all duration-500 hover:shadow-2xl">
-              <h3 class="text-2xl font-bold text-white mb-4">Ready to Experience Secure Voting?</h3>
-              <p class="text-white/90 mb-6 text-lg">Join thousands who trust VoteSmartt</p>
-              <a href="/register" class="bg-white inline-block text-[#1A3D7C] px-8 py-4 rounded-full font-bold hover:bg-gray-100 transition-all duration-300 hover:scale-105 shadow-lg">Get Started Now</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-        <footer>
-            <div class="footerContainer">
-                <div class="footer">
-                    <div class="footerInside">
-                        <div class="footer1">
-                            <h2 class="footerTitle">VoteSmartt</h2>
-                            <p class="footerText">Making voting easier and more accessible for everyone.</p>
+            <!-- Right Illustration -->
+            <div class="relative hidden lg:block opacity-0 translate-x-12" id="right-illustration">
+                <div class="relative">
+                    <!-- Main Card -->
+                    <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 mt-8 space-y-6 animate-[float_4s_ease-in-out_infinite] floating-card">
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-900 to-green-500 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="vote" class="w-8 h-8 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900">Cast Your Vote</h3>
+                                <p class="text-sm text-gray-500">Quick & Easy Process</p>
+                            </div>
                         </div>
-                        <div class="footer2">
-                            <h3 class="footerSubtitle">Quick Links</h3>
-                            <ul class="footerLinks">
-                                <li><a href="/about" class="footerLink">About</a></li>
-                                <li><a href="/credits" class="footerLink">Credits</a></li>
-                                <li><a href="/contact" class="footerLink">Contact Us</a></li>
-                            </ul>
+
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 p-4 rounded-xl bg-white/60 hover:bg-green-500/10 transition-colors cursor-pointer border-2 border-transparent hover:border-green-500">
+                                <div class="w-6 h-6 rounded-full border-2 border-blue-900"></div>
+                                <span class="font-medium text-gray-800">Option A</span>
+                            </div>
+                            <div class="flex items-center gap-3 p-4 rounded-xl bg-white/60 hover:bg-green-500/10 transition-colors cursor-pointer border-2 border-transparent hover:border-green-500">
+                                <div class="w-6 h-6 rounded-full border-2 border-blue-900"></div>
+                                <span class="font-medium text-gray-800">Option B</span>
+                            </div>
+                            <div class="flex items-center gap-3 p-4 rounded-xl bg-white/60 hover:bg-green-500/10 transition-colors cursor-pointer border-2 border-transparent hover:border-green-500">
+                                <div class="w-6 h-6 rounded-full border-2 border-blue-900"></div>
+                                <span class="font-medium text-gray-800">Option C</span>
+                            </div>
                         </div>
-                        <div class="footer3">
-                            <h3 class="footerSubtitle">Team members</h3>
-                            <ul class="footerCredits">
-                                <li>UX Designer</li>
-                                <li>Project Manager</li>
-                                <li>Developers</li>
-                            </ul>
+
+                        <button class="w-full btn-hero submit-btn">
+                            Submit Vote
+                        </button>
+                    </div>
+
+                    <!-- Floating Shield -->
+                    <div class="absolute -top-6 -right-1 w-20 h-20 bg-gradient-to-br from-blue-900 to-blue-600 rounded-2xl shadow-xl flex items-center justify-center animate-[float-rotate_5s_ease-in-out_infinite]">
+                        <i data-lucide="shield" class="w-10 h-10 text-white"></i>
+                    </div>
+
+                    <!-- Floating Check -->
+                    <div class="absolute -bottom-4 -left-4 w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center animate-[float_3s_ease-in-out_infinite]">
+                        <i data-lucide="check-circle-2" class="w-8 h-8 text-blue-900"></i>
+                    </div>
+                </div>
+
+                <!-- Right-side trust badge (under illustration) -->
+                <div class="right-badge-wrap mt-6 flex flex-col items-center">
+                    <a href="https://github.com/Jsingh651/project-golf-electronic-voting" class="github-badge" target="_blank" rel="noopener noreferrer" aria-label="Open-Source on GitHub">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 .5C5.73.5.9 5.33.9 11.6c0 4.67 3.03 8.63 7.24 10.03.53.1.72-.23.72-.5 0-.25-.01-.92-.01-1.8-2.95.64-3.58-1.42-3.58-1.42-.48-1.2-1.17-1.52-1.17-1.52-.96-.66.07-.64.07-.64 1.06.07 1.62 1.06 1.62 1.06.94 1.6 2.48 1.14 3.08.87.1-.68.37-1.14.67-1.4-2.36-.27-4.84-1.18-4.84-5.24 0-1.16.41-2.1 1.08-2.84-.11-.27-.47-1.37.1-2.85 0 0 .88-.28 2.88 1.08a9.49 9.49 0 0 1 2.62-.35c.89 0 1.78.12 2.62.35 2-.36 2.88-1.08 2.88-1.08.57 1.48.21 2.58.1 2.85.67.74 1.08 1.68 1.08 2.84 0 4.07-2.49 4.97-4.86 5.23.38.33.71.97.71 1.96 0 1.41-.01 2.55-.01 2.9 0 .27.19.61.73.5C19.07 20.23 22.1 16.27 22.1 11.6 22.1 5.33 17.27.5 12 .5z" fill="currentColor"/>
+                        </svg>
+                        <span class="badge-text">Open-Source GitHub</span>
+                    </a>
+                    <span class="trust-copy mt-2 text-center">Trusted • Open audits • Community-driven</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Transitional heading between hero and How It Works -->
+    <div class="howitworks-bridge relative z-10">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+            <h2 class="howitworks-title text-4xl lg:text-5xl font-bold text-[#2D2D2D] leading-tight">
+                How <span class="bg-gradient-to-r from-[#1A3D7C] to-[#2ECC71] bg-clip-text text-transparent">It Works</span>
+            </h2>
+            <p class="text-xl text-[#6B7280] max-w-2xl mx-auto mt-4">Four simple steps to secure, transparent voting</p>
+        </div>
+    </div>
+
+    <section class="how-it-works pt-0 pb-20 bg-transparent relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-0 opacity-0" id="hiw-heading">
+                <h2 class="text-4xl lg:text-5xl font-bold text-[#2D2D2D] mb-0">
+                    How <span class="bg-gradient-to-r from-[#1A3D7C] to-[#2ECC71] bg-clip-text text-transparent font-bold">It Works</span>
+                </h2>
+                <p class="text-xl text-[#6B7280] max-w-2xl mx-auto">Four simple steps to secure, transparent voting</p>
+            </div>
+
+            <div class="space-y-32" id="hiw-steps">
+                <!-- Step 1 -->
+                <div class="how-step flex flex-col lg:flex-row gap-12 items-center slide-left">
+                    <div class="w-full lg:w-1/2">
+                        <div class="relative group">
+                            <div class="absolute inset-0 bg-gradient-to-br from-[#1A3D7C] to-[#2563EB] rounded-3xl transform group-hover:scale-105 transition-transform duration-500 blur-2xl opacity-20"></div>
+                            <div class="relative bg-white/70 backdrop-blur-sm rounded-3xl overflow-hidden shadow-2xl p-12">
+                                <img src="https://illustrations.popsy.co/amber/man-riding-a-rocket.svg" alt="Register & Verify" class="w-full h-80 object-contain" />
+                                <div class="absolute top-6 left-6">
+                                    <div class="w-20 h-20 bg-gradient-to-br from-[#1A3D7C] to-[#2563EB] rounded-2xl flex items-center justify-center shadow-xl">
+                                        <i data-lucide="user-plus" class="w-10 h-10 text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="footer4">
-                            <h3 class="footerSubtitle">Social Media</h3>
-                            <div class="footerSMLinks">
-                                <a href="#" aria-label="Twitter" class="smlink">
-                                    <!-- Twitter SVG -->
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <path d="M22 5.92c-.63.28-1.3.47-2 .56.72-.43 1.27-1.12 1.53-1.94-.68.4-1.43.7-2.22.86C18.6 4.5 17.68 4 16.66 4c-1.7 0-3.08 1.38-3.08 3.08 0 .24.03.47.08.69-2.56-.13-4.83-1.36-6.35-3.24-.27.47-.43 1.02-.43 1.6 0 1.11.56 2.09 1.42 2.67-.51-.02-.99-.16-1.41-.4v.04c0 1.52 1.08 2.79 2.51 3.08-.26.07-.53.11-.81.11-.2 0-.39-.02-.58-.06.39 1.23 1.52 2.13 2.86 2.15C9.7 18.3 8.11 19 6.36 19c-.42 0-.83-.02-1.24-.07C5.84 20 7.27 20.7 8.88 20.7c5.32 0 8.24-4.41 8.24-8.23v-.37c.56-.4 1.04-.9 1.42-1.47-.52.23-1.07.39-1.64.46z" fill="currentColor"/>
-                                    </svg>
-                                </a>
-                                <a href="#" aria-label="Facebook" class="smlink">
-                                    <!-- Facebook SVG -->
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <path d="M22 12.07C22 6.48 17.52 2 12 2S2 6.48 2 12.07c0 4.99 3.66 9.13 8.44 9.92v-7.02H7.9v-2.9h2.54V9.41c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.46h-1.25c-1.23 0-1.61.77-1.61 1.56v1.87h2.74l-.44 2.9h-2.3v7.02C18.34 21.2 22 17.06 22 12.07z" fill="currentColor"/>
-                                    </svg>
-                                </a>
-                                <a href="#" aria-label="Instagram" class="smlink">
-                                    <!-- Instagram SVG -->
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm5 5.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zm4.8-.9a1.12 1.12 0 1 1-2.24 0 1.12 1.12 0 0 1 2.24 0zM12 9.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z" fill="currentColor"/>
-                                    </svg>
-                                </a>
-                                <a href="#" aria-label="LinkedIn" class="smlink">
-                                    <!-- LinkedIn SVG -->
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <path d="M20.45 20.45h-3.6v-5.6c0-1.33-.03-3.05-1.86-3.05-1.86 0-2.15 1.45-2.15 2.95v5.7h-3.6V9h3.46v1.56h.05c.48-.9 1.66-1.86 3.42-1.86 3.66 0 4.34 2.41 4.34 5.54v6.71zM5.34 7.43a2.09 2.09 0 1 1 0-4.19 2.09 2.09 0 0 1 0 4.19zM7.14 20.45H3.54V9h3.6v11.45z" fill="currentColor"/>
-                                    </svg>
-                                </a>
-                                <a href="https://github.com/Jsingh651/project-golf-electronic-voting" aria-label="GitHub" class="smlink" target="_blank" rel="noopener noreferrer">
-                                    <!-- GitHub SVG -->
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 .5C5.73.5.9 5.33.9 11.6c0 4.67 3.03 8.63 7.24 10.03.53.1.72-.23.72-.5 0-.25-.01-.92-.01-1.8-2.95.64-3.58-1.42-3.58-1.42-.48-1.2-1.17-1.52-1.17-1.52-.96-.66.07-.64.07-.64 1.06.07 1.62 1.06 1.62 1.06.94 1.6 2.48 1.14 3.08.87.1-.68.37-1.14.67-1.4-2.36-.27-4.84-1.18-4.84-5.24 0-1.16.41-2.1 1.08-2.84-.11-.27-.47-1.37.1-2.85 0 0 .88-.28 2.88 1.08a9.49 9.49 0 0 1 2.62-.35c.89 0 1.78.12 2.62.35 2-.36 2.88-1.08 2.88-1.08.57 1.48.21 2.58.1 2.85.67.74 1.08 1.68 1.08 2.84 0 4.07-2.49 4.97-4.86 5.23.38.33.71.97.71 1.96 0 1.41-.01 2.55-.01 2.9 0 .27.19.61.73.5C19.07 20.23 22.1 16.27 22.1 11.6 22.1 5.33 17.27.5 12 .5z" fill="currentColor"/>
-                                    </svg>
-                                </a>
+                    </div>
+                    <div class="w-full lg:w-1/2 space-y-6">
+                        <div class="flex items-center gap-4">
+                            <span class="text-6xl font-bold bg-gradient-to-br from-[#1A3D7C] to-[#2563EB] bg-clip-text text-transparent">01</span>
+                            <div class="h-1 flex-1 bg-gradient-to-r from-[#1A3D7C]/20 to-transparent rounded-full"></div>
+                        </div>
+                        <h3 class="text-3xl lg:text-4xl font-bold text-[#2D2D2D]">Register & Verify</h3>
+                        <p class="text-lg text-[#6B7280] leading-relaxed">Create your account with secure authentication. Your identity is verified while maintaining privacy through end-to-end encryption.</p>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="how-step flex flex-col lg:flex-row-reverse gap-12 items-center slide-right">
+                    <div class="w-full lg:w-1/2">
+                        <div class="relative group">
+                            <div class="absolute inset-0 bg-gradient-to-br from-[#2ECC71] to-[#27AE60] rounded-3xl transform group-hover:scale-105 transition-transform duration-500 blur-2xl opacity-20"></div>
+                            <div class="relative bg-white/70 backdrop-blur-sm rounded-3xl overflow-hidden shadow-2xl p-12">
+                                <img src="https://illustrations.popsy.co/amber/work-from-home.svg" alt="Browse Active Polls" class="w-full h-80 object-contain" />
+                                <div class="absolute top-6 left-6">
+                                    <div class="w-20 h-20 bg-gradient-to-br from-[#2ECC71] to-[#27AE60] rounded-2xl flex items-center justify-center shadow-xl">
+                                        <i data-lucide="vote" class="w-10 h-10 text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-1/2 space-y-6">
+                        <div class="flex items-center gap-4">
+                            <span class="text-6xl font-bold bg-gradient-to-br from-[#2ECC71] to-[#27AE60] bg-clip-text text-transparent">02</span>
+                            <div class="h-1 flex-1 bg-gradient-to-r from-[#2ECC71]/20 to-transparent rounded-full"></div>
+                        </div>
+                        <h3 class="text-3xl lg:text-4xl font-bold text-[#2D2D2D]">Browse Active Polls</h3>
+                        <p class="text-lg text-[#6B7280] leading-relaxed">View all available voting events on your personalized dashboard. Each poll includes detailed information about candidates and measures.</p>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="how-step flex flex-col lg:flex-row gap-12 items-center slide-left">
+                    <div class="w-full lg:w-1/2">
+                        <div class="relative group">
+                            <div class="absolute inset-0 bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] rounded-3xl transform group-hover:scale-105 transition-transform duration-500 blur-2xl opacity-20"></div>
+                            <div class="relative bg-white/70 backdrop-blur-sm rounded-3xl overflow-hidden shadow-2xl p-12">
+                                <img src="/static/media/undraw_voting_3ygx.svg" alt="Cast Your Vote" class="w-80 h-72 lg:h-96 object-contain mx-auto" />
+                                <div class="absolute top-6 left-6">
+                                    <div class="w-20 h-20 bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] rounded-2xl flex items-center justify-center shadow-xl">
+                                        <i data-lucide="shield" class="w-10 h-10 text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-1/2 space-y-6">
+                        <div class="flex items-center gap-4">
+                            <span class="text-6xl font-bold bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] bg-clip-text text-transparent">03</span>
+                            <div class="h-1 flex-1 bg-gradient-to-r from-[#8B5CF6]/20 to-transparent rounded-full"></div>
+                        </div>
+                        <h3 class="text-3xl lg:text-4xl font-bold text-[#2D2D2D]">Cast Your Vote</h3>
+                        <p class="text-lg text-[#6B7280] leading-relaxed">Select your choices with confidence. Our system ensures one vote per person and tamper-proof records.</p>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="how-step flex flex-col lg:flex-row-reverse gap-12 items-center slide-right">
+                    <div class="w-full lg:w-1/2">
+                        <div class="relative group">
+                            <div class="absolute inset-0 bg-gradient-to-br from-[#F59E0B] to-[#D97706] rounded-3xl transform group-hover:scale-105 transition-transform duration-500 blur-2xl opacity-20"></div>
+                            <div class="relative bg-white/70 backdrop-blur-sm rounded-3xl overflow-hidden shadow-2xl p-12">
+                                <img src="https://illustrations.popsy.co/amber/success.svg" alt="View Results" class="w-full h-80 object-contain" />
+                                <div class="absolute top-6 left-6">
+                                    <div class="w-20 h-20 bg-gradient-to-br from-[#F59E0B] to-[#D97706] rounded-2xl flex items-center justify-center shadow-xl">
+                                        <i data-lucide="bar-chart-3" class="w-10 h-10 text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-1/2 space-y-6">
+                        <div class="flex items-center gap-4">
+                            <span class="text-6xl font-bold bg-gradient-to-br from-[#F59E0B] to-[#D97706] bg-clip-text text-transparent">04</span>
+                            <div class="h-1 flex-1 bg-gradient-to-r from-[#F59E0B]/20 to-transparent rounded-full"></div>
+                        </div>
+                        <h3 class="text-3xl lg:text-4xl font-bold text-[#2D2D2D]">View Results</h3>
+                        <p class="text-lg text-[#6B7280] leading-relaxed">Access transparent, real-time results once voting closes. All data is publicly auditable while protecting individual voter anonymity.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features / Why Choose VoteSmartt -->
+    <section id="features" class="py-32 bg-gradient-to-b from-teal-50/40 via-emerald-50/30 to-cyan-50/40 relative overflow-hidden pt-40">
+        <div class="relative max-w-7xl mx-auto px-6 lg:px-8 z-10">
+            <div class="text-center mb-20">
+                <h2 class="text-4xl lg:text-5xl font-bold text-[#2D2D2D] mb-6 pt-40">
+                    Why Choose <span class="bg-gradient-to-r from-[#1A3D7C] to-[#2ECC71] bg-clip-text text-transparent font-bold">VoteSmartt</span>
+                </h2>
+                <p class="text-xl text-[#6B7280] max-w-2xl mx-auto">Built on the pillars of security, transparency, and accessibility</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-6 max-w-6xl mx-auto">
+                <!-- Large Feature -->
+                <div class="md:col-span-4 md:row-span-2">
+                    <div class="relative group h-full how-step slide-left">
+                        <div class="absolute inset-0 bg-gradient-to-br from-[#1A3D7C] to-[#2563EB] rounded-3xl blur-3xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
+                        <div class="relative bg-white/80 backdrop-blur-sm rounded-3xl p-12 h-full flex flex-col justify-center transition-all duration-500 hover:shadow-2xl hover:bg-white/95">
+                            <div class="w-24 h-24 bg-gradient-to-br from-[#1A3D7C] to-[#2563EB] rounded-3xl flex items-center justify-center mb-8 shadow-xl">
+                                <i data-lucide="shield" class="w-12 h-12 text-white"></i>
+                            </div>
+                            <h3 class="text-4xl font-bold text-[#2D2D2D] mb-6">Secure Voting</h3>
+                            <p class="text-xl text-[#6B7280] leading-relaxed mb-6">End-to-end encryption with single-vote validation ensures every ballot is protected and authentic.</p>
+                            <div class="flex items-center gap-2 text-[#1A3D7C] font-semibold">
+                                Learn more <span class="text-2xl">→</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                    <div class="footerCopyright">
-                        <div class="copyright-wrap">
-                            <span>&copy; <span id="year">2025</span> VoteSmartt — <a href="https://github.com/Jsingh651/project-golf-electronic-voting" class="footerLink" target="_blank" rel="noopener noreferrer">GitHub</a></span>
+
+                <!-- User-Friendly -->
+                <div class="md:col-span-2">
+                    <div class="relative group h-full how-step slide-right">
+                        <div class="absolute inset-0 bg-gradient-to-br from-[#2ECC71] to-[#27AE60] rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
+                        <div class="relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 h-full flex flex-col transition-all duration-500 hover:shadow-2xl hover:bg-white/95">
+                            <div class="w-16 h-16 bg-gradient-to-br from-[#2ECC71] to-[#27AE60] rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                                <i data-lucide="users" class="w-8 h-8 text-white"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-[#2D2D2D] mb-4">User-Friendly</h3>
+                            <p class="text-[#6B7280] leading-relaxed flex-grow">Simple registration, clean dashboard, and intuitive ballots make voting accessible to everyone.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Tools -->
+                <div class="md:col-span-2">
+                    <div class="relative group h-full how-step slide-left">
+                        <div class="absolute inset-0 bg-gradient-to-br from-[#F59E0B] to-[#D97706] rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
+                        <div class="relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 h-full flex flex-col transition-all duration-500 hover:shadow-2xl hover:bg-white/95">
+                            <div class="w-16 h-16 bg-gradient-to-br from-[#F59E0B] to-[#D97706] rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                                <i data-lucide="settings" class="w-8 h-8 text-white"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-[#2D2D2D] mb-4">Admin Tools</h3>
+                            <p class="text-[#6B7280] leading-relaxed flex-grow">Comprehensive event creation and user management tools without bias or interference.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transparent Results -->
+                <div class="md:col-span-3">
+                    <div class="relative group h-full how-step slide-right">
+                        <div class="absolute inset-0 bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] rounded-3xl blur-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
+                        <div class="relative bg-white/80 backdrop-blur-sm rounded-3xl p-10 h-full flex items-center gap-8 transition-all duration-500 hover:shadow-2xl hover:bg-white/95">
+                            <div class="w-20 h-20 bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                                <i data-lucide="bar-chart-3" class="w-10 h-10 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-[#2D2D2D] mb-3">Transparent Results</h3>
+                                <p class="text-[#6B7280] leading-relaxed">Results visible only after voting ends, ensuring fairness and building trust in the process.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CTA Card -->
+                <div class="md:col-span-3">
+                    <div class="relative group h-full how-step slide-left">
+                        <div class="absolute inset-0 bg-gradient-to-br from-[#1A3D7C] to-[#2ECC71] rounded-3xl blur-2xl opacity-30 group-hover:opacity-40 transition-opacity duration-500"></div>
+                        <div class="relative bg-gradient-to-br from-[#1A3D7C] to-[#2ECC71] rounded-3xl p-10 h-full flex flex-col justify-center items-center text-center transition-all duration-500 hover:shadow-2xl">
+                            <h3 class="text-2xl font-bold text-white mb-4">Ready to Experience Secure Voting?</h3>
+                            <p class="text-white/90 mb-6 text-lg">Join thousands who trust VoteSmartt</p>
+                            <a href="/register" class="bg-white inline-block text-[#1A3D7C] px-8 py-4 rounded-full font-bold hover:bg-gray-100 transition-all duration-300 hover:scale-105 shadow-lg">Get Started Now</a>
                         </div>
                     </div>
                 </div>
             </div>
-        </footer>
-  <script src="../static/js/animated-bg.js"></script>
-  <script>
-    // Handle Get Started button click
-    function handleGetStarted() {
-      const dashboardUrl = window.location.origin + "/dashboard";
-      window.location.href = dashboardUrl;
-    }
+        </div>
+    </section>
+{% endblock %}
 
-    // Animate on load 
-    window.addEventListener("DOMContentLoaded", () => {
-      gsap.to("#left-content", { opacity: 1, x: 0, duration: 0.8 });
-      gsap.to("#tagline", { opacity: 1, y: 0, delay: 0.2, duration: 0.8 });
-      gsap.to("#stats", { opacity: 1, y: 0, delay: 0.6, duration: 0.8 });
-      gsap.to("#right-illustration", { opacity: 1, x: 0, delay: 0.4, duration: 0.8 });
+{% block extra_js %}
+    <script src="../static/js/animated-bg.js"></script>
+    <script>
+        // Handle Get Started button click
+        function handleGetStarted() {
+            const dashboardUrl = window.location.origin + "/dashboard";
+            window.location.href = dashboardUrl;
+        }
 
-      
-      lucide.createIcons();
-    });
-  </script>
-</body>
+        // Animate on load 
+        window.addEventListener("DOMContentLoaded", () => {
+            gsap.to("#left-content", { opacity: 1, x: 0, duration: 0.8 });
+            gsap.to("#tagline", { opacity: 1, y: 0, delay: 0.2, duration: 0.8 });
+            gsap.to("#stats", { opacity: 1, y: 0, delay: 0.6, duration: 0.8 });
+            gsap.to("#right-illustration", { opacity: 1, x: 0, delay: 0.4, duration: 0.8 });
 
-</html>
+            // Initialize Lucide icons for homepage content
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
+{% endblock %}

@@ -23,10 +23,31 @@ def get_user_session_data():
                 'last_name': user.last_name,
                 'email': user.email,
                 'phone': user.phone,
-                'user_id': user.user_id
+                'user_id': user.user_id,
+                'created_at': user.created_at
             })
     
     return user_data
+
+def get_user_voting_stats(user_id):
+    """Get voting statistics for dashboard (placeholder data)"""
+    # TODO: Replace with actual database queries when voting system is implemented
+    return {
+        'total_votes': 'N/A',  # Will be replaced with actual count
+        'participation_rate': 'N/A',  # Will be calculated from events participated / total events
+        'events_participated': 'N/A',  # Count of events user voted in
+        'last_vote_date': 'N/A'  # Date of most recent vote
+    }
+
+def get_recent_votes(user_id, limit=3):
+    """Get recent voting activity (placeholder data)"""
+    # TODO: Replace with actual database queries when voting system is implemented
+    return []  # Will return list of recent votes
+
+def get_upcoming_elections(limit=10):
+    """Get upcoming elections for voting guides (placeholder data)"""
+    # TODO: Replace with actual database queries when event system is expanded
+    return []  # Will return list of upcoming elections
 
 def require_login(redirect_to="/login"):
     """Helper function to check if user is logged in"""
@@ -55,22 +76,25 @@ def homepage():
 @app.route('/register') # Registration page route
 def register_page():
     user_data = get_user_session_data()
-    return render_template('registration.html', **user_data)
+    user_data['page_type'] = 'register'
+    return render_template('auth.html', **user_data)
 
 @app.route('/login') # Login page route
 def login_page():
     user_data = get_user_session_data()
-    return render_template('login.html', **user_data)
+    user_data['page_type'] = 'login'
+    return render_template('auth.html', **user_data)
 
 @app.route("/contact") # Contact page route     
 def contact_page():
     user_data = get_user_session_data()
     return render_template('contact.html', **user_data)
 
-@app.route('/navComponent') # Navbar component route
-def navComponent():
-    user_data = get_user_session_data()
-    return render_template('navbar.html', **user_data)
+# Navbar component route - DEPRECATED: Now using unified base.html template
+# @app.route('/navComponent') # Navbar component route
+# def navComponent():
+#     user_data = get_user_session_data()
+#     return render_template('navbar.html', **user_data)
 
 # ================================
 # AUTHENTICATION ROUTES
@@ -177,16 +201,26 @@ def profile_page():
         return redirect(redirect_url)
     
     user_data = get_user_session_data()
+    user_id = session.get("user_id")
+    
+    # Add voting dashboard data
+    user_data.update({
+        'user_stats': get_user_voting_stats(user_id),
+        'recent_votes': get_recent_votes(user_id),
+        'upcoming_elections': get_upcoming_elections()
+    })
+    
     return render_template('profile.html', **user_data)
 
-@app.route('/settings') # Settings page
+@app.route('/settings') # Settings page (unified with profile)
 def settings_page():
     redirect_url = require_login()
     if redirect_url:
         return redirect(redirect_url)
     
     user_data = get_user_session_data()
-    return render_template('settings.html', **user_data)
+    # Use unified profile template for both profile and settings
+    return render_template('profile.html', **user_data)
 
 # ================================
 # PROFILE MANAGEMENT ROUTES
