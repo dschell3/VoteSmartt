@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, flash, url_for, redirect, session, re
 from flask_app import app
 from flask_app.models.userModels import User
 from flask_bcrypt import Bcrypt
+from urllib.parse import urlencode
 
 bcrypt = Bcrypt(app)
 
@@ -67,6 +68,11 @@ def require_login(redirect_to="/unauthorized"):
         return redirect_to
     
     return None  # No redirect needed
+
+# FIXME: Implement actual email sending logic
+def send_email(to_address, subject, body):
+    """Placeholder function to send emails"""
+    ...
 
 
 @app.route('/unauthorized')
@@ -186,6 +192,68 @@ def login():
 def logout():
     session.clear()
     return redirect("/")
+
+@app.route("/forgot_password", methods=['GET']) # Password reset request handler
+def forgot_password_page():
+    user_data = get_user_session_data()
+    return render_template('forgot_password.html', **user_data)
+
+@app.route("/forgotPassword", methods=['POST']) # Forgot password handler
+def forgot_password_request():
+    email = request.form.get('email', '').strip().lower()
+    
+    if not email:
+        flash("Please enter your email address")
+        return redirect("/reset_password")
+    
+    result = User.createPasswordReset(email)
+    token = result.get('token', '')
+    params = urlencode({'token': token})
+    reset_link = f"{request.host_url.rstrip('/')}/reset_password?{params}"
+
+    # TODO: Send the reset link via email, finish helper function send_email above
+
+    # Always show the same message to avoid revealing if the email exists
+    flash("If an account with that email exists, a password reset link has been sent.", "success")
+
+    flash("If an account with that email exists, a password reset link has been sent.", "info")
+    return redirect("/login")
+
+@app.route("/reset_password", methods=['GET']) # Password reset page
+def reset_password_page():
+    token = request.args.get('token', '').strip()
+    if not token:
+        flash("Invalid or missing password reset token", "error")
+        return redirect("/login")
+    
+    user_data = get_user_session_data()
+    return render_template('reset_password.html', token=token, **user_data)
+    
+@app.route("/resetPassword", methods=['POST']) # Password reset handler
+def reset_password_submit():
+    token = request.form.get('token', '')
+    new_password = request.form.get('new_password', '')
+    confirm_password = request.form.get('confirm_password', '')
+
+    if not token or not new_password or not confirm_password:
+        flash("All fields are required", "error")
+        return redirect(request.referrer or '/login')
+
+    if new_password != confirm_password:
+        flash("New passwords do not match", "error")
+        return redirect(request.referrer or '/login')
+
+    if len(new_password) < 8:
+        flash("Password must be at least 8 characters", "error")
+        return redirect(request.referrer or '/login')
+
+    ok = User.reset_password_with_token(token, new_password)
+    if not ok:
+        flash("Invalid or expired reset link", "error")
+        return redirect('/forgot-password')
+
+    flash("Password updated successfully! Please log in.", "success")
+    return redirect('/login')
 
 # ================================
 # PROTECTED PAGES (Login required)
