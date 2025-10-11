@@ -1,41 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Create Event - VoteSmart</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-100">
-    <main class="container mx-auto px-4 py-8">
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-bold mb-4">Create a New Event</h2>
-            <p class="text-gray-600 mb-4">Fill out the form below to add a new event to your dashboard.</p>
-
-            <form action="/createEventRoute" method="post" novalidate class="space-y-4">
-                <div>
-                    <label for="title" class="block font-medium mb-1">Event Title</label>
-                    <input id="title" name="title" type="text" placeholder="Enter event title" class="w-full px-4 py-2 border rounded" />
-                </div>
-
-                <div>
-                    <label for="start_time" class="block font-medium mb-1">Start Date</label>
-                    <input id="start_time" name="start_time" type="date" class="w-full px-4 py-2 border rounded" />
-                </div>
-
-                <div>
-                    <label for="end_time" class="block font-medium mb-1">End Date</label>
-                    <input id="end_time" name="end_time" type="date" class="w-full px-4 py-2 border rounded" />
-                </div>
-
-                <div>
-                    <label for="description" class="block font-medium mb-1">Description</label>
-                    <input id="description" name="description" type="text" placeholder="Enter event description" class="w-full px-4 py-2 border rounded" />
-                </div>
-
-
-                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors">Submit</button>
-            </form>
+    <main class="flex justify-center items-center min-h-screen bg-gray-100">
+        <div class="flex w-full max-w-4xl bg-white p-12 rounded-2xl shadow-2xl" style="background-color: #f8f9fa;">
+            <!-- 左侧插画 -->
+            <div class="hidden md:flex items-center justify-center w-1/2 pr-12">
+                <img src="/static/media/undraw_voting_3ygx.svg" alt="Event Person" class="w-96 h-96 object-contain mx-auto" />
+            </div>
+            <!-- 右侧表单 -->
+            <div class="w-full md:w-1/2">
+                <h2 class="text-3xl font-extrabold text-center mb-6 text-gray-800">Event Creation</h2>
+                <form action="/createEventRoute" method="post" novalidate class="space-y-5" autocomplete="off">
+                    <div>
+                        <label for="title" class="block font-medium mb-1 text-gray-700 text-sm">Event</label>
+                        <input id="title" name="title" type="text" placeholder="Enter new event" class="w-full px-4 py-3 border rounded-lg mb-2 text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" />
+                    </div>
+                    <div>
+                        <label for="description" class="block font-medium mb-1 text-gray-700 text-sm">Event Description</label>
+                        <input id="description" name="description" type="text" placeholder="Description of the event" class="w-full px-4 py-3 border rounded-lg mb-2 text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" />
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-1">
+                            <label for="start_time" class="block font-medium mb-1 text-gray-700 text-sm">Start Date</label>
+                            <input id="start_time" name="start_time" type="date" placeholder="Enter Date" class="w-full px-4 py-3 border rounded-lg mb-2 text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" lang="en" />
+                        </div>
+                        <div class="flex-1">
+                            <label for="end_time" class="block font-medium mb-1 text-gray-700 text-sm">End Date</label>
+                            <input id="end_time" name="end_time" type="date" placeholder="Enter Date" class="w-full px-4 py-3 border rounded-lg mb-2 text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" lang="en" />
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <h3 class="text-xl font-bold mb-4 text-gray-800">Add Candidates</h3>
+                        <div class="mb-6">
+                            <label for="candidate-name" class="block font-medium mb-1 text-gray-700 text-sm">Candidate</label>
+                            <input id="candidate-name" type="text" placeholder="Enter candidate" class="w-full px-4 py-3 border rounded-lg text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" />
+                        </div>
+                        <div class="mb-6">
+                            <label for="candidate-desc" class="block font-medium mb-1 text-gray-700 text-sm">Candidate Description</label>
+                            <input id="candidate-desc" type="text" placeholder="Not required" class="w-full px-4 py-3 border rounded-lg text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" />
+                        </div>
+                        <div class="space-y-2 mb-6" id="candidates-list">
+                            <!-- 动态添加的候选人输入框会显示在这里 -->
+                        </div>
+                        <button type="button" id="add-candidate-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-lg mb-6">Add Candidate</button>
+                    </div>
+                    <button type="submit" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-lg">Create Event</button>
+                </form>
+            </div>
         </div>
     </main>
+    <script>
+        const candidatesList = document.getElementById('candidates-list');
+        const addBtn = document.getElementById('add-candidate-btn');
+        const nameInput = document.getElementById('candidate-name');
+        const descInput = document.getElementById('candidate-desc');
+
+        addBtn.onclick = function () {
+            if (nameInput.value.trim() === "") return;
+            // 创建一个候选人输入框（只读，提交时用 name="candidates[]" 和 name="candidate_descs[]"）
+            //Create a candidate input box (read-only, using name="candidates[]" and name="candidate_descs[]" when submitting)
+            const wrapper = document.createElement('div');
+            wrapper.className = "flex space-x-2 items-center mt-2";
+            wrapper.innerHTML = `
+            <input type="text" name="candidates[]" value="${nameInput.value}" readonly class="px-4 py-2 border rounded w-1/2" />
+            <input type="text" name="candidate_descs[]" value="${descInput.value}" readonly class="px-4 py-2 border rounded w-1/2" />
+            <button type="button" class="text-red-500 remove-candidate">Remove</button>
+        `;
+            candidatesList.appendChild(wrapper);
+            nameInput.value = "";
+            descInput.value = "";
+        };
+
+        candidatesList.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-candidate')) {
+                e.target.parentElement.remove();
+            }
+        });
+    </script>
 </body>
+
 </html>
