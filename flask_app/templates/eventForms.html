@@ -10,11 +10,11 @@
 <body class="bg-gray-100">
     <main class="flex justify-center items-center min-h-screen bg-gray-100">
         <div class="flex w-full max-w-4xl bg-white p-12 rounded-2xl shadow-2xl" style="background-color: #f8f9fa;">
-            <!-- 左侧插画 -->
+            <!-- Illustration on the left -->
             <div class="hidden md:flex items-center justify-center w-1/2 pr-12">
                 <img src="/static/media/undraw_voting_3ygx.svg" alt="Event Person" class="w-96 h-96 object-contain mx-auto" />
             </div>
-            <!-- 右侧表单 -->
+            <!-- Form on the right -->
             <div class="w-full md:w-1/2">
                 <h2 class="text-3xl font-extrabold text-center mb-6 text-gray-800">Event Creation</h2>
                 <form action="/createEventRoute" method="post" novalidate class="space-y-5" autocomplete="off">
@@ -47,7 +47,7 @@
                             <input id="candidate-desc" type="text" placeholder="Not required" class="w-full px-4 py-3 border rounded-lg text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" />
                         </div>
                         <div class="space-y-2 mb-6" id="candidates-list">
-                            <!-- 动态添加的候选人输入框会显示在这里 -->
+                            <!-- The dynamically added candidate input boxes will be displayed here. -->
                         </div>
                         <button type="button" id="add-candidate-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-lg mb-6">Add Candidate</button>
                     </div>
@@ -64,7 +64,6 @@
 
         addBtn.onclick = function () {
             if (nameInput.value.trim() === "") return;
-            // 创建一个候选人输入框（只读，提交时用 name="candidates[]" 和 name="candidate_descs[]"）
             //Create a candidate input box (read-only, using name="candidates[]" and name="candidate_descs[]" when submitting)
             const wrapper = document.createElement('div');
             wrapper.className = "flex space-x-2 items-center mt-2";
