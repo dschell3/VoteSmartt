@@ -75,6 +75,22 @@ class User:
         WHERE user_id = %(user_id)s;
         """
         return connectToMySQL(db).query_db(query, data)
+
+    @staticmethod
+    def validatePassword(password: str) -> bool:
+        """Return True if the password meets minimum security requirements."""
+        import re
+        if not password or len(password) < 8:
+            return False
+        if not re.search(r"[A-Z]", password):
+            return False
+        if not re.search(r"[a-z]", password):
+            return False
+        if not re.search(r"\d", password):
+            return False
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+            return False
+        return True
     
     @classmethod
     def sendPasswordResetEmail(cls, email: str):
