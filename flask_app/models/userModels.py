@@ -77,84 +77,32 @@ class User:
         """
         return connectToMySQL(db).query_db(query, data)
     
+    @classmethod
+@classmethod
+    def sendPasswordResetEmail(cls, email: str):
+        """Check if the email belongs to a registered user; if so, send a reset link."""
+        user = cls.getUserByEmail({'email': email})
+        if not user:
+            # Return generic OK to avoid revealing whether email exists
+            return {"ok": True}
 
-    # Complete Password reset functionality
-    # create password_tokens_db table to store password reset tokens
-    # with fields: id, user_id, token_hash, expires_at, used_at, created_at
-    # token_hash is a sha256 hash of a random token we generate 
+        reset_link = f"http://localhost:5000/reset_password?email={email}"
+        # Replace this placeholder with your actual email sending logic
+        from flask_app.controllers.userController import send_email
+        send_email(
+            to_address=email,
+            subject="Password Reset Request",
+            body=f"Click the link below to reset your password:\n{reset_link}"
+        )
+        return {"ok": True}
     
     @classmethod
-    def createPasswordReset( cls, email: str) -> dict:
-        # look up user by email, returns none if not found
-        user = cls.getUserByEmail( { 'email': email } )
-        # generate a token either way
-        raw_token = secrets.token_urlsafe(32)     # send to user
-        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()  # store in db
-        expires_at = (datetime.now() + timedelta(minutes=RESET_TOKEN_MIN)).strftime("%Y-%m-%d %H:%M:%S")
-
-        if user:
-            # should we delete any existing tokens for this user first?
-            connectToMySQL(db).query_db(
-                """
-                UPDATE password_tokens_db SET used_at = NOW() 
-                WHERE user_id = %(uid)s AND used_at IS NULL;
-                """, 
-                { 'uid': user.user_id })
-            # store the hashed token
-            connectToMySQL(db).query_db(
-                """
-                INSERT INTO password_tokens_db (user_id, token_hash, expires_at) 
-                VALUES (%(uid)s, %(th)s, %(exp)s);
-                """, 
-                { 'uid': user.user_id, 'th': token_hash, 'exp': expires_at })
-            
-        # return the plain token so the caller can email a link to the user
-        return { "ok": True, "token": raw_token, "ttl_mins": RESET_TOKEN_MIN }
-    
-    @classmethod
-    def resetPasswordWithToken( cls, token: str, new_password: str) -> bool:
-        #check if token is valid, marks it used if so, and updates password
-        # returns true on success, false otherwise
-        token_hash = hashlib.sha256(token.encode()).hexdigest()
-
-        rows = connectToMySQL(db).query_db(
-            """
-            SELECT prt.id, prt.user_id, prt.expires_at, prt.used_at 
-            FROM password_tokens_db prt
-            WHERE pt.token_hash = %(th)s 
-              AND pt.used_at IS NULL 
-            LIMIT 1;
-            """, 
-            { 'th': token_hash })
-        
-        if not rows:
+    def resetPasswordByEmail(cls, email: str, new_password: str) -> bool:
+        """Directly update the user's password if the email exists."""
+        user = cls.getUserByEmail({'email': email})
+        if not user:
             return False
-        
-        rec = rows[0]
-        expires_at = rec['expires_at']
-        if isinstance(expires_at, str):
-            try:
-                expires_at = datetime.strptime(expires_at, "%Y-%m-%d %H:%M:%S")
-            except Exception:
-                return False
-            
-        if datetime.utcnow() > rec["expires_at"]:
-            return False
-        
-        # hash the new password and update the user record
-        bcrypt = Bcrypt()
+
         pw_hash = bcrypt.generate_password_hash(new_password)
-        ok = cls.updatePassword( { 'user_id': rec['user_id'], 'password': pw_hash } )
-        if not ok:
-            return False
-        
-        # mark the token used
-        connectToMySQL(db).query_db(
-            """
-            UPDATE password_tokens_db 
-            SET used_at = NOW() 
-            WHERE id = %(id)s;
-            """, 
-            { 'id': rec['id'] })
-        return True
+        return cls.updatePassword({'user_id': user.user_id, 'password': pw_hash})
     
