@@ -111,6 +111,8 @@ class User:
     @classmethod
     def resetPasswordByEmail(cls, email: str, new_password: str) -> bool:
         """Directly update the user's password if the email exists."""
+        if not cls.validatePassword(new_password):
+            return False
         user = cls.getUserByEmail({'email': email})
         if not user:
             return False
