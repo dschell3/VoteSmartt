@@ -6,21 +6,44 @@
 <main class="max-w-7xl mx-auto px-6 py-12">
     <style>
         /* Small pulse animation for timer dot */
-        @keyframes pulse-slow { 0% { transform: scale(1); opacity: 0.9 } 50% { transform: scale(1.35); opacity: 0.6 } 100% { transform: scale(1); opacity: 0.9 } }
-        .timer-dot { animation: pulse-slow 2s ease-in-out infinite; box-shadow: 0 0 6px rgba(99,102,241,0.18); }
+        @keyframes pulse-slow {
+            0% {
+                transform: scale(1);
+                opacity: 0.9
+            }
+
+            50% {
+                transform: scale(1.35);
+                opacity: 0.6
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0.9
+            }
+        }
+
+        .timer-dot {
+            animation: pulse-slow 2s ease-in-out infinite;
+            box-shadow: 0 0 6px rgba(99, 102, 241, 0.18);
+        }
     </style>
     <!-- Header / Hero -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
         <div>
             <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900">Events Dashboard</h1>
-            <p class="mt-2 text-sm text-slate-600">Manage your events — create, edit, or remove events and track schedules. only for admins</p>
+            <p class="mt-2 text-sm text-slate-600">Manage your events — create, edit, or remove events and track
+                schedules. only for admins</p>
         </div>
 
         <div class="flex items-center gap-3">
             <form action="/logout" method="post" class="hidden md:block">
-                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium">Logout</button>
+                <button type="submit"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium">Logout</button>
             </form>
-            <a href="/admin2" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-medium">Create Event</a>
+            <a href="/admin2"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-medium">Create
+                Event</a>
         </div>
     </div>
 
@@ -30,15 +53,21 @@
             <div class="flex-1 flex items-center gap-4">
                 <label for="search" class="sr-only">Search events</label>
                 <div class="relative w-full md:w-2/3 lg:w-1/2">
-                    <input id="search" name="search" type="search" placeholder="Search events by title or description" class="w-full border border-slate-200 rounded-lg py-3 pl-12 pr-4 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                    <input id="search" name="search" type="search" placeholder="Search events by title or description"
+                        class="w-full border border-slate-200 rounded-lg py-3 pl-12 pr-4 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
                     <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" />
+                        </svg>
                     </div>
                 </div>
 
                 <!-- Wider, modern select -->
                 <div class="w-48">
-                    <select id="filter" class="w-full border border-slate-200 rounded-lg py-3 px-3 bg-white text-sm shadow-sm">
+                    <select id="filter"
+                        class="w-full border border-slate-200 rounded-lg py-3 px-3 bg-white text-sm shadow-sm">
                         <option value="all">All Events</option>
                         <option value="upcoming">Upcoming</option>
                         <option value="past">Past</option>
@@ -47,27 +76,34 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <a href="/admin2" class="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 shadow">New Event</a>
+                <a href="/admin2"
+                    class="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 shadow">New
+                    Event</a>
             </div>
         </div>
         <!-- Subtle metadata row -->
-        <div class="mt-3 text-sm text-slate-500">Showing <strong>{{ allEvents|length if allEvents else 0 }}</strong> events · Sorted by start date</div>
+        <div class="mt-3 text-sm text-slate-500">Showing <strong>{{ allEvents|length if allEvents else 0 }}</strong>
+            events · Sorted by start date</div>
     </div>
 
     <!-- Events grid -->
     {% if allEvents %}
     <div id="eventsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for events in allEvents %}
-        <article class="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow relative overflow-hidden" data-status="{{ events.status|lower }}">
-            <a href="/event/{{ events.event_id }}" class="absolute inset-0 z-10" aria-label="Open {{ events.title }}"></a>
+        <article class="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow relative overflow-hidden"
+            data-status="{{ events.status|lower }}">
+            <a href="/event/{{ events.event_id }}" class="absolute inset-0 z-10"
+                aria-label="Open {{ events.title }}"></a>
             <div class="relative z-20 flex items-start justify-between gap-4">
                 <div>
                     <h3 class="text-lg font-semibold text-slate-900">{{ events.title }}</h3>
                     <p class="mt-2 text-sm text-slate-600 line-clamp-3">{{ events.description }}</p>
                 </div>
                 <div class="shrink-0 text-right">
-                    <div class="text-sm text-slate-500"><span class="event-start" data-start="{{ events.start_time or '' }}">&mdash;</span></div>
-                    <div class="text-xs text-slate-400">to <span class="event-end" data-end="{{ events.end_time or '' }}">&mdash;</span></div>
+                    <div class="text-sm text-slate-500"><span class="event-start"
+                            data-start="{{ events.start_time or '' }}">&mdash;</span></div>
+                    <div class="text-xs text-slate-400">to <span class="event-end"
+                            data-end="{{ events.end_time or '' }}">&mdash;</span></div>
                     <div class="mt-2 text-right">
                         <span class="inline-flex items-center gap-2 text-xs font-medium text-indigo-600">
                             <span class="timer-dot w-2 h-2 rounded-full bg-indigo-500/90"></span>
@@ -76,7 +112,10 @@
                     </div>
                     <!-- Status badge (Waiting / Open / Closed) -->
                     <div class="mt-3 text-right">
-                        <span class="event-status status-badge {% if events.status %}status-{{ events.status|lower }}{% endif %}" data-start="{{ events.start_time or '' }}" data-end="{{ events.end_time or '' }}">{{ events.status or '—' }}</span>
+                        <span
+                            class="event-status status-badge {% if events.status %}status-{{ events.status|lower }}{% endif %}"
+                            data-start="{{ events.start_time or '' }}" data-end="{{ events.end_time or '' }}">{{
+                            events.status or '—' }}</span>
                     </div>
                 </div>
             </div>
@@ -84,14 +123,17 @@
             <div class="mt-4 flex items-center justify-between z-20 relative">
                 <div class="flex items-center gap-2 event-actions opacity-90">
                     <a href="/event/{{ events.event_id }}" class="text-sm text-blue-600 hover:underline">View</a>
-                    <a href="/events/{{ events.event_id }}/edit" class="text-sm text-slate-600 hover:text-slate-800">Edit</a>
+                    <a href="/events/{{ events.event_id }}/edit"
+                        class="text-sm text-slate-600 hover:text-slate-800">Edit</a>
                     <form action="/events/{{ events.event_id }}/delete" method="post" class="inline">
                         <button type="submit" class="text-sm text-red-600 hover:underline">Delete</button>
                     </form>
                 </div>
             </div>
             <!-- subtle overlay to show clickable card on hover -->
-            <div class="absolute inset-0 z-0 pointer-events-none bg-gradient-to-b from-transparent to-white/40 opacity-0 hover:opacity-100 transition-opacity"></div>
+            <div
+                class="absolute inset-0 z-0 pointer-events-none bg-gradient-to-b from-transparent to-white/40 opacity-0 hover:opacity-100 transition-opacity">
+            </div>
         </article>
         {% endfor %}
     </div>
@@ -99,13 +141,16 @@
 
     <!-- Empty state -->
     <div class="bg-white border border-dashed border-slate-200 rounded-lg p-12 text-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" />
         </svg>
         <h3 class="mt-4 text-xl font-semibold text-slate-900">No events yet</h3>
         <p class="mt-2 text-sm text-slate-600">You don't have any events. Create your first event to get started.</p>
         <div class="mt-6">
-            <a href="/admin2" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-medium">Create Event</a>
+            <a href="/admin2"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-medium">Create
+                Event</a>
         </div>
     </div>
     {% endif %}
@@ -113,214 +158,254 @@
 {% endblock %}
 
 {% block extra_js %}
-    <!-- Day.js for nice date formatting (with relative time & parsing) -->
-    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/dayjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/customParseFormat.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/relativeTime.min.js"></script>
-    <script>
-        // Enable Day.js plugins
-        dayjs.extend(dayjs_plugin_customParseFormat);
-        dayjs.extend(dayjs_plugin_relativeTime);
+<!-- Day.js for nice date formatting (with relative time & parsing) -->
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/dayjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/customParseFormat.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/relativeTime.min.js"></script>
+<script>
+    // Enable Day.js plugins
+    dayjs.extend(dayjs_plugin_customParseFormat);
+    dayjs.extend(dayjs_plugin_relativeTime);
 
-        function tryParse(raw) {
-            if (!raw) return null;
-            // Try ISO / common DB formats first
-            let d = dayjs(raw);
+    function tryParse(raw) {
+        if (!raw) return null;
+        // Try ISO / common DB formats first
+        let d = dayjs(raw);
+        if (d.isValid()) return d;
+
+        // Try specific common formats
+        const formats = ['YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DDTHH:mm:ss', 'YYYY-MM-DD'];
+        for (const f of formats) {
+            d = dayjs(raw, f);
             if (d.isValid()) return d;
-
-            // Try specific common formats
-            const formats = ['YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DDTHH:mm:ss', 'YYYY-MM-DD'];
-            for (const f of formats) {
-                d = dayjs(raw, f);
-                if (d.isValid()) return d;
-            }
-
-            return null;
         }
 
-        function formatSingle(raw) {
-            const d = tryParse(raw);
-            if (!d) return '—';
+        return null;
+    }
 
-            // Determine if time-of-day is present in the raw string
-            const hasTime = /\d{1,2}:\d{2}/.test(raw);
-            const datePart = d.format(hasTime ? 'MMM D, YYYY · h:mm A' : 'MMM D, YYYY');
-            const relative = d.fromNow();
-            return `${datePart} — ${relative}`;
-        }
+    function formatSingle(raw) {
+        const d = tryParse(raw);
+        if (!d) return '—';
 
-        function formatEventTimes() {
-            document.querySelectorAll('.event-start').forEach(el => {
-                const raw = el.getAttribute('data-start') || '';
-                el.textContent = formatSingle(raw);
-            });
+        // Determine if time-of-day is present in the raw string
+        const hasTime = /\d{1,2}:\d{2}/.test(raw);
+        const datePart = d.format(hasTime ? 'MMM D, YYYY · h:mm A' : 'MMM D, YYYY');
+        const relative = d.fromNow();
+        return `${datePart} — ${relative}`;
+    }
 
-            document.querySelectorAll('.event-end').forEach(el => {
-                const raw = el.getAttribute('data-end') || '';
-                el.textContent = formatSingle(raw);
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', formatEventTimes);
-    </script>
-    <!-- Choices.js for enhanced select dropdown -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-    <style>
-        /* Choices.js subtle sizing override to avoid squished dropdown */
-        .choices__inner { padding: 0.5rem 0.75rem; min-height: 46px; }
-        .choices__list--single { line-height: 1.25; }
-        .choices__item--selectable { padding: 0 0; }
-        .choices__list--dropdown { border-radius: 0.5rem; box-shadow: 0 8px 20px rgba(2,6,23,0.08); }
-
-        /* Event card action polish */
-        .event-actions a, .event-actions button { font-size: 0.95rem; padding: 0.35rem 0.5rem; border-radius: 0.375rem; }
-        .event-card-meta { min-width: 10rem; }
-        /* Status badge styles */
-        .status-badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
-        .status-waiting { background: rgba(99,102,241,0.08); color: #6366F1; }
-        .status-open { background: rgba(34,197,94,0.12); color: #16A34A; }
-        .status-closed { background: rgba(248,113,113,0.12); color: #EF4444; }
-    </style>
-
-    <script>
-        // Initialize Choices for the filter select with nicer spacing
-        document.addEventListener('DOMContentLoaded', function(){
-            try {
-                const filter = document.getElementById('filter');
-                if (filter) {
-                    new Choices(filter, {
-                        searchEnabled: false,
-                        itemSelectText: '',
-                        shouldSort: false,
-                        position: 'bottom',
-                        classNames: {
-                            containerInner: 'choices__inner',
-                            listSingle: 'choices__list--single',
-                            inputCloned: 'choices__input--cloned'
-                        }
-                    });
-                }
-            } catch (e) {
-                console.warn('Choices init failed', e);
-            }
-
-            // Start timers after formatting dates
-                startEventTimers();
-                // Also update statuses on initial render
-                updateEventStatuses();
-                // Wire up search + filter behavior
-                setupFilters();
+    function formatEventTimes() {
+        document.querySelectorAll('.event-start').forEach(el => {
+            const raw = el.getAttribute('data-start') || '';
+            el.textContent = formatSingle(raw);
         });
 
-        function humanDuration(ms) {
-            if (ms <= 0) return 'Started';
-            const sec = Math.floor(ms / 1000) % 60;
-            const min = Math.floor(ms / (1000 * 60)) % 60;
-            const hrs = Math.floor(ms / (1000 * 60 * 60)) % 24;
-            const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-            if (days > 0) return `${days}d ${hrs}h`;
-            if (hrs > 0) return `${hrs}h ${min}m`;
-            if (min > 0) return `${min}m ${sec}s`;
-            return `${sec}s`;
-        }
+        document.querySelectorAll('.event-end').forEach(el => {
+            const raw = el.getAttribute('data-end') || '';
+            el.textContent = formatSingle(raw);
+        });
+    }
 
-        function startEventTimers() {
-            const timers = Array.from(document.querySelectorAll('.event-timer'));
-            if (!timers.length) return;
+    document.addEventListener('DOMContentLoaded', formatEventTimes);
+</script>
+<!-- Choices.js for enhanced select dropdown -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<style>
+    /* Choices.js subtle sizing override to avoid squished dropdown */
+    .choices__inner {
+        padding: 0.5rem 0.75rem;
+        min-height: 46px;
+    }
 
-            function tick() {
-                const now = dayjs();
-                timers.forEach(el => {
-                    const startRaw = el.getAttribute('data-start') || '';
-                    const start = tryParse(startRaw);
-                    if (!start) {
-                        el.textContent = '—';
-                        return;
+    .choices__list--single {
+        line-height: 1.25;
+    }
+
+    .choices__item--selectable {
+        padding: 0 0;
+    }
+
+    .choices__list--dropdown {
+        border-radius: 0.5rem;
+        box-shadow: 0 8px 20px rgba(2, 6, 23, 0.08);
+    }
+
+    /* Event card action polish */
+    .event-actions a,
+    .event-actions button {
+        font-size: 0.95rem;
+        padding: 0.35rem 0.5rem;
+        border-radius: 0.375rem;
+    }
+
+    .event-card-meta {
+        min-width: 10rem;
+    }
+
+    /* Status badge styles */
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-waiting {
+        background: rgba(99, 102, 241, 0.08);
+        color: #6366F1;
+    }
+
+    .status-open {
+        background: rgba(34, 197, 94, 0.12);
+        color: #16A34A;
+    }
+
+    .status-closed {
+        background: rgba(248, 113, 113, 0.12);
+        color: #EF4444;
+    }
+</style>
+
+<script>
+    // Initialize Choices for the filter select with nicer spacing
+    document.addEventListener('DOMContentLoaded', function () {
+        try {
+            const filter = document.getElementById('filter');
+            if (filter) {
+                new Choices(filter, {
+                    searchEnabled: false,
+                    itemSelectText: '',
+                    shouldSort: false,
+                    position: 'bottom',
+                    classNames: {
+                        containerInner: 'choices__inner',
+                        listSingle: 'choices__list--single',
+                        inputCloned: 'choices__input--cloned'
                     }
-                    const diff = start.diff(now);
-                    el.textContent = diff > 0 ? `Starts in ${humanDuration(diff)}` : `Started ${humanDuration(-diff)} ago`;
                 });
-                // Update statuses each tick as well
-                updateEventStatuses();
             }
-
-            tick();
-            setInterval(tick, 1000);
+        } catch (e) {
+            console.warn('Choices init failed', e);
         }
 
-        // Compute and update event status badges
-        function updateEventStatuses() {
-            const now = dayjs();
-            document.querySelectorAll('.event-status').forEach(el => {
-                const startRaw = el.getAttribute('data-start') || '';
-                const endRaw = el.getAttribute('data-end') || '';
-                const start = tryParse(startRaw);
-                const end = tryParse(endRaw);
+        // Start timers after formatting dates
+        startEventTimers();
+        // Also update statuses on initial render
+        updateEventStatuses();
+        // Wire up search + filter behavior
+        setupFilters();
+    });
 
-                // Default when dates invalid
-                if (!start && !end) {
-                    el.textContent = 'Unknown';
-                    el.className = 'event-status status-badge';
+    function humanDuration(ms) {
+        if (ms <= 0) return 'Started';
+        const sec = Math.floor(ms / 1000) % 60;
+        const min = Math.floor(ms / (1000 * 60)) % 60;
+        const hrs = Math.floor(ms / (1000 * 60 * 60)) % 24;
+        const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+        if (days > 0) return `${days}d ${hrs}h`;
+        if (hrs > 0) return `${hrs}h ${min}m`;
+        if (min > 0) return `${min}m ${sec}s`;
+        return `${sec}s`;
+    }
+
+    function startEventTimers() {
+        const timers = Array.from(document.querySelectorAll('.event-timer'));
+        if (!timers.length) return;
+
+        function tick() {
+            const now = dayjs();
+            timers.forEach(el => {
+                const startRaw = el.getAttribute('data-start') || '';
+                const start = tryParse(startRaw);
+                if (!start) {
+                    el.textContent = '—';
                     return;
                 }
+                const diff = start.diff(now);
+                el.textContent = diff > 0 ? `Starts in ${humanDuration(diff)}` : `Started ${humanDuration(-diff)} ago`;
+            });
+            // Update statuses each tick as well
+            updateEventStatuses();
+        }
 
-                // Determine status
-                let status = 'Waiting';
-                if (start && end) {
-                    if (now.isBefore(start)) status = 'Waiting';
-                    else if (now.isAfter(end)) status = 'Closed';
-                    else status = 'Open';
-                } else if (start && !end) {
-                    status = now.isBefore(start) ? 'Waiting' : 'Open';
-                } else if (!start && end) {
-                    status = now.isAfter(end) ? 'Closed' : 'Open';
+        tick();
+        setInterval(tick, 1000);
+    }
+
+    // Compute and update event status badges
+    function updateEventStatuses() {
+        const now = dayjs();
+        document.querySelectorAll('.event-status').forEach(el => {
+            const startRaw = el.getAttribute('data-start') || '';
+            const endRaw = el.getAttribute('data-end') || '';
+            const start = tryParse(startRaw);
+            const end = tryParse(endRaw);
+
+            // Default when dates invalid
+            if (!start && !end) {
+                el.textContent = 'Unknown';
+                el.className = 'event-status status-badge';
+                return;
+            }
+
+            // Determine status
+            let status = 'Waiting';
+            if (start && end) {
+                if (now.isBefore(start)) status = 'Waiting';
+                else if (now.isAfter(end)) status = 'Closed';
+                else status = 'Open';
+            } else if (start && !end) {
+                status = now.isBefore(start) ? 'Waiting' : 'Open';
+            } else if (!start && end) {
+                status = now.isAfter(end) ? 'Closed' : 'Open';
+            }
+
+            // Apply classes
+            el.textContent = status;
+            el.classList.remove('status-waiting', 'status-open', 'status-closed');
+            if (status === 'Waiting') el.classList.add('status-waiting');
+            if (status === 'Open') el.classList.add('status-open');
+            if (status === 'Closed') el.classList.add('status-closed');
+        });
+    }
+
+    // Client-side filtering
+    function setupFilters() {
+        const searchInput = document.getElementById('search');
+        const filterSelect = document.getElementById('filter');
+        const grid = document.getElementById('eventsGrid');
+        if (!grid) return;
+
+        function applyFilters() {
+            const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            const status = filterSelect ? (filterSelect.value || 'all') : 'all';
+
+            Array.from(grid.children).forEach(card => {
+                const title = (card.querySelector('h3') || { textContent: '' }).textContent.toLowerCase();
+                const desc = (card.querySelector('p') || { textContent: '' }).textContent.toLowerCase();
+                const cardStatus = card.getAttribute('data-status') || 'unknown';
+
+                const matchesQuery = q === '' || title.includes(q) || desc.includes(q);
+                const matchesStatus = status === 'all' || (status === 'upcoming' && cardStatus === 'waiting') || (status === 'past' && cardStatus === 'closed') || (status === 'open' && cardStatus === 'open');
+
+                if (matchesQuery && matchesStatus) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
                 }
-
-                // Apply classes
-                el.textContent = status;
-                el.classList.remove('status-waiting','status-open','status-closed');
-                if (status === 'Waiting') el.classList.add('status-waiting');
-                if (status === 'Open') el.classList.add('status-open');
-                if (status === 'Closed') el.classList.add('status-closed');
             });
         }
 
-        // Client-side filtering
-        function setupFilters() {
-            const searchInput = document.getElementById('search');
-            const filterSelect = document.getElementById('filter');
-            const grid = document.getElementById('eventsGrid');
-            if (!grid) return;
-
-            function applyFilters() {
-                const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
-                const status = filterSelect ? (filterSelect.value || 'all') : 'all';
-
-                Array.from(grid.children).forEach(card => {
-                    const title = (card.querySelector('h3') || {textContent:''}).textContent.toLowerCase();
-                    const desc = (card.querySelector('p') || {textContent:''}).textContent.toLowerCase();
-                    const cardStatus = card.getAttribute('data-status') || 'unknown';
-
-                    const matchesQuery = q === '' || title.includes(q) || desc.includes(q);
-                    const matchesStatus = status === 'all' || (status === 'upcoming' && cardStatus === 'waiting') || (status === 'past' && cardStatus === 'closed') || (status === 'open' && cardStatus === 'open');
-
-                    if (matchesQuery && matchesStatus) {
-                        card.style.display = '';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            }
-
-            let debounceTimer;
-            function debounceApply() {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(applyFilters, 150);
-            }
-
-            if (searchInput) searchInput.addEventListener('input', debounceApply);
-            if (filterSelect) filterSelect.addEventListener('change', applyFilters);
+        let debounceTimer;
+        function debounceApply() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(applyFilters, 150);
         }
-    </script>
+
+        if (searchInput) searchInput.addEventListener('input', debounceApply);
+        if (filterSelect) filterSelect.addEventListener('change', applyFilters);
+    }
+</script>
 {% endblock %}
