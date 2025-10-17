@@ -5,7 +5,6 @@ from flask_app import app
 from datetime import datetime, timedelta
 from flask_bcrypt import Bcrypt
 
-RESET_TOKEN_MIN = 30 
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$') 
 
 db = "mydb"
