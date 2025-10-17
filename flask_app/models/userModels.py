@@ -19,8 +19,7 @@ class User:
         self.phone = data['phone']
         self.created_at = data['created_at']
         
-        
-    
+
     @classmethod
     def register(cls, data):
         query = '''
@@ -79,7 +78,6 @@ class User:
     @staticmethod
     def validatePassword(password: str) -> bool:
         """Return True if the password meets minimum security requirements."""
-        import re
         if not password or len(password) < 8:
             return False
         if not re.search(r"[A-Z]", password):
