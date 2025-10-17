@@ -131,8 +131,8 @@ def register():
     if not email or '@' not in email:
         errors.append("Please enter a valid email address")
     
-    if len(password) < 8:
-        errors.append("Password must be at least 8 characters")
+    if not User.validatePassword(password):
+        errors.append("Password does not meet requirements")
     
     if len(phone) < 10:
         errors.append("Please enter a valid phone number")
@@ -233,8 +233,9 @@ def reset_password_submit():
         flash("Passwords do not match", "error")
         return redirect(request.referrer or '/login')
 
-    if len(new_password) < 8:
-        flash("Password must be at least 8 characters", "error")
+    if not User.validatePassword(new_password):
+        # frontend shows specifics; backend just gates with a boolean
+        flash("Password does not meet requirements", "error")
         return redirect(request.referrer or '/login')
 
     ok = User.resetPasswordByEmail(email, new_password)
@@ -338,8 +339,8 @@ def change_password():
         return redirect("/settings")
     
     # Validate new password strength
-    if len(new_password) < 8:
-        flash("New password must be at least 8 characters", "error")
+    if not User.validatePassword(new_password):
+        flash("New password does not meet requirements", "error")
         return redirect("/settings")
     
     # Update password
