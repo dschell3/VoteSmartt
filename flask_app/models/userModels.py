@@ -78,7 +78,6 @@ class User:
         return connectToMySQL(db).query_db(query, data)
     
     @classmethod
-@classmethod
     def sendPasswordResetEmail(cls, email: str):
         """Check if the email belongs to a registered user; if so, send a reset link."""
         user = cls.getUserByEmail({'email': email})
