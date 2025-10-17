@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, flash, url_for, redirect, session, re
 from flask_app import app
 from flask_app.models.userModels import User
 from flask_bcrypt import Bcrypt
+from urllib.parse import urlencode
 
 bcrypt = Bcrypt(app)
 
@@ -68,6 +69,11 @@ def require_login(redirect_to="/unauthorized"):
     
     return None  # No redirect needed
 
+# FIXME: Implement actual email sending logic
+def send_email(to_address, subject, body):
+    """Placeholder function to send emails"""
+    ...
+
 
 @app.route('/unauthorized')
 def unauthorized_page():
@@ -125,8 +131,8 @@ def register():
     if not email or '@' not in email:
         errors.append("Please enter a valid email address")
     
-    if len(password) < 8:
-        errors.append("Password must be at least 8 characters")
+    if not User.validatePassword(password):
+        errors.append("Password does not meet requirements")
     
     if len(phone) < 10:
         errors.append("Please enter a valid phone number")
@@ -186,6 +192,59 @@ def login():
 def logout():
     session.clear()
     return redirect("/")
+
+@app.route("/forgot_password", methods=['GET']) # Password reset request handler
+def forgot_password_page():
+    user_data = get_user_session_data()
+    return render_template('forgot_password.html', **user_data)
+
+@app.route("/forgotPassword", methods=['POST']) # Forgot password handler
+def forgot_password_request():
+    email = request.form.get('email', '').strip().lower()
+    if not email:
+        flash("Please enter your email address", "error")
+        return redirect("/forgot_password")
+
+    # Send reset email if account exists (but don’t reveal status)
+    User.sendPasswordResetEmail(email)
+    flash("If an account with that email exists, a reset link has been sent.", "success")
+    return redirect("/login")
+
+@app.route("/reset_password", methods=['GET']) # Password reset page
+def reset_password_page():
+    email = request.args.get('email', '').strip().lower()
+    if not email:
+        flash("Invalid or missing email parameter.", "error")
+        return redirect("/login")
+
+    return render_template("reset_password.html", email=email)
+    
+@app.route("/resetPassword", methods=['POST']) # Password reset handler
+def reset_password_submit():
+    email = request.form.get('email', '').strip().lower()
+    new_password = request.form.get('new_password', '')
+    confirm_password = request.form.get('confirm_password', '')
+
+    if not email or not new_password or not confirm_password:
+        flash("All fields are required", "error")
+        return redirect(request.referrer or '/login')
+
+    if new_password != confirm_password:
+        flash("Passwords do not match", "error")
+        return redirect(request.referrer or '/login')
+
+    if not User.validatePassword(new_password):
+        # frontend shows specifics; backend just gates with a boolean
+        flash("Password does not meet requirements", "error")
+        return redirect(request.referrer or '/login')
+
+    ok = User.resetPasswordByEmail(email, new_password)
+    if not ok:
+        flash("No account found for that email.", "error")
+        return redirect('/forgot_password')
+
+    flash("Password successfully updated. Please log in.", "success")
+    return redirect('/login')
 
 # ================================
 # PROTECTED PAGES (Login required)
@@ -280,8 +339,8 @@ def change_password():
         return redirect("/settings")
     
     # Validate new password strength
-    if len(new_password) < 8:
-        flash("New password must be at least 8 characters", "error")
+    if not User.validatePassword(new_password):
+        flash("New password does not meet requirements", "error")
         return redirect("/settings")
     
     # Update password

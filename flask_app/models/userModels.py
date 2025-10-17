@@ -1,8 +1,9 @@
 from flask_app.config.mysqlconnection import connectToMySQL
-import re
+import re, secrets, hashlib
 from flask import flash
 from flask_app import app
 from datetime import datetime, timedelta
+from flask_bcrypt import Bcrypt
 
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$') 
 
@@ -18,8 +19,7 @@ class User:
         self.phone = data['phone']
         self.created_at = data['created_at']
         
-        
-    
+
     @classmethod
     def register(cls, data):
         query = '''
@@ -74,3 +74,49 @@ class User:
         WHERE user_id = %(user_id)s;
         """
         return connectToMySQL(db).query_db(query, data)
+
+    @staticmethod
+    def validatePassword(password: str) -> bool:
+        """Return True if the password meets minimum security requirements."""
+        if not password or len(password) < 8:
+            return False
+        if not re.search(r"[A-Z]", password):
+            return False
+        if not re.search(r"[a-z]", password):
+            return False
+        if not re.search(r"\d", password):
+            return False
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+            return False
+        return True
+    
+    @classmethod
+    def sendPasswordResetEmail(cls, email: str):
+        """Check if the email belongs to a registered user; if so, send a reset link."""
+        user = cls.getUserByEmail({'email': email})
+        if not user:
+            # Return generic OK to avoid revealing whether email exists
+            return {"ok": True}
+
+        reset_link = f"http://localhost:5000/reset_password?email={email}"
+        # Replace this placeholder with your actual email sending logic
+        from flask_app.controllers.userController import send_email
+        send_email(
+            to_address=email,
+            subject="Password Reset Request",
+            body=f"Click the link below to reset your password:\n{reset_link}"
+        )
+        return {"ok": True}
+    
+    @classmethod
+    def resetPasswordByEmail(cls, email: str, new_password: str) -> bool:
+        """Directly update the user's password if the email exists."""
+        if not cls.validatePassword(new_password):
+            return False
+        user = cls.getUserByEmail({'email': email})
+        if not user:
+            return False
+
+        pw_hash = bcrypt.generate_password_hash(new_password)
+        return cls.updatePassword({'user_id': user.user_id, 'password': pw_hash})
+    
