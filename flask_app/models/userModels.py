@@ -4,6 +4,7 @@ from flask import flash
 from flask_app import app
 from datetime import datetime, timedelta
 from flask_bcrypt import Bcrypt
+import bcrypt
 
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$') 
 
