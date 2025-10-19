@@ -1,7 +1,11 @@
 from flask_app.config.mysqlconnection import connectToMySQL
 import re
+from datetime import datetime
 
 db = "mydb"
+
+# columns in event table are: event_id, title, description, start_time, end_time,
+#                             created_at, created_byFK, status
 
 class Events:
     def __init__(self, data):
@@ -81,6 +85,14 @@ class Events:
             events.append(cls(row))
         return events
 
+    @staticmethod
+    def isOpen(start_time, end_time, now: datetime) -> bool:
+        return bool(start_time and end_time and start_time <= now <= end_time)
 
-
-
+    @staticmethod
+    def hasEnded(end_time, now: datetime) -> bool:
+        return bool(end_time and now > end_time)
+    
+    @staticmethod
+    def updateStatus():
+        ...

@@ -1,14 +1,16 @@
+import bcrypt
 from flask_app.config.mysqlconnection import connectToMySQL
 import re, secrets, hashlib
 from flask import flash
 from flask_app import app
 from datetime import datetime, timedelta
-from flask_bcrypt import Bcrypt
-import bcrypt
 
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$') 
 
 db = "mydb"
+
+# columns in user table are: user_id, first_name, last_name, email,
+#                            password, isAdmin, created_at, phone
 
 class User:
     def __init__(self, data):
@@ -19,6 +21,7 @@ class User:
         self.password = data['password']
         self.phone = data['phone']
         self.created_at = data['created_at']
+        # FIXME...isAdmin Default already set to 0 in DB schema?
         
 
     @classmethod
@@ -99,6 +102,7 @@ class User:
             # Return generic OK to avoid revealing whether email exists
             return {"ok": True}
 
+        # FIXME: Ask Jang how to create a link/token for password reset
         reset_link = f"http://localhost:5000/reset_password?email={email}"
         # Replace this placeholder with your actual email sending logic
         from flask_app.controllers.userController import send_email
@@ -121,3 +125,21 @@ class User:
         pw_hash = bcrypt.generate_password_hash(new_password)
         return cls.updatePassword({'user_id': user.user_id, 'password': pw_hash})
     
+    @classmethod
+    def isAdmin(cls, user_id: int) -> bool:
+        query = "SELECT isAdmin FROM user WHERE user_id = %s;"
+        result = connectToMySQL(db).query_db(query, (user_id,))
+        return bool(result and result[0].get("isAdmin") == 1)
+    
+    @classmethod
+    def getAllUsers(cls):
+        # Get all users ordered by creation date descending, w/o password information
+        query = """
+        SELECT user_id, first_name, last_name, email, phone, created_at, isAdmin
+        FROM user
+        ORDER BY created_at DESC;
+        """
+        return connectToMySQL(db).query_db(query)
+    
+    
+
