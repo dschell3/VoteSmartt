@@ -1,5 +1,6 @@
 from flask import request, redirect, flash, session
 from flask_app import app
+from flask_app.models.userModels import User
 from flask_app.models.voteModels import Vote
 from flask_app.models.eventsModels import Events
 from datetime import datetime
@@ -11,12 +12,25 @@ def require_login(redirect_to="/unauthorized"):
         return redirect_to
     return None
 
+# block to ensure admins cannot vote
+def require_not_admin():
+    u = User.getUserByID({'user_id': session['user_id']})
+    # User.getUserByID returns a User instance; it includes isAdmin in your model.
+    if u and getattr(u, "isAdmin", 0) == 1:
+        flash("Administrators cannot vote on events.", "error")
+        return True
+    return False
+
 @app.route('/vote/cast', methods=['POST'])
 def cast_vote():
     # Ensure user is logged in
     redirect_url = require_login()
     if redirect_url:
         return redirect(redirect_url) # Redirect if not logged in
+    
+    # Ensure user is not admin
+    if require_not_admin():
+        return redirect('/eventList')
 
     # Get form data
     event_id = request.form.get('event_id')
@@ -69,6 +83,10 @@ def delete_vote():
     if redirect_url:
         return redirect(redirect_url)
 
+    # Ensure user is not admin
+    if require_not_admin():
+        return redirect('/eventList')
+    
     # Get form data
     event_id = request.form.get('event_id')
     if not event_id:
