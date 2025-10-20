@@ -36,9 +36,9 @@ class User:
         return connectToMySQL(db).query_db(query, data)
     
     @classmethod
-    def isAdmin(cls, user_id: int) -> bool:
-        query = "SELECT isAdmin FROM user WHERE user_id = %s;"
-        result = connectToMySQL(db).query_db(query, (user_id,))
+    def isAdmin(cls, data):
+        query = "SELECT isAdmin FROM user WHERE user_id = %(user_id)s;"
+        result = connectToMySQL(db).query_db(query, data)
         return bool(result and result[0].get("isAdmin") == 1)
 
     @classmethod
@@ -94,6 +94,39 @@ class User:
         WHERE user_id = %(user_id)s;
         """
         return connectToMySQL(db).query_db(query, data)
+    
+    @classmethod
+    def sendPasswordResetEmail(cls, data):
+        """Check if the email belongs to a registered user; if so, send a reset link."""
+        user = cls.getUserByEmail({'email': data['email']})
+        if not user:
+            # Return generic OK to avoid revealing whether email exists
+            return {"ok": True}
+
+        # FIXME: Ask Jang how to create a link/token for password reset
+        # FIXME: Implement actual send_email() function
+        reset_link = f"http://localhost:5000/reset_password?email={data['email']}"
+        from flask_app.controllers.userController import send_email
+        send_email(
+            to_address=data['email'],
+            subject="Password Reset Request",
+            body=f"Click the link below to reset your password:\n{reset_link}"
+        )
+        return {"ok": True}
+
+    @classmethod
+    def resetPasswordByEmail(cls, data):
+        """Directly update the user's password if the email exists."""
+        new_password = data['new_password']
+        if not cls.validatePassword(new_password):
+            return False
+
+        user = cls.getUserByEmail({'email': data['email']})
+        if not user:
+            return False
+
+        pw_hash = bcrypt.generate_password_hash(new_password)
+        return cls.updatePassword({'user_id': user.user_id, 'password': pw_hash})
 
     @staticmethod
     def validatePassword(password: str) -> bool:
@@ -109,39 +142,3 @@ class User:
         if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
             return False
         return True
-    
-    @classmethod
-    def sendPasswordResetEmail(cls, email: str):
-        """Check if the email belongs to a registered user; if so, send a reset link."""
-        user = cls.getUserByEmail({'email': email})
-        if not user:
-            # Return generic OK to avoid revealing whether email exists
-            return {"ok": True}
-
-        # FIXME: Ask Jang how to create a link/token for password reset
-        # FIXME: Implement actual send_email() function
-        reset_link = f"http://localhost:5000/reset_password?email={email}"
-        # Replace this placeholder with your actual email sending logic
-        from flask_app.controllers.userController import send_email
-        send_email(
-            to_address=email,
-            subject="Password Reset Request",
-            body=f"Click the link below to reset your password:\n{reset_link}"
-        )
-        return {"ok": True}
-    
-    @classmethod
-    def resetPasswordByEmail(cls, email: str, new_password: str) -> bool:
-        """Directly update the user's password if the email exists."""
-        if not cls.validatePassword(new_password):
-            return False
-        user = cls.getUserByEmail({'email': email})
-        if not user:
-            return False
-
-        pw_hash = bcrypt.generate_password_hash(new_password)
-        return cls.updatePassword({'user_id': user.user_id, 'password': pw_hash})
-    
-  
-    
-
