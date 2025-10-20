@@ -34,6 +34,12 @@ class User:
         (%(first_name)s, %(last_name)s, %(email)s, %(password)s, %(phone)s, NOW());
         '''
         return connectToMySQL(db).query_db(query, data)
+    
+    @classmethod
+    def isAdmin(cls, user_id: int) -> bool:
+        query = "SELECT isAdmin FROM user WHERE user_id = %s;"
+        result = connectToMySQL(db).query_db(query, (user_id,))
+        return bool(result and result[0].get("isAdmin") == 1)
 
     @classmethod
     def getUserByEmail(cls, data):
@@ -56,6 +62,16 @@ class User:
         except Exception:
             return None
     
+    @classmethod
+    def getAllUsers(cls):
+        # Get all users ordered by creation date descending, w/o password information
+        query = """
+        SELECT user_id, first_name, last_name, email, phone, created_at, isAdmin
+        FROM user
+        ORDER BY created_at DESC;
+        """
+        return connectToMySQL(db).query_db(query)
+
     @classmethod
     def updateProfile(cls, data):
         query = """
@@ -103,6 +119,7 @@ class User:
             return {"ok": True}
 
         # FIXME: Ask Jang how to create a link/token for password reset
+        # FIXME: Implement actual send_email() function
         reset_link = f"http://localhost:5000/reset_password?email={email}"
         # Replace this placeholder with your actual email sending logic
         from flask_app.controllers.userController import send_email
@@ -125,21 +142,6 @@ class User:
         pw_hash = bcrypt.generate_password_hash(new_password)
         return cls.updatePassword({'user_id': user.user_id, 'password': pw_hash})
     
-    @classmethod
-    def isAdmin(cls, user_id: int) -> bool:
-        query = "SELECT isAdmin FROM user WHERE user_id = %s;"
-        result = connectToMySQL(db).query_db(query, (user_id,))
-        return bool(result and result[0].get("isAdmin") == 1)
-    
-    @classmethod
-    def getAllUsers(cls):
-        # Get all users ordered by creation date descending, w/o password information
-        query = """
-        SELECT user_id, first_name, last_name, email, phone, created_at, isAdmin
-        FROM user
-        ORDER BY created_at DESC;
-        """
-        return connectToMySQL(db).query_db(query)
-    
+  
     
 

@@ -1,8 +1,11 @@
 from flask import Flask, jsonify, request, flash, url_for, redirect, session, render_template
 from flask_app import app
+from flask_app.models.eventsModels import Events
 from flask_app.models.userModels import User
 from flask_bcrypt import Bcrypt
 from urllib.parse import urlencode
+
+from flask_app.models.voteModels import Vote
 
 bcrypt = Bcrypt(app)
 
@@ -43,12 +46,20 @@ def get_user_voting_stats(user_id):
 def get_recent_votes(user_id, limit=3):
     """Get recent voting activity (placeholder data)"""
     # TODO: Replace with actual database queries when voting system is implemented
-    return []  # Will return list of recent votes
+    
+    rows = Vote.getRecentForUser({'user_id': user_id, 'limit': limit}) or []
+    return rows  # Will return list of recent votes
 
 def get_upcoming_elections(limit=10):
     """Get upcoming elections for voting guides (placeholder data)"""
     # TODO: Replace with actual database queries when event system is expanded
-    return []  # Will return list of upcoming elections
+    
+    events = Events.getAll()
+    now = datetime.now()
+    upcoming = [e for e in events if Events._parse_dt(getattr(e, 'start_time', None)) and
+                                   Events._parse_dt(e.start_time) > now]
+    return sorted(upcoming, key=lambda e: Events._parse_dt(e.start_time))[:limit]
+    # Will return list of upcoming elections
 
 def require_login(redirect_to="/unauthorized"):
     """Helper function to check if user is logged in"""

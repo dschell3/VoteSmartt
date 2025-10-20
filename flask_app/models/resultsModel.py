@@ -8,7 +8,6 @@ class Result:
         self.event_id = data['event_id']
         self.rows = self.calculate()
 
-    @classmethod
     def calculate(self):
         rows = Vote.tallyVotesForEvent({'event_id': self.event_id})
         total = sum(r['votes'] for r in rows) if rows else 0
@@ -19,4 +18,3 @@ class Result:
     # Additional methods for result processing can be added here as needed.
     # How does frontend expect the results to be formatted?
 
-    

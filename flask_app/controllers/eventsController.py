@@ -4,7 +4,7 @@ from flask_app.models.eventsModels import Events
 from flask_app.models.userModels import User
 from datetime import datetime
 
-
+# should this be in /models and called in here instead?
 def _parse_datetime(value):
     """Try to parse a DB value into a naive datetime. Return None if impossible."""
     if not value:
@@ -25,7 +25,7 @@ def _parse_datetime(value):
     except Exception:
         return None
 
-
+# should this be in /models and called in here instead?
 def _compute_status(start_raw, end_raw):
     now = datetime.now()
     start = _parse_datetime(start_raw)
@@ -44,6 +44,7 @@ def _compute_status(start_raw, end_raw):
     if end and not start:
         return 'Closed' if now > end else 'Open'
     return 'Unknown'
+
 
 def get_user_session_data():
     """Helper function to get user session data for templates"""
@@ -64,6 +65,9 @@ def get_user_session_data():
             })
     
     return user_data
+
+def is_logged_in():
+    return 'user_id' in session
 
 def require_login(redirect_to="/unauthorized"):
     """Helper function to check if user is logged in"""
@@ -109,9 +113,6 @@ def createEventRoute():
 
     Events.createEvent(data)
     return redirect(url_for('eventList'))
-
-def is_logged_in():
-    return 'user_id' in session
 
 @app.route('/eventList')
 def eventList():

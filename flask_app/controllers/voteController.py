@@ -74,7 +74,7 @@ def cast_vote():
 def change_vote():
     # Is this needed? Ask Jang, 'vote/cast' already handles changing votes.
     # Just maintains two routes for clarity? I would remove this unless needed.
-    return cast_vote
+    return cast_vote()
 
 @app.route('/vote/delete', methods=['POST'])
 def delete_vote():
