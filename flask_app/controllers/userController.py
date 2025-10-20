@@ -46,7 +46,6 @@ def get_user_voting_stats(user_id):
 def get_recent_votes(user_id, limit=3):
     """Get recent voting activity (placeholder data)"""
     # TODO: Replace with actual database queries when voting system is implemented
-    
     rows = Vote.getRecentForUser({'user_id': user_id, 'limit': limit}) or []
     return rows  # Will return list of recent votes
 
