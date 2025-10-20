@@ -12,6 +12,7 @@ bcrypt = Bcrypt(app)
 # ================================
 # HELPER FUNCTIONS
 # ================================
+# should any of these be in /models and called in here instead? all that aren't login or session related?
 
 def get_user_session_data():
     """Helper function to get user session data for templates"""
@@ -43,11 +44,14 @@ def get_user_voting_stats(user_id):
         'last_vote_date': 'N/A'  # Date of most recent vote
     }
 
+# this just reimplements Vote.getRecentForUser...remove?
 def get_recent_votes(user_id, limit=3):
     """Get recent voting activity (placeholder data)"""
     # TODO: Replace with actual database queries when voting system is implemented
+    
     rows = Vote.getRecentForUser({'user_id': user_id, 'limit': limit}) or []
     return rows  # Will return list of recent votes
+
 
 def get_upcoming_elections(limit=10):
     """Get upcoming elections for voting guides (placeholder data)"""
@@ -178,6 +182,7 @@ def register():
         print(f"Registration error: {e}")
         return redirect("/register")
 
+
 @app.route('/loginRoute', methods=['POST']) # Login handler
 def login():
     email = request.form.get('email', '').strip().lower()
@@ -198,15 +203,18 @@ def login():
     session['first_name'] = user.first_name
     return redirect(url_for('eventList'))
 
+
 @app.route("/logout", methods=['POST']) # Logout handler
 def logout():
     session.clear()
     return redirect("/")
 
+
 @app.route("/forgot_password", methods=['GET']) # Password reset request handler
 def forgot_password_page():
     user_data = get_user_session_data()
     return render_template('forgot_password.html', **user_data)
+
 
 @app.route("/forgotPassword", methods=['POST']) # Forgot password handler
 def forgot_password_request():
@@ -220,6 +228,7 @@ def forgot_password_request():
     flash("If an account with that email exists, a reset link has been sent.", "success")
     return redirect("/login")
 
+
 @app.route("/reset_password", methods=['GET']) # Password reset page
 def reset_password_page():
     email = request.args.get('email', '').strip().lower()
@@ -229,6 +238,7 @@ def reset_password_page():
 
     return render_template("reset_password.html", email=email)
     
+
 @app.route("/resetPassword", methods=['POST']) # Password reset handler
 def reset_password_submit():
     email = request.form.get('email', '').strip().lower()
@@ -255,6 +265,7 @@ def reset_password_submit():
 
     flash("Password successfully updated. Please log in.", "success")
     return redirect('/login')
+
 
 # ================================
 # PROTECTED PAGES (Login required)
