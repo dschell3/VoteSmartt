@@ -132,10 +132,10 @@ class Events:
     
     # was at top of eventsController.py, moved here for reuse
     @staticmethod
-    def _compute_status(start_raw, end_raw):
+    def compute_status(start_raw, end_raw):
         now = datetime.now()
-        start = Events._parse_datetime(start_raw)
-        end = Events._parse_datetime(end_raw)
+        start = Events.parse_datetime(start_raw)
+        end = Events.parse_datetime(end_raw)
 
         if not start and not end:
             return 'Unknown'
@@ -153,7 +153,7 @@ class Events:
 
     # was at top of eventsController.py, moved here for reuse
     @staticmethod
-    def _parse_datetime(value):
+    def parse_datetime(value):
         """Try to parse a DB value into a naive datetime. Return None if impossible."""
         if not value:
             return None

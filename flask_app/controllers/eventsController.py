@@ -68,7 +68,7 @@ def createEventRoute():
     }
     # compute initial status from provided times
     try:
-        data['status'] = Events._compute_status(data.get('start_time'), data.get('end_time'))
+        data['status'] = Events.compute_status(data.get('start_time'), data.get('end_time'))
     except Exception:
         data['status'] = 'Unknown'
 
@@ -85,7 +85,7 @@ def eventList():
     # Compute server-side status for each event so templates have a reliable value
     for ev in allEvents:
         try:
-            ev.status = Events._compute_status(ev.start_time, ev.end_time)
+            ev.status = Events.compute_status(ev.start_time, ev.end_time)
         except Exception:
             ev.status = 'Unknown'
     # Sort events so that Open events appear first, then Waiting, then Closed.
@@ -99,7 +99,7 @@ def eventList():
 
     def _safe_parse_start(ev):
         """Return a datetime for sorting; None becomes far-future to push it to the end."""
-        dt = Events._parse_datetime(ev.start_time)
+        dt = Events.parse_datetime(ev.start_time)
         if dt is None:
             # Use a far-future date so events without start_time appear after dated ones
             return datetime.max
@@ -131,7 +131,7 @@ def singleEvent(event_id):
     # compute statuses for recommendations
     for r in recs:
         try:
-            r.status = Events._compute_status(r.start_time, r.end_time)
+            r.status = Events.compute_status(r.start_time, r.end_time)
         except Exception:
             r.status = 'Unknown'
 

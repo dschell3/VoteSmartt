@@ -59,9 +59,12 @@ def get_upcoming_elections(limit=10):
     
     events = Events.getAll()
     now = datetime.now()
-    upcoming = [e for e in events if Events._parse_dt(getattr(e, 'start_time', None)) and
-                                   Events._parse_dt(e.start_time) > now]
-    return sorted(upcoming, key=lambda e: Events._parse_dt(e.start_time))[:limit]
+    upcoming = [
+    e for e in events
+    if Events.parse_datetime(getattr(e, 'start_time', None)) and
+       Events.parse_datetime(e.start_time) > datetime.now()
+    ]
+    return sorted(upcoming, key=lambda e: Events.parse_datetime(e.start_time))[:limit]
     # Will return list of upcoming elections
 
 def require_login(redirect_to="/unauthorized"):

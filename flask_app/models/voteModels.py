@@ -89,8 +89,8 @@ class Vote:
         return connectToMySQL(db).query_db(query, data)
     
     @staticmethod
-    def isEditable(event: 'Events', now: datetime) -> bool:
+    def isEditable(event: 'Events') -> bool:
         # Determine if the vote can be edited based on the event's status.
-        return event.isOpen(event.start_time, event.end_time, now)
+        return Events._compute_status(event.start_time, event.end_time) == "Open"
 
     

@@ -12,21 +12,21 @@ class Option:
 
     @classmethod
     def getByEventId(cls, data):
-        query = "SELECT * FROM 'option' WHERE option_event_id = %(event_id)s;"
+        query = "SELECT * FROM `option` WHERE option_event_id = %(event_id)s;"
         results = connectToMySQL(db).query_db(query, data)
         return [cls(row) for row in results]
     
     @classmethod
     def create(cls, data):
         query = '''
-        INSERT INTO 'option' (option_text, option_event_id)
+        INSERT INTO `option` (option_text, option_event_id)
         VALUES (%(option_text)s, %(option_event_id)s);
         '''
         return connectToMySQL(db).query_db(query, data)
     
     @classmethod
     def deleteByEventId(cls, data):
-        query = "DELETE FROM 'option' WHERE option_event_id = %(event_id)s;"
+        query = "DELETE FROM `option` WHERE option_event_id = %(event_id)s;"
         return connectToMySQL(db).query_db(query, data)
     
     # Additional methods for updating or retrieving options can be added here as needed.

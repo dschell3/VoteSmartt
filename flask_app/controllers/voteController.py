@@ -15,14 +15,14 @@ def require_login(redirect_to="/unauthorized"):
 # block to ensure admins cannot vote
 def require_not_admin():
     u = User.getUserByID({'user_id': session['user_id']})
-    if u and u.isInstanceAdmin:
+    if u and u.is_admin:
         flash("Administrators cannot vote on events.", "error")
         return True
     return False
 
 def require_admin():
     u = User.getUserByID({'user_id': session.get('user_id')})
-    if not u or u.isAdmin != 1:
+    if not u or u.is_admin == False:
         flash("Admins only.", "error")
         return True
     return False
@@ -52,7 +52,7 @@ def cast_vote():
         return redirect('/eventList')
     
     # Ensure event is open for voting
-    if not Events.isOpen(event.start_time, event.end_time, datetime.now()):
+    if Events.compute_status(event.start_time, event.end_time) != "Open":
         flash("Voting is closed for this event.", "error")
         return redirect(f"/event/{event_id}")
 

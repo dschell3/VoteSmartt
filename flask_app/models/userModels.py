@@ -24,7 +24,7 @@ class User:
         # FIXME...isAdminByID Default already set to 0 in DB schema? role not on UML
         
     @property
-    def isInstanceAdmin(self) -> bool:
+    def is_admin(self) -> bool:
         return self.isAdminByID == 1
 
     @classmethod
