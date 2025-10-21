@@ -1,8 +1,12 @@
+from datetime import datetime
 from flask import Flask, jsonify, request, flash, url_for, redirect, session, render_template
 from flask_app import app
+from flask_app.models.eventsModels import Events
 from flask_app.models.userModels import User
 from flask_bcrypt import Bcrypt
 from urllib.parse import urlencode
+
+from flask_app.models.voteModels import Vote
 
 bcrypt = Bcrypt(app)
 
@@ -40,15 +44,28 @@ def get_user_voting_stats(user_id):
         'last_vote_date': 'N/A'  # Date of most recent vote
     }
 
+# this just reimplements Vote.getRecentForUser...remove?
 def get_recent_votes(user_id, limit=3):
     """Get recent voting activity (placeholder data)"""
     # TODO: Replace with actual database queries when voting system is implemented
-    return []  # Will return list of recent votes
+    
+    rows = Vote.getRecentForUser({'user_id': user_id, 'limit': limit}) or []
+    return rows  # Will return list of recent votes
+
 
 def get_upcoming_elections(limit=10):
     """Get upcoming elections for voting guides (placeholder data)"""
     # TODO: Replace with actual database queries when event system is expanded
-    return []  # Will return list of upcoming elections
+    
+    events = Events.getAll()
+    now = datetime.now()
+    upcoming = [
+    e for e in events
+    if Events.parse_datetime(getattr(e, 'start_time', None)) and
+       Events.parse_datetime(e.start_time) > datetime.now()
+    ]
+    return sorted(upcoming, key=lambda e: Events.parse_datetime(e.start_time))[:limit]
+    # Will return list of upcoming elections
 
 def require_login(redirect_to="/unauthorized"):
     """Helper function to check if user is logged in"""
@@ -73,7 +90,6 @@ def require_login(redirect_to="/unauthorized"):
 def send_email(to_address, subject, body):
     """Placeholder function to send emails"""
     ...
-
 
 @app.route('/unauthorized')
 def unauthorized_page():
@@ -168,6 +184,7 @@ def register():
         print(f"Registration error: {e}")
         return redirect("/register")
 
+
 @app.route('/loginRoute', methods=['POST']) # Login handler
 def login():
     email = request.form.get('email', '').strip().lower()
@@ -188,15 +205,18 @@ def login():
     session['first_name'] = user.first_name
     return redirect(url_for('eventList'))
 
+
 @app.route("/logout", methods=['POST']) # Logout handler
 def logout():
     session.clear()
     return redirect("/")
 
+
 @app.route("/forgot_password", methods=['GET']) # Password reset request handler
 def forgot_password_page():
     user_data = get_user_session_data()
     return render_template('forgot_password.html', **user_data)
+
 
 @app.route("/forgotPassword", methods=['POST']) # Forgot password handler
 def forgot_password_request():
@@ -206,9 +226,10 @@ def forgot_password_request():
         return redirect("/forgot_password")
 
     # Send reset email if account exists (but don’t reveal status)
-    User.sendPasswordResetEmail(email)
+    User.sendPasswordResetEmail({'email': email})
     flash("If an account with that email exists, a reset link has been sent.", "success")
     return redirect("/login")
+
 
 @app.route("/reset_password", methods=['GET']) # Password reset page
 def reset_password_page():
@@ -219,6 +240,7 @@ def reset_password_page():
 
     return render_template("reset_password.html", email=email)
     
+
 @app.route("/resetPassword", methods=['POST']) # Password reset handler
 def reset_password_submit():
     email = request.form.get('email', '').strip().lower()
@@ -238,13 +260,15 @@ def reset_password_submit():
         flash("Password does not meet requirements", "error")
         return redirect(request.referrer or '/login')
 
-    ok = User.resetPasswordByEmail(email, new_password)
+    pw_hash = bcrypt.generate_password_hash(new_password)
+    ok = User.resetPasswordByEmail({'email': email, 'password': pw_hash})
     if not ok:
         flash("No account found for that email.", "error")
         return redirect('/forgot_password')
 
     flash("Password successfully updated. Please log in.", "success")
     return redirect('/login')
+
 
 # ================================
 # PROTECTED PAGES (Login required)

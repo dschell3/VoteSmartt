@@ -3,13 +3,16 @@ import re, secrets, hashlib
 from flask import flash
 from flask_app import app
 from datetime import datetime, timedelta
-from flask_bcrypt import Bcrypt
 
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$') 
 
 db = "mydb"
 
 class User:
+    db = db
+    # columns in user table are: user_id, first_name, last_name, email,
+    #                            password, isAdminByID, created_at, phone
+    
     def __init__(self, data):
         self.user_id = data['user_id']
         self.first_name = data['first_name']
@@ -18,7 +21,12 @@ class User:
         self.password = data['password']
         self.phone = data['phone']
         self.created_at = data['created_at']
+        self.isAdminByID = int(data.get('isAdminByID', 0)) # always set an int 0/1
+        # FIXME...isAdminByID Default already set to 0 in DB schema? role not on UML
         
+    @property
+    def is_admin(self) -> bool:
+        return self.isAdminByID == 1
 
     @classmethod
     def register(cls, data):
@@ -30,6 +38,12 @@ class User:
         (%(first_name)s, %(last_name)s, %(email)s, %(password)s, %(phone)s, NOW());
         '''
         return connectToMySQL(db).query_db(query, data)
+    
+    @classmethod
+    def isAdminByID(cls, data):
+        query = "SELECT isAdminByID FROM user WHERE user_id = %(user_id)s;"
+        result = connectToMySQL(db).query_db(query, data)
+        return bool(result and result[0].get("isAdminByID") == 1)
 
     @classmethod
     def getUserByEmail(cls, data):
@@ -53,6 +67,16 @@ class User:
             return None
     
     @classmethod
+    def getAllUsers(cls):
+        # Get all users ordered by creation date descending, w/o password information
+        query = """
+        SELECT user_id, first_name, last_name, email, phone, created_at, isAdminByID
+        FROM user
+        ORDER BY created_at DESC;
+        """
+        return connectToMySQL(db).query_db(query)
+
+    @classmethod
     def updateProfile(cls, data):
         query = """
         UPDATE user
@@ -74,6 +98,34 @@ class User:
         WHERE user_id = %(user_id)s;
         """
         return connectToMySQL(db).query_db(query, data)
+    
+    @classmethod
+    def sendPasswordResetEmail(cls, data):
+        """Check if the email belongs to a registered user; if so, send a reset link."""
+        user = cls.getUserByEmail({'email': data['email']})
+        if not user:
+            # Return generic OK to avoid revealing whether email exists
+            return {"ok": True}
+
+        # FIXME: Ask Jang how to create a link/token for password reset
+        # FIXME: Implement actual send_email() function
+        reset_link = f"http://localhost:5000/reset_password?email={data['email']}"
+        from flask_app.controllers.userController import send_email
+        send_email(
+            to_address=data['email'],
+            subject="Password Reset Request",
+            body=f"Click the link below to reset your password:\n{reset_link}"
+        )
+        return {"ok": True}
+
+    @classmethod
+    def resetPasswordByEmail(cls, data):
+        """Directly update the user's password if the email exists.
+        Expects data['password'] to ALREADY be hashed."""
+        user = cls.getUserByEmail({'email': data['email']})
+        if not user:
+            return False
+        return cls.updatePassword({'user_id': user.user_id, 'password': data['password']})
 
     @staticmethod
     def validatePassword(password: str) -> bool:
@@ -89,34 +141,3 @@ class User:
         if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
             return False
         return True
-    
-    @classmethod
-    def sendPasswordResetEmail(cls, email: str):
-        """Check if the email belongs to a registered user; if so, send a reset link."""
-        user = cls.getUserByEmail({'email': email})
-        if not user:
-            # Return generic OK to avoid revealing whether email exists
-            return {"ok": True}
-
-        reset_link = f"http://localhost:5000/reset_password?email={email}"
-        # Replace this placeholder with your actual email sending logic
-        from flask_app.controllers.userController import send_email
-        send_email(
-            to_address=email,
-            subject="Password Reset Request",
-            body=f"Click the link below to reset your password:\n{reset_link}"
-        )
-        return {"ok": True}
-    
-    @classmethod
-    def resetPasswordByEmail(cls, email: str, new_password: str) -> bool:
-        """Directly update the user's password if the email exists."""
-        if not cls.validatePassword(new_password):
-            return False
-        user = cls.getUserByEmail({'email': email})
-        if not user:
-            return False
-
-        pw_hash = bcrypt.generate_password_hash(new_password)
-        return cls.updatePassword({'user_id': user.user_id, 'password': pw_hash})
-    
