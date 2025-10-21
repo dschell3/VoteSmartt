@@ -17,69 +17,197 @@
             <!-- Form on the right -->
             <div class="w-full md:w-1/2">
                 <h2 class="text-3xl font-extrabold text-center mb-6 text-gray-800">Event Creation</h2>
-                <form action="/createEventRoute" method="post" novalidate class="space-y-5" autocomplete="off">
+                <form action="/createEventRoute" method="post" novalidate class="space-y-6" autocomplete="off">
                     <div>
-                        <label for="title" class="block font-medium mb-1 text-gray-700 text-sm">Event</label>
-                        <input id="title" name="title" type="text" placeholder="Enter new event" class="w-full px-4 py-3 border rounded-lg mb-2 text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" />
+                        <label for="title" class="block font-medium mb-2 text-gray-700 text-base">Event</label>
+                        <input id="title" name="title" type="text" placeholder="Enter new event" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white placeholder-gray-400 text-base" />
                     </div>
                     <div>
-                        <label for="description" class="block font-medium mb-1 text-gray-700 text-sm">Event Description</label>
-                        <input id="description" name="description" type="text" placeholder="Description of the event" class="w-full px-4 py-3 border rounded-lg mb-2 text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" />
+                        <label for="description" class="block font-medium mb-2 text-gray-700 text-base">Event Description</label>
+                        <input id="description" name="description" type="text" placeholder="Description of the event" class="w-full px-4 py-3 border border-gray-300 rounded-lg mb-2 text-gray-700 bg-white placeholder-gray-400 text-base" />
                     </div>
-                    <div class="flex gap-4">
-                        <div class="flex-1">
-                            <label for="start_time" class="block font-medium mb-1 text-gray-700 text-sm">Start Date</label>
-                            <input id="start_time" name="start_time" type="date" placeholder="Enter Date" class="w-full px-4 py-3 border rounded-lg mb-2 text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" lang="en" />
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="start_time" class="block font-medium mb-2 text-gray-700 text-base">Start Date</label>
+                            <input id="start_time" name="start_time" type="date" placeholder="Enter Date" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white placeholder-gray-400 text-base" lang="en" />
                         </div>
-                        <div class="flex-1">
-                            <label for="end_time" class="block font-medium mb-1 text-gray-700 text-sm">End Date</label>
-                            <input id="end_time" name="end_time" type="date" placeholder="Enter Date" class="w-full px-4 py-3 border rounded-lg mb-2 text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" lang="en" />
+                        <div>
+                            <label for="end_time" class="block font-medium mb-2 text-gray-700 text-base">End Date</label>
+                            <input id="end_time" name="end_time" type="date" placeholder="Enter Date" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white placeholder-gray-400 text-base" lang="en" />
                         </div>
                     </div>
                     <div class="mt-8">
-                        <h3 class="text-xl font-bold mb-4 text-gray-800">Add Candidates</h3>
-                        <div class="mb-6">
-                            <label for="candidate-name" class="block font-medium mb-1 text-gray-700 text-sm">Candidate</label>
-                            <input id="candidate-name" type="text" placeholder="Enter candidate" class="w-full px-4 py-3 border rounded-lg text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" />
+                        <h3 class="text-xl font-bold mb-4 text-gray-800">Candidates</h3>
+                        <button type="button" id="add-candidate-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-base mb-4 flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Add Candidate
+                        </button>
+                        <div class="space-y-3 mb-6" id="candidates-list">
+                            <!-- The dynamically added candidate cards will be displayed here. -->
                         </div>
-                        <div class="mb-6">
-                            <label for="candidate-desc" class="block font-medium mb-1 text-gray-700 text-sm">Candidate Description</label>
-                            <input id="candidate-desc" type="text" placeholder="Not required" class="w-full px-4 py-3 border rounded-lg text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" />
-                        </div>
-                        <div class="space-y-2 mb-6" id="candidates-list">
-                            <!-- The dynamically added candidate input boxes will be displayed here. -->
-                        </div>
-                        <button type="button" id="add-candidate-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-lg mb-6">Add Candidate</button>
                     </div>
                     <button type="submit" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-lg">Create Event</button>
                 </form>
             </div>
         </div>
     </main>
+
+    <!-- Modal for adding candidates -->
+    <div id="candidate-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Candidate Details</h3>
+                    <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="modal-candidate-name" class="block text-sm font-medium text-gray-700 mb-1">Candidate</label>
+                        <input id="modal-candidate-name" type="text" placeholder="Enter candidate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                    </div>
+                    
+                    <div>
+                        <label for="modal-candidate-desc" class="block text-sm font-medium text-gray-700 mb-1">Candidate Details</label>
+                        <textarea id="modal-candidate-desc" rows="3" placeholder="Enter candidate details..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"></textarea>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button id="cancel-candidate" type="button" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition duration-200">Cancel</button>
+                    <button id="save-candidate" type="button" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition duration-200">Add Candidate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const candidatesList = document.getElementById('candidates-list');
         const addBtn = document.getElementById('add-candidate-btn');
-        const nameInput = document.getElementById('candidate-name');
-        const descInput = document.getElementById('candidate-desc');
+        const modal = document.getElementById('candidate-modal');
+        const modalNameInput = document.getElementById('modal-candidate-name');
+        const modalDescInput = document.getElementById('modal-candidate-desc');
+        const saveBtn = document.getElementById('save-candidate');
+        const cancelBtn = document.getElementById('cancel-candidate');
+        const closeBtn = document.getElementById('close-modal');
 
+        // Open modal
         addBtn.onclick = function () {
-            if (nameInput.value.trim() === "") return;
-            //Create a candidate input box (read-only, using name="candidates[]" and name="candidate_descs[]" when submitting)
-            const wrapper = document.createElement('div');
-            wrapper.className = "flex space-x-2 items-center mt-2";
-            wrapper.innerHTML = `
-            <input type="text" name="candidates[]" value="${nameInput.value}" readonly class="px-4 py-2 border rounded w-1/2" />
-            <input type="text" name="candidate_descs[]" value="${descInput.value}" readonly class="px-4 py-2 border rounded w-1/2" />
-            <button type="button" class="text-red-500 remove-candidate">Remove</button>
-        `;
-            candidatesList.appendChild(wrapper);
-            nameInput.value = "";
-            descInput.value = "";
+            modal.classList.remove('hidden');
+            modalNameInput.focus();
         };
 
+        // Close modal functions
+        function closeModal() {
+            modal.classList.add('hidden');
+            modalNameInput.value = '';
+            modalDescInput.value = '';
+            modalNameInput.classList.remove('border-red-500');
+            delete modal.dataset.editingIndex;
+        }
+
+        cancelBtn.onclick = closeModal;
+        closeBtn.onclick = closeModal;
+
+        // Close modal when clicking outside
+        modal.onclick = function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        };
+
+        // Save candidate
+        saveBtn.onclick = function () {
+            const name = modalNameInput.value.trim();
+            const desc = modalDescInput.value.trim();
+            
+            if (name === "") {
+                modalNameInput.focus();
+                modalNameInput.classList.add('border-red-500');
+                return;
+            }
+            
+            modalNameInput.classList.remove('border-red-500');
+            
+            // Check if we're editing an existing candidate
+            if (modal.dataset.editingIndex) {
+                updateExistingCandidate(modal.dataset.editingIndex, name, desc);
+                delete modal.dataset.editingIndex;
+            } else {
+                addNewCandidate(name, desc);
+            }
+            
+            closeModal();
+        };
+
+        function addNewCandidate(name, desc) {
+            // Create candidate card exactly like design - no labels, just content
+            const candidateCard = document.createElement('div');
+            candidateCard.className = "bg-white border border-gray-200 rounded-lg p-5 mb-4 shadow-lg hover:shadow-xl transition-shadow duration-200";
+            candidateCard.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <input type="hidden" name="candidates[]" value="${name}" />
+                        <input type="hidden" name="candidate_descs[]" value="${desc}" />
+                        <h4 class="font-semibold text-gray-900 text-base mb-2">Candidate</h4>
+                        <p class="text-sm text-gray-600 mb-3">${name}</p>
+                        <p class="text-sm text-gray-600">${desc || 'No description provided'}</p>
+                    </div>
+                    <div class="flex space-x-2 ml-4">
+                        <button type="button" class="edit-candidate px-3 py-1 text-blue-500 hover:text-blue-700 text-sm font-medium border border-blue-300 rounded hover:bg-blue-50 hover:border-blue-500 transition duration-200 shadow-sm hover:shadow-md">Edit</button>
+                        <button type="button" class="remove-candidate px-3 py-1 text-red-500 hover:text-red-700 text-sm font-medium border border-red-300 rounded hover:bg-red-50 hover:border-red-500 transition duration-200 shadow-sm hover:shadow-md">Delete</button>
+                    </div>
+                </div>
+            `;
+            
+            candidatesList.appendChild(candidateCard);
+        }
+
+        function updateExistingCandidate(index, name, desc) {
+            const cards = candidatesList.children;
+            if (cards[index]) {
+                const card = cards[index];
+                // Update hidden inputs
+                card.querySelector('input[name="candidates[]"]').value = name;
+                card.querySelector('input[name="candidate_descs[]"]').value = desc;
+                // Update display text - simplified structure
+                const paragraphs = card.querySelectorAll('p');
+                paragraphs[0].textContent = name; // First p tag (candidate name)
+                paragraphs[1].textContent = desc || 'No description provided'; // Second p tag (description)
+            }
+        }
+
+        // Remove candidate and Edit candidate
         candidatesList.addEventListener('click', function (e) {
             if (e.target.classList.contains('remove-candidate')) {
-                e.target.parentElement.remove();
+                e.target.closest('.bg-white').remove();
+            } else if (e.target.classList.contains('edit-candidate')) {
+                const card = e.target.closest('.bg-white');
+                const index = Array.from(candidatesList.children).indexOf(card);
+                const name = card.querySelector('input[name="candidates[]"]').value;
+                const desc = card.querySelector('input[name="candidate_descs[]"]').value;
+                
+                // Populate modal with existing data
+                modalNameInput.value = name;
+                modalDescInput.value = desc;
+                modal.dataset.editingIndex = index;
+                
+                // Open modal for editing
+                modal.classList.remove('hidden');
+                modalNameInput.focus();
+            }
+        });
+
+        // Handle Enter key in modal
+        modalNameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                saveBtn.click();
             }
         });
     </script>
