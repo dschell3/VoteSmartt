@@ -13,7 +13,6 @@ bcrypt = Bcrypt(app)
 # ================================
 # HELPER FUNCTIONS
 # ================================
-# should any of these be in /models and called in here instead? all that aren't login or session related?
 
 def get_user_session_data():
     """Helper function to get user session data for templates"""
@@ -88,7 +87,6 @@ def require_login(redirect_to="/unauthorized"):
 def send_email(to_address, subject, body):
     """Placeholder function to send emails"""
     ...
-
 
 @app.route('/unauthorized')
 def unauthorized_page():
@@ -259,7 +257,8 @@ def reset_password_submit():
         flash("Password does not meet requirements", "error")
         return redirect(request.referrer or '/login')
 
-    ok = User.resetPasswordByEmail({'email': email, 'new_password': new_password})
+    pw_hash = bcrypt.generate_password_hash(new_password)
+    ok = User.resetPasswordByEmail({'email': email, 'password': pw_hash})
     if not ok:
         flash("No account found for that email.", "error")
         return redirect('/forgot_password')

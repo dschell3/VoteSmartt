@@ -4,47 +4,8 @@ from flask_app.models.eventsModels import Events
 from flask_app.models.userModels import User
 from datetime import datetime
 
-# should this be in /models and called in here instead?
-def _parse_datetime(value):
-    """Try to parse a DB value into a naive datetime. Return None if impossible."""
-    if not value:
-        return None
-    # If it's already a datetime object
-    if isinstance(value, datetime):
-        return value
-    # Try common string formats
-    fmts = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"]
-    for f in fmts:
-        try:
-            return datetime.strptime(value, f)
-        except Exception:
-            continue
-    # Fallback: try fromisoformat
-    try:
-        return datetime.fromisoformat(value)
-    except Exception:
-        return None
-
-# should this be in /models and called in here instead?
-def _compute_status(start_raw, end_raw):
-    now = datetime.now()
-    start = _parse_datetime(start_raw)
-    end = _parse_datetime(end_raw)
-
-    if not start and not end:
-        return 'Unknown'
-    if start and end:
-        if now < start:
-            return 'Waiting'
-        if now > end:
-            return 'Closed'
-        return 'Open'
-    if start and not end:
-        return 'Waiting' if now < start else 'Open'
-    if end and not start:
-        return 'Closed' if now > end else 'Open'
-    return 'Unknown'
-
+# moved compute_status and _parse_datetime to Events model for reuse
+# so other controllers can call it too
 
 def get_user_session_data():
     """Helper function to get user session data for templates"""
@@ -107,7 +68,7 @@ def createEventRoute():
     }
     # compute initial status from provided times
     try:
-        data['status'] = _compute_status(data.get('start_time'), data.get('end_time'))
+        data['status'] = Events._compute_status(data.get('start_time'), data.get('end_time'))
     except Exception:
         data['status'] = 'Unknown'
 
@@ -124,7 +85,7 @@ def eventList():
     # Compute server-side status for each event so templates have a reliable value
     for ev in allEvents:
         try:
-            ev.status = _compute_status(ev.start_time, ev.end_time)
+            ev.status = Events._compute_status(ev.start_time, ev.end_time)
         except Exception:
             ev.status = 'Unknown'
     # Sort events so that Open events appear first, then Waiting, then Closed.
@@ -138,7 +99,7 @@ def eventList():
 
     def _safe_parse_start(ev):
         """Return a datetime for sorting; None becomes far-future to push it to the end."""
-        dt = _parse_datetime(ev.start_time)
+        dt = Events._parse_datetime(ev.start_time)
         if dt is None:
             # Use a far-future date so events without start_time appear after dated ones
             return datetime.max
@@ -170,7 +131,7 @@ def singleEvent(event_id):
     # compute statuses for recommendations
     for r in recs:
         try:
-            r.status = _compute_status(r.start_time, r.end_time)
+            r.status = Events._compute_status(r.start_time, r.end_time)
         except Exception:
             r.status = 'Unknown'
 

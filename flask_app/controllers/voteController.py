@@ -15,9 +15,15 @@ def require_login(redirect_to="/unauthorized"):
 # block to ensure admins cannot vote
 def require_not_admin():
     u = User.getUserByID({'user_id': session['user_id']})
-    # User.getUserByID returns a User instance; it includes isAdmin in your model.
-    if u and getattr(u, "isAdmin", 0) == 1:
+    if u and u.isInstanceAdmin:
         flash("Administrators cannot vote on events.", "error")
+        return True
+    return False
+
+def require_admin():
+    u = User.getUserByID({'user_id': session.get('user_id')})
+    if not u or u.isAdmin != 1:
+        flash("Admins only.", "error")
         return True
     return False
 

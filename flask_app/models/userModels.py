@@ -1,4 +1,3 @@
-import bcrypt
 from flask_app.config.mysqlconnection import connectToMySQL
 import re, secrets, hashlib
 from flask import flash
@@ -10,7 +9,7 @@ EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$')
 db = "mydb"
 
 # columns in user table are: user_id, first_name, last_name, email,
-#                            password, isAdmin, created_at, phone
+#                            password, isAdminByID, created_at, phone
 
 class User:
     def __init__(self, data):
@@ -21,9 +20,12 @@ class User:
         self.password = data['password']
         self.phone = data['phone']
         self.created_at = data['created_at']
-        self.role = data.get('isAdmin', 0)
-        # FIXME...isAdmin Default already set to 0 in DB schema? role not on UML
+        self.isAdminByID = int(data.get('isAdminByID', 0)) # always set an int 0/1
+        # FIXME...isAdminByID Default already set to 0 in DB schema? role not on UML
         
+    @property
+    def isInstanceAdmin(self) -> bool:
+        return self.isAdminByID == 1
 
     @classmethod
     def register(cls, data):
@@ -37,10 +39,10 @@ class User:
         return connectToMySQL(db).query_db(query, data)
     
     @classmethod
-    def isAdmin(cls, data):
-        query = "SELECT isAdmin FROM user WHERE user_id = %(user_id)s;"
+    def isAdminByID(cls, data):
+        query = "SELECT isAdminByID FROM user WHERE user_id = %(user_id)s;"
         result = connectToMySQL(db).query_db(query, data)
-        return bool(result and result[0].get("isAdmin") == 1)
+        return bool(result and result[0].get("isAdminByID") == 1)
 
     @classmethod
     def getUserByEmail(cls, data):
@@ -67,7 +69,7 @@ class User:
     def getAllUsers(cls):
         # Get all users ordered by creation date descending, w/o password information
         query = """
-        SELECT user_id, first_name, last_name, email, phone, created_at, isAdmin
+        SELECT user_id, first_name, last_name, email, phone, created_at, isAdminByID
         FROM user
         ORDER BY created_at DESC;
         """
@@ -117,17 +119,12 @@ class User:
 
     @classmethod
     def resetPasswordByEmail(cls, data):
-        """Directly update the user's password if the email exists."""
-        new_password = data['new_password']
-        if not cls.validatePassword(new_password):
-            return False
-
+        """Directly update the user's password if the email exists.
+        Expects data['password'] to ALREADY be hashed."""
         user = cls.getUserByEmail({'email': data['email']})
         if not user:
             return False
-
-        pw_hash = bcrypt.generate_password_hash(new_password)
-        return cls.updatePassword({'user_id': user.user_id, 'password': pw_hash})
+        return cls.updatePassword({'user_id': user.user_id, 'password': data['password']})
 
     @staticmethod
     def validatePassword(password: str) -> bool:
