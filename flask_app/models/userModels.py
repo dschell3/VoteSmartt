@@ -8,10 +8,11 @@ EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$')
 
 db = "mydb"
 
-# columns in user table are: user_id, first_name, last_name, email,
-#                            password, isAdminByID, created_at, phone
-
 class User:
+    db = db
+    # columns in user table are: user_id, first_name, last_name, email,
+    #                            password, isAdminByID, created_at, phone
+    
     def __init__(self, data):
         self.user_id = data['user_id']
         self.first_name = data['first_name']

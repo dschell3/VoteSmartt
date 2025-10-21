@@ -7,7 +7,8 @@ db = "mydb"
 class Vote:
     
     # columns in vote table are: vote_id, voted_at, vote_user_id, vote_option_id
-    
+    db = db
+
     def __init__(self, data):
         self.vote_id = data['vote_id']
         self.voted_at = data['voted_at']
@@ -91,6 +92,6 @@ class Vote:
     @staticmethod
     def isEditable(event: 'Events') -> bool:
         # Determine if the vote can be edited based on the event's status.
-        return Events._compute_status(event.start_time, event.end_time) == "Open"
+        return Events.compute_status(event.start_time, event.end_time) == "Open"
 
     

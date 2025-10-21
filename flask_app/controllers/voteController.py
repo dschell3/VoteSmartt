@@ -106,7 +106,7 @@ def delete_vote():
         return redirect('/eventList')
 
     # Ensure event is still open for voting
-    if not Events.isOpen(event.start_time, event.end_time, datetime.now()):
+    if Events.compute_status(event.start_time, event.end_time) != "Open":
         flash("This event has closed; votes cannot be retracted.", "error")
         return redirect(f"/event/{event_id}")
 

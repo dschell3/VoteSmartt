@@ -5,6 +5,8 @@ db = "mydb"
 # option is a reserved word in SQL, so table name MUST be enclosed in backticks
 
 class Option:
+    db = db
+
     def __init__(self, data):
         self.option_id = data['option_id']
         self.option_text = data['option_text']

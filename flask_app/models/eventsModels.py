@@ -10,6 +10,8 @@ db = "mydb"
 #                             created_at, created_byFK, status
 
 class Events:
+    db = db
+
     def __init__(self, data):
         self.event_id = data['event_id']
         self.title = data['title']
