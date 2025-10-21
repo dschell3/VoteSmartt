@@ -9,7 +9,7 @@ class Result:
         self.rows = self.calculate()
 
     def calculate(self):
-        rows = Vote.tallyVotesForEvent({'event_id': self.event_id})
+        rows = Vote.tallyVotesForEvent({'event_id': self.event_id}) or []
         total = sum(r['votes'] for r in rows) if rows else 0
         for r in rows:
             r['percentage'] = round((r['votes'] / total * 100), 1) if total else 0.0
@@ -17,4 +17,7 @@ class Result:
     
     # Additional methods for result processing can be added here as needed.
     # How does frontend expect the results to be formatted?
+        # % of votes per option?
+        # total votes?
+        # Should there be methods to get results for all events, or just specific ones?
 

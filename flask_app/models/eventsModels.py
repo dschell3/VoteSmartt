@@ -1,6 +1,8 @@
 from flask_app.config.mysqlconnection import connectToMySQL
 import re
 from datetime import datetime
+# Should dt_parse be imported from dateutil? or move the method created in controller here?
+
 
 db = "mydb"
 
@@ -30,22 +32,20 @@ class Events:
     @classmethod
     def editEvent(cls, data):
         query = '''
-                UPDATE event \
-                SET title       = %(title)s, \
-                    description = %(description)s, \
-                    start_time  = %(start_time)s, \
-                    end_time    = %(end_time)s, \
-                    modified_at = %(modified_at)s
-                WHERE id = %(id)s \
-                '''
+        UPDATE event
+        SET title       = %(title)s,
+            description = %(description)s,
+            start_time  = %(start_time)s,
+            end_time    = %(end_time)s,
+        WHERE event_id  = %(event_id)s;
+        '''
         return connectToMySQL(db).query_db(query, data)
 
     @classmethod
     def deleteEvent(cls, data):
         query = '''
-                DELETE
-                FROM event
-                WHERE id = %(id)s \
+                DELETE FROM event
+                WHERE event_id = %(event_id)s;
                 '''
         return connectToMySQL(db).query_db(query, data)
 
@@ -70,7 +70,7 @@ class Events:
     def getRecommendations(cls, data):
         """Return up to 3 upcoming event (by start_time) excluding the provided event_id."""
         query = """
-        SELECT * FROM events
+        SELECT * FROM event
         WHERE event_id != %(event_id)s
           AND (start_time IS NOT NULL)
         ORDER BY start_time ASC
@@ -94,5 +94,18 @@ class Events:
         return bool(end_time and now > end_time)
     
     @staticmethod
+    # FIXME: what are the status keys in the DB?
     def updateStatus():
-        ...
+        query = """
+        UPDATE event
+        SET status = CASE
+            WHEN start_time IS NULL AND end_time IS NULL THEN 'Unknown'
+            WHEN start_time IS NOT NULL AND end_time IS NOT NULL AND NOW() < start_time THEN 'Waiting'
+            WHEN end_time IS NOT NULL AND NOW() > end_time THEN 'Closed'
+            WHEN start_time IS NOT NULL AND end_time IS NOT NULL AND NOW() BETWEEN start_time AND end_time THEN 'Open'
+            WHEN start_time IS NOT NULL AND end_time IS NULL AND NOW() >= start_time THEN 'Open'
+            WHEN end_time IS NOT NULL AND start_time IS NULL AND NOW() <= end_time THEN 'Open'
+            ELSE 'Unknown'
+        END;
+        """
+        return connectToMySQL(db).query_db(query)

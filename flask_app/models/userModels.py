@@ -21,7 +21,8 @@ class User:
         self.password = data['password']
         self.phone = data['phone']
         self.created_at = data['created_at']
-        # FIXME...isAdmin Default already set to 0 in DB schema?
+        self.role = data.get('isAdmin', 0)
+        # FIXME...isAdmin Default already set to 0 in DB schema? role not on UML
         
 
     @classmethod

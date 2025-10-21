@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, jsonify, request, flash, url_for, redirect, session, render_template
 from flask_app import app
 from flask_app.models.eventsModels import Events
@@ -224,7 +225,7 @@ def forgot_password_request():
         return redirect("/forgot_password")
 
     # Send reset email if account exists (but don’t reveal status)
-    User.sendPasswordResetEmail(email)
+    User.sendPasswordResetEmail({'email': email})
     flash("If an account with that email exists, a reset link has been sent.", "success")
     return redirect("/login")
 
@@ -258,7 +259,7 @@ def reset_password_submit():
         flash("Password does not meet requirements", "error")
         return redirect(request.referrer or '/login')
 
-    ok = User.resetPasswordByEmail(email, new_password)
+    ok = User.resetPasswordByEmail({'email': email, 'new_password': new_password})
     if not ok:
         flash("No account found for that email.", "error")
         return redirect('/forgot_password')

@@ -5,7 +5,7 @@ from flask_app.models.voteModels import Vote
 from flask_app.models.eventsModels import Events
 from datetime import datetime
 
-# Local helper, same style as other controllers
+# Local helper, same style as other controllers...duplicates from other controllers, call a single method instead?
 def require_login(redirect_to="/unauthorized"):
     if "user_id" not in session:
         flash("Should you really be here? Please sign in to continue.")
