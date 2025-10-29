@@ -1,88 +1,209 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Create Event - VoteSmart</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
+{% block title %}Create Event - VoteSmart{% endblock %}
 
-<body class="bg-gray-100">
-    <main class="flex justify-center items-center min-h-screen bg-gray-100">
-        <div class="flex w-full max-w-4xl bg-white p-12 rounded-2xl shadow-2xl" style="background-color: #f8f9fa;">
-            <!-- Illustration on the left -->
-            <div class="hidden md:flex items-center justify-center w-1/2 pr-12">
-                <img src="/static/media/undraw_voting_3ygx.svg" alt="Event Person" class="w-96 h-96 object-contain mx-auto" />
-            </div>
-            <!-- Form on the right -->
-            <div class="w-full md:w-1/2">
-                <h2 class="text-3xl font-extrabold text-center mb-6 text-gray-800">Event Creation</h2>
+{% block extra_css %}{% endblock %}
+
+{% block content %}
+<main class="flex justify-center items-start py-12 pb-24">
+    <div class="w-full max-w-4xl px-6">
+        <div class="grid md:grid-cols-2 gap-6 items-start">
+            <!-- Form on the left (flattened look: no white card, no heavy shadow) -->
+            <div class="w-full">
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800 text-left">Create Event</h2>
                 <form action="/createEventRoute" method="post" novalidate class="space-y-5" autocomplete="off">
                     <div>
                         <label for="title" class="block font-medium mb-1 text-gray-700 text-sm">Event</label>
-                        <input id="title" name="title" type="text" placeholder="Enter new event" class="w-full px-4 py-3 border rounded-lg mb-2 text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" />
+                        <input id="title" name="title" type="text" placeholder="Enter new event" class="w-full px-4 py-3 border rounded mb-2 text-gray-700 bg-transparent placeholder-gray-400 text-sm" />
                     </div>
+
                     <div>
                         <label for="description" class="block font-medium mb-1 text-gray-700 text-sm">Event Description</label>
-                        <input id="description" name="description" type="text" placeholder="Description of the event" class="w-full px-4 py-3 border rounded-lg mb-2 text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" />
+                        <input id="description" name="description" type="text" placeholder="Description of the event" class="w-full px-4 py-3 border rounded mb-2 text-gray-700 bg-transparent placeholder-gray-400 text-sm" />
                     </div>
+
                     <div class="flex gap-4">
                         <div class="flex-1">
                             <label for="start_time" class="block font-medium mb-1 text-gray-700 text-sm">Start Date</label>
-                            <input id="start_time" name="start_time" type="date" placeholder="Enter Date" class="w-full px-4 py-3 border rounded-lg mb-2 text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" lang="en" />
+                            <input id="start_time" name="start_time" type="date" class="w-full px-4 py-3 border rounded mb-2 text-gray-700 bg-transparent text-sm" lang="en" />
                         </div>
                         <div class="flex-1">
                             <label for="end_time" class="block font-medium mb-1 text-gray-700 text-sm">End Date</label>
-                            <input id="end_time" name="end_time" type="date" placeholder="Enter Date" class="w-full px-4 py-3 border rounded-lg mb-2 text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" lang="en" />
+                            <input id="end_time" name="end_time" type="date" class="w-full px-4 py-3 border rounded mb-2 text-gray-700 bg-transparent text-sm" lang="en" />
                         </div>
                     </div>
+
                     <div class="mt-8">
                         <h3 class="text-xl font-bold mb-4 text-gray-800">Add Candidates</h3>
-                        <div class="mb-6">
-                            <label for="candidate-name" class="block font-medium mb-1 text-gray-700 text-sm">Candidate</label>
-                            <input id="candidate-name" type="text" placeholder="Enter candidate" class="w-full px-4 py-3 border rounded-lg text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" />
-                        </div>
-                        <div class="mb-6">
-                            <label for="candidate-desc" class="block font-medium mb-1 text-gray-700 text-sm">Candidate Description</label>
-                            <input id="candidate-desc" type="text" placeholder="Not required" class="w-full px-4 py-3 border rounded-lg text-gray-700 bg-gray-50 placeholder-gray-400 text-sm" />
-                        </div>
-                        <div class="space-y-2 mb-6" id="candidates-list">
-                            <!-- The dynamically added candidate input boxes will be displayed here. -->
-                        </div>
-                        <button type="button" id="add-candidate-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-lg mb-6">Add Candidate</button>
+
+
+                                    <!-- hidden container: actual inputs for form submission -->
+                                    <div id="candidates-hidden" class="hidden">
+                                        <!-- hidden inputs (type=hidden) will be appended here for form submission -->
+                                    </div>
+
+                                    <button type="button" id="open-candidate-modal-btn" class="w-full ctaButton rounded font-semibold text-lg mb-4">Add Candidate</button>
                     </div>
-                    <button type="submit" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-lg">Create Event</button>
+
+                      <button type="submit" class="w-full ctaButton rounded font-semibold text-lg">Create Event</button>
                 </form>
             </div>
+
+            <!-- Illustration on the right (hidden on small screens) -->
+            <div class="hidden md:flex flex-col items-center justify-center pl-6">
+                <img src="/static/media/undraw_voting_3ygx.svg" alt="Event Illustration" class="w-80 h-80 object-contain" />
+                <!-- visible candidate list shown under the image on larger screens -->
+                <h3 id="candidates-heading" class="hidden text-lg font-semibold text-gray-800 mt-6">Candidate Details</h3>
+                <div id="candidates-display" class="mt-3 w-full max-w-xs space-y-2"></div>
+            </div>
         </div>
-    </main>
-    <script>
-        const candidatesList = document.getElementById('candidates-list');
-        const addBtn = document.getElementById('add-candidate-btn');
-        const nameInput = document.getElementById('candidate-name');
-        const descInput = document.getElementById('candidate-desc');
+    </div>
+</main>
+    <!-- Candidate Modal -->
+    <div id="candidateModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 relative">
+            <button onclick="closeModal('candidateModal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h2 class="text-xl font-bold text-center mb-4">Add Candidate</h2>
+            <form id="candidateModalForm" class="space-y-4" onsubmit="return false;">
+                <div>
+                    <label for="modal-candidate-name" class="block text-sm font-medium text-gray-700 mb-2">Candidate Name</label>
+                    <input id="modal-candidate-name" name="candidate_name" type="text" required placeholder="Enter candidate name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none" />
+                </div>
+                <div>
+                    <label for="modal-candidate-desc" class="block text-sm font-medium text-gray-700 mb-2">Description (optional)</label>
+                    <input id="modal-candidate-desc" name="candidate_desc" type="text" placeholder="Short description" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none" />
+                </div>
+                <div class="flex gap-3 mt-2">
+                    <button id="modal-add-candidate-btn" class="ctaButton w-full py-3 rounded font-semibold">Add</button>
+                    <button id="modal-cancel-candidate-btn" type="button" class="w-full py-3 rounded border" onclick="closeModal('candidateModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
 
-        addBtn.onclick = function () {
-            if (nameInput.value.trim() === "") return;
-            //Create a candidate input box (read-only, using name="candidates[]" and name="candidate_descs[]" when submitting)
-            const wrapper = document.createElement('div');
-            wrapper.className = "flex space-x-2 items-center mt-2";
-            wrapper.innerHTML = `
-            <input type="text" name="candidates[]" value="${nameInput.value}" readonly class="px-4 py-2 border rounded w-1/2" />
-            <input type="text" name="candidate_descs[]" value="${descInput.value}" readonly class="px-4 py-2 border rounded w-1/2" />
-            <button type="button" class="text-red-500 remove-candidate">Remove</button>
-        `;
-            candidatesList.appendChild(wrapper);
-            nameInput.value = "";
-            descInput.value = "";
-        };
+{% block extra_js %}
+<script>
+    (function () {
+    const candidatesHidden = document.getElementById('candidates-hidden'); // hidden inputs inside form
+    const candidatesDisplay = document.getElementById('candidates-display'); // visible list under image
+    const openModalBtn = document.getElementById('open-candidate-modal-btn');
+    const modalAddBtn = document.getElementById('modal-add-candidate-btn');
+    const modalCancelBtn = document.getElementById('modal-cancel-candidate-btn');
+    const nameInput = document.getElementById('modal-candidate-name');
+    const descInput = document.getElementById('modal-candidate-desc');
+    const candidateModal = document.getElementById('candidateModal');
 
-        candidatesList.addEventListener('click', function (e) {
+    if (!openModalBtn || !candidatesHidden || !candidatesDisplay) return;
+
+        openModalBtn.addEventListener('click', function () {
+            // Use global openModal if available (defined in base.html), otherwise show modal manually
+            if (typeof openModal === 'function') openModal('candidateModal');
+            else candidateModal.classList.remove('hidden');
+            // focus the input after a short delay so modal can render
+            setTimeout(() => nameInput && nameInput.focus(), 120);
+        });
+
+        // Add candidate from modal
+        if (modalAddBtn) {
+            modalAddBtn.addEventListener('click', function () {
+                if (!nameInput || nameInput.value.trim() === '') {
+                    if (nameInput) nameInput.focus();
+                    return;
+                }
+
+                // create a unique id to link visible row and hidden inputs
+                const id = (Date.now().toString(36) + Math.random().toString(36).slice(2,7));
+
+                // visible row (under the image)
+                const vis = document.createElement('div');
+                vis.className = 'flex items-center justify-between gap-2 p-2 rounded border bg-white/30';
+                vis.setAttribute('data-cid', id);
+                vis.innerHTML = `
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-800">${escapeHtml(nameInput.value)}</div>
+                        <div class="text-sm text-gray-600">${escapeHtml(descInput.value)}</div>
+                    </div>
+                    <button type="button" class="text-red-500 remove-candidate underline">Remove</button>
+                `;
+                // show heading if this is the first candidate
+                const heading = document.getElementById('candidates-heading');
+                if (heading && candidatesDisplay.children.length === 0) {
+                    heading.classList.remove('hidden');
+                }
+
+                candidatesDisplay.appendChild(vis);
+
+                // hidden inputs for form submission
+                const hiddenName = document.createElement('input');
+                hiddenName.type = 'hidden';
+                hiddenName.name = 'candidates[]';
+                hiddenName.value = nameInput.value;
+                hiddenName.setAttribute('data-cid', id);
+
+                const hiddenDesc = document.createElement('input');
+                hiddenDesc.type = 'hidden';
+                hiddenDesc.name = 'candidate_descs[]';
+                hiddenDesc.value = descInput.value;
+                hiddenDesc.setAttribute('data-cid', id);
+
+                candidatesHidden.appendChild(hiddenName);
+                candidatesHidden.appendChild(hiddenDesc);
+
+                // Clear and close modal
+                nameInput.value = '';
+                descInput.value = '';
+                if (typeof closeModal === 'function') closeModal('candidateModal');
+                else candidateModal.classList.add('hidden');
+            });
+        }
+
+        if (modalCancelBtn) {
+            modalCancelBtn.addEventListener('click', function () {
+                nameInput.value = '';
+                descInput.value = '';
+                if (typeof closeModal === 'function') closeModal('candidateModal');
+                else candidateModal.classList.add('hidden');
+            });
+        }
+
+        // remove handler: works for visible rows under image
+        candidatesDisplay.addEventListener('click', function (e) {
             if (e.target.classList.contains('remove-candidate')) {
-                e.target.parentElement.remove();
+                const row = e.target.closest('div');
+                if (!row) return;
+                const cid = row.getAttribute('data-cid');
+                // remove corresponding hidden inputs
+                const hiddenName = candidatesHidden.querySelector(`input[data-cid="${cid}"][name="candidates[]"]`);
+                const hiddenDesc = candidatesHidden.querySelector(`input[data-cid="${cid}"][name="candidate_descs[]"]`);
+                if (hiddenName) hiddenName.remove();
+                if (hiddenDesc) hiddenDesc.remove();
+                row.remove();
+
+                // if no visible candidates left, hide the heading
+                const heading = document.getElementById('candidates-heading');
+                if (heading && candidatesDisplay.children.length === 0) {
+                    heading.classList.add('hidden');
+                }
             }
         });
-    </script>
-</body>
 
-</html>
+        // Close modal when clicking on overlay
+        document.addEventListener('click', function (e) {
+            if (e.target && e.target.id === 'candidateModal') {
+                // close
+                if (typeof closeModal === 'function') closeModal('candidateModal');
+                else candidateModal.classList.add('hidden');
+            }
+        });
+
+        // small helper to escape user text when injecting into value attributes
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+    })();
+</script>
+{% endblock %}
