@@ -17,9 +17,30 @@ class Result:
             r['percentage'] = round((r['votes'] / total * 100), 1) if total else 0.0
         return rows 
     
+
+    # can use calculate() to help to get the results for the methods below
+    # access via cls.rows
+    @classmethod
+    def getWinner(cls):
+        ...
+        # Implement logic to return the winning option for a given event
+
+    @classmethod
+    def getTotalVotes(cls):
+        ...
+        # Implement logic to return the total votes for a given event
+
+    @classmethod
+    def getWinnerVoteTotal(cls):
+        ...
+        # Implement logic to return the total votes for the winning option
+
+    @classmethod
+    def getWinnerPercentage(cls):
+        ...
+        # Implement logic to return the percentage of votes for the winning option
+
+
     # Additional methods for result processing can be added here as needed.
-    # How does frontend expect the results to be formatted?
-        # % of votes per option?
-        # total votes?
-        # Should there be methods to get results for all events, or just specific ones?
+        
 
