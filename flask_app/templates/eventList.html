@@ -96,7 +96,7 @@
                 aria-label="Open {{ events.title }}"></a>
             <div class="relative z-20 flex items-start justify-between gap-4">
                 <div>
-                    <h3 class="text-lg font-semibold text-slate-900">{{ events.title }}</h3>
+                   <a href="/event/{{ events.event_id }}"><h3 class="text-lg font-semibold text-slate-900"> {{ events.title }}</h3></a> 
                     <p class="mt-2 text-sm text-slate-600 line-clamp-3">{{ events.description }}</p>
                 </div>
                 <div class="shrink-0 text-right">
@@ -120,16 +120,7 @@
                 </div>
             </div>
 
-            <div class="mt-4 flex items-center justify-between z-20 relative">
-                <div class="flex items-center gap-2 event-actions opacity-90">
-                    <a href="/event/{{ events.event_id }}" class="text-sm text-blue-600 hover:underline">View</a>
-                    <a href="/events/{{ events.event_id }}/edit"
-                        class="text-sm text-slate-600 hover:text-slate-800">Edit</a>
-                    <form action="/events/{{ events.event_id }}/delete" method="post" class="inline">
-                        <button type="submit" class="text-sm text-red-600 hover:underline">Delete</button>
-                    </form>
-                </div>
-            </div>
+           
             <!-- subtle overlay to show clickable card on hover -->
             <div
                 class="absolute inset-0 z-0 pointer-events-none bg-gradient-to-b from-transparent to-white/40 opacity-0 hover:opacity-100 transition-opacity">
