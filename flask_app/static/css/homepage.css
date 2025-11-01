@@ -27,7 +27,8 @@ body {
     position: relative;
     display: flex;
     align-items: center;
-    padding: 20px 50px;
+    /* slightly tighter horizontal padding so logo and links have balanced space */
+    padding: 18px 32px;
 }
 
 /* Logo on left */
@@ -43,13 +44,13 @@ body {
 
 /* Logo text */
 .logoText {
-    font-size: 42px;
-    font-weight: 900;
+    font-size: 30px; /* reduced so logo doesn't dominate the header */
+    font-weight: 800;
     color: #0b1220;
     /* Make the logo appear thicker: subtle text-stroke (webkit) and layered shadows */
-    -webkit-text-stroke: 0.6px rgba(11,18,32,0.06);
-    text-shadow: 0 1px 0 rgba(255,255,255,0.02), 0 2px 0 rgba(11,18,32,0.02), 0 4px 8px rgba(11,18,32,0.03);
-    letter-spacing: -0.5px;
+    -webkit-text-stroke: 0.45px rgba(11,18,32,0.06);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.02), 0 2px 0 rgba(11,18,32,0.02), 0 4px 6px rgba(11,18,32,0.025);
+    letter-spacing: -0.4px;
 }
 
 /* Links in center */
@@ -69,11 +70,11 @@ body {
 
 @media (max-width: 1024px) {
     .nav {
-        padding: 14px 20px;
+        padding: 12px 18px;
         align-items: center;
     }
     .logoText {
-        font-size: 32px;
+        font-size: 24px;
     }
     .links {
         position: static;
