@@ -1,153 +1,431 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Create Event - VoteSmart</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
+{% block title %}Create Event - VoteSmart{% endblock %}
 
-<body class="bg-gray-100">
-    <main class="flex justify-center items-center min-h-screen bg-gray-100">
-        <div class="flex w-full max-w-4xl bg-white p-12 rounded-2xl shadow-2xl" style="background-color: #f8f9fa;">
-            <!-- Illustration on the left -->
-            <div class="hidden md:flex items-center justify-center w-1/2 pr-12">
-                <img src="/static/media/undraw_voting_3ygx.svg" alt="Event Person" class="w-96 h-96 object-contain mx-auto" />
-            </div>
-            <!-- Form on the right -->
-            <div class="w-full md:w-1/2">
-                <h2 class="text-3xl font-extrabold text-center mb-6 text-gray-800">Event Creation</h2>
-                <form action="/createEventRoute" method="post" novalidate class="space-y-6" autocomplete="off">
-                    <div>
-                        <label for="title" class="block font-medium mb-2 text-gray-700 text-base">Event</label>
-                        <input id="title" name="title" type="text" placeholder="Enter new event" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white placeholder-gray-400 text-base" />
-                    </div>
-                    <div>
-                        <label for="description" class="block font-medium mb-2 text-gray-700 text-base">Event Description</label>
-                        <input id="description" name="description" type="text" placeholder="Description of the event" class="w-full px-4 py-3 border border-gray-300 rounded-lg mb-2 text-gray-700 bg-white placeholder-gray-400 text-base" />
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="start_time" class="block font-medium mb-2 text-gray-700 text-base">Start Date</label>
-                            <input id="start_time" name="start_time" type="date" placeholder="Enter Date" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white placeholder-gray-400 text-base" lang="en" />
-                        </div>
-                        <div>
-                            <label for="end_time" class="block font-medium mb-2 text-gray-700 text-base">End Date</label>
-                            <input id="end_time" name="end_time" type="date" placeholder="Enter Date" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white placeholder-gray-400 text-base" lang="en" />
-                        </div>
-                    </div>
-                    <div class="mt-8">
-                        <h3 class="text-xl font-bold mb-4 text-gray-800">Candidates</h3>
-                        <button type="button" id="add-candidate-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-base mb-4 flex items-center justify-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                            Add Candidate
-                        </button>
-                        <div class="space-y-3 mb-6" id="candidates-list">
-                            <!-- The dynamically added candidate cards will be displayed here. -->
-                        </div>
-                    </div>
-                    <button type="submit" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-lg">Create Event</button>
-                </form>
+{% block content %}
+<div class="bg-gray-100 min-h-screen">
+    {% if not logged_in %}
+        <!-- Login prompt for unauthenticated users -->
+        <div class="flex justify-center items-center min-h-screen">
+            <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md">
+                <div class="mb-4">
+                    <svg class="w-16 h-16 text-purple-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Login Required</h2>
+                <p class="text-gray-600 mb-6">You need to be logged in to create events.</p>
+                <div class="space-y-3">
+                    <a href="/login" class="block w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold transition duration-200">Login</a>
+                    <a href="/register" class="block w-full border border-purple-500 text-purple-500 hover:bg-purple-50 py-3 rounded-lg font-semibold transition duration-200">Register</a>
+                    <a href="/" class="block text-gray-500 hover:text-gray-700 transition duration-200">← Back to Home</a>
+                </div>
             </div>
         </div>
-    </main>
-
-    <!-- Modal for adding candidates -->
-    <div id="candidate-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-medium text-gray-900">Candidate Details</h3>
-                    <button id="close-modal" class="text-gray-400 hover:text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
+    {% else %}
+        <!-- Breadcrumb navigation -->
+        <div class="pt-8 pb-4" style="position: relative; z-index: 10;">
+            <div class="max-w-4xl mx-auto px-6">
+                <nav class="flex items-center space-x-2 text-sm text-gray-500">
+                    <a href="/" class="hover:text-purple-600 transition duration-200">Home</a>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                    <a href="/eventList" class="hover:text-purple-600 transition duration-200">Events</a>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                    <span class="text-gray-800 font-medium">Create Event</span>
+                </nav>
+            </div>
+        </div>
+        
+        <main class="flex justify-center items-center py-8 bg-gray-100" style="min-height: calc(100vh - 200px);">
+            <div class="flex w-full max-w-4xl bg-white p-12 rounded-2xl shadow-2xl" style="background-color: #f8f9fa;">
+                <!-- Illustration on the left -->
+                <div class="hidden md:flex items-center justify-center w-1/2 pr-12">
+                    <img src="/static/media/undraw_voting_3ygx.svg" alt="Event Person" class="w-96 h-96 object-contain mx-auto" />
                 </div>
                 
-                <div class="space-y-4">
-                    <div>
-                        <label for="modal-candidate-name" class="block text-sm font-medium text-gray-700 mb-1">Candidate</label>
-                        <input id="modal-candidate-name" type="text" placeholder="Enter candidate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                <!-- Form on the right -->
+                <div class="w-full md:w-1/2">
+                    <h2 class="text-3xl font-extrabold text-center mb-6 text-gray-800">Event Creation</h2>
+                    
+                    <!-- User welcome message -->
+                    {% if logged_in and first_name %}
+                        <div class="text-center mb-4">
+                            <p class="text-gray-600">Welcome, <span class="font-semibold text-purple-600">{{ first_name }}</span>! Create a new voting event.</p>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Store flash messages for inline display -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <script>
+                                    window.flashMessage = "{{ message }}";
+                                    window.flashCategory = "{{ category }}";
+                                </script>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form action="/createEventRoute" method="post" novalidate class="space-y-6" autocomplete="off">
+                        <!-- Event Name -->
+                        <div>
+                            <label for="title" class="block font-medium mb-2 text-gray-700 text-base">Event <span class="text-red-500">*</span></label>
+                            <input id="title" name="title" type="text" placeholder="Enter new event" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white placeholder-gray-400 text-base" />
+                            <div id="title-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                        </div>
+                        
+                        <!-- Event Description (Optional) -->
+                        <div>
+                            <label for="description" class="block font-medium mb-2 text-gray-700 text-base">Event Description</label>
+                            <input id="description" name="description" type="text" placeholder="Description of the event (optional)" class="w-full px-4 py-3 border border-gray-300 rounded-lg mb-2 text-gray-700 bg-white placeholder-gray-400 text-base" />
+                            <div id="description-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                        </div>
+                        
+                        <!-- Date Fields -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="start_time" class="block font-medium mb-2 text-gray-700 text-base">Start Date <span class="text-red-500">*</span></label>
+                                <input id="start_time" name="start_time" type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white" />
+                                <div id="start-time-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                            </div>
+                            <div>
+                                <label for="end_time" class="block font-medium mb-2 text-gray-700 text-base">End Date <span class="text-red-500">*</span></label>
+                                <input id="end_time" name="end_time" type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white" />
+                                <div id="end-time-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Candidates Section -->
+                        <div class="mt-8">
+                            <h3 class="text-xl font-bold mb-4 text-gray-800">Candidates</h3>
+                            <button type="button" id="add-candidate-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-base mb-4 flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Add Candidate
+                            </button>
+                            <div class="space-y-3 mb-6" id="candidates-list">
+                                <!-- Dynamic candidate cards will be added here -->
+                            </div>
+                            <div id="candidates-error" class="text-red-500 text-xs mb-4 hidden"></div>
+                        </div>
+                        
+                        <button type="submit" id="create-event-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-lg">Create Event</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal for adding candidates -->
+        <div id="candidate-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Candidate Details</h3>
+                        <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
                     </div>
                     
-                    <div>
-                        <label for="modal-candidate-desc" class="block text-sm font-medium text-gray-700 mb-1">Candidate Details</label>
-                        <textarea id="modal-candidate-desc" rows="3" placeholder="Enter candidate details..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"></textarea>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="modal-candidate-name" class="block text-sm font-medium text-gray-700 mb-1">Candidate</label>
+                            <input id="modal-candidate-name" type="text" placeholder="Enter candidate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                        </div>
+                        
+                        <div>
+                            <label for="modal-candidate-desc" class="block text-sm font-medium text-gray-700 mb-1">Candidate Details</label>
+                            <textarea id="modal-candidate-desc" rows="3" placeholder="Enter candidate details..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"></textarea>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button id="cancel-candidate" type="button" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition duration-200">Cancel</button>
-                    <button id="save-candidate" type="button" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition duration-200">Add Candidate</button>
+                    
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button id="cancel-candidate" type="button" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition duration-200">Cancel</button>
+                        <button id="save-candidate" type="button" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition duration-200">Add Candidate</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    {% endif %}
+</div>
+{% endblock %}
 
-    <script>
-        const candidatesList = document.getElementById('candidates-list');
-        const addBtn = document.getElementById('add-candidate-btn');
-        const modal = document.getElementById('candidate-modal');
-        const modalNameInput = document.getElementById('modal-candidate-name');
-        const modalDescInput = document.getElementById('modal-candidate-desc');
-        const saveBtn = document.getElementById('save-candidate');
-        const cancelBtn = document.getElementById('cancel-candidate');
-        const closeBtn = document.getElementById('close-modal');
+{% block extra_js %}
+<!-- Import our custom profanity detection library for content filtering -->
+<script src="/static/js/badWordsCheck.js"></script>
+<script>
+console.log('🎯 Event Form Validation & Management Loading...');
 
-        // Open modal
-        addBtn.onclick = function () {
-            modal.classList.remove('hidden');
-            modalNameInput.focus();
-        };
-
-        // Close modal functions
-        function closeModal() {
-            modal.classList.add('hidden');
-            modalNameInput.value = '';
-            modalDescInput.value = '';
-            modalNameInput.classList.remove('border-red-500');
-            delete modal.dataset.editingIndex;
-        }
-
-        cancelBtn.onclick = closeModal;
-        closeBtn.onclick = closeModal;
-
-        // Close modal when clicking outside
-        modal.onclick = function(e) {
-            if (e.target === modal) {
-                closeModal();
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎯 DOM Ready - Initializing Event Form');
+    
+    const form = document.querySelector('form[action="/createEventRoute"]');
+    if (!form) {
+        console.error('❌ Form not found!');
+        return;
+    }
+    
+    // ======= State Machine Form Validation Module =======
+    const FormValidator = {
+        // Instance of our profanity detection system
+        profanityChecker: null,
+        
+        // Initialize the validation system and profanity checker
+        init() {
+            try {
+                if (typeof BadWordsCheck !== 'undefined') {
+                    this.profanityChecker = new BadWordsCheck();
+                    console.log('🛡️ BadWordsCheck initialized successfully');
+                } else {
+                    console.warn('⚠️ BadWordsCheck library not found');
+                }
+            } catch (error) {
+                console.error('❌ Failed to initialize BadWordsCheck:', error);
             }
-        };
-
-        // Save candidate
-        saveBtn.onclick = function () {
-            const name = modalNameInput.value.trim();
-            const desc = modalDescInput.value.trim();
+        },
+        
+        // Check if text contains inappropriate language using our profanity detection library
+        containsProfanity(text) {
+            if (!this.profanityChecker || !text) {
+                return false;
+            }
             
-            if (name === "") {
-                modalNameInput.focus();
-                modalNameInput.classList.add('border-red-500');
+            try {
+                return this.profanityChecker.isProfane(text);
+            } catch (error) {
+                console.warn('⚠️ Profanity check failed:', error);
+                return false;
+            }
+        },
+        
+        // Validate input content using a priority-based scoring system
+        validateInput(text) {
+            // Check if input is empty or contains only whitespace
+            if (!text || text.trim() === '') {
+                return 1; // Priority 1: Empty value (most basic validation)
+            }
+            
+            // Check if input contains inappropriate language
+            if (this.containsProfanity(text.trim())) {
+                return 100; // Priority 100: Contains inappropriate content (highest priority error)
+            }
+            
+            return 0; // All validation passed - input is clean and valid
+        },
+        
+        // Clear all error messages from the form to reset validation state
+        clearAllErrors() {
+            const errorIds = ['title-error', 'description-error', 'start-time-error', 'end-time-error', 'candidates-error'];
+            errorIds.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.classList.add('hidden');
+                    element.innerHTML = '';
+                }
+            });
+        },
+        
+        // Display error message for a specific form field
+        showError(fieldId, message) {
+            const errorElement = document.getElementById(fieldId);
+            if (errorElement) {
+                errorElement.innerHTML = `${message}`;
+                errorElement.classList.remove('hidden');
+                console.log(`🔴 Error shown for ${fieldId}: ${message}`);
+            }
+        },
+        
+        // Main state machine validation function - validates form in logical sequence
+        validateWithStateMachine() {
+            console.log('🔄 === STATE MACHINE VALIDATION START ===');
+            
+            // Collect all form data for validation
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const startDate = document.getElementById('start_time').value;
+            const endDate = document.getElementById('end_time').value;
+            const candidateCards = document.querySelectorAll('#candidates-list .bg-white');
+            
+            console.log('📝 Form Data:', { title, description, startDate, endDate, candidates: candidateCards.length });
+            
+            // Reset all error states before starting validation
+            this.clearAllErrors();
+            
+            // State-based validation sequence - check each requirement in logical order
+            // State 1: Validate event name (required field)
+            const titleValidation = this.validateInput(title);
+            if (titleValidation === 1) {
+                console.log('🔴 State 1: Event name is missing');
+                this.showError('title-error', 'Please enter an event name');
+                return false;
+            } else if (titleValidation === 100) {
+                console.log('🔴 State 1: Event name contains inappropriate language');
+                this.showError('title-error', 'Contains inappropriate language');
+                return false;
+            }
+            console.log('� State 1: Event name validated successfully ✓');
+            
+            // State 1.2: Validate event description (optional field, but check profanity if provided)
+            if (description) {
+                const descValidation = this.validateInput(description);
+                if (descValidation === 100) {
+                    console.log('🔴 State 1.2: Event description contains inappropriate language');
+                    this.showError('description-error', 'Contains inappropriate language');
+                    return false;
+                }
+            }
+            console.log('🟢 State 1.2: Event description validated successfully ✓');
+            
+            // State 2: Validate start date (required field)
+            if (!startDate) {
+                console.log('🔴 State 2: Start date is missing');
+                this.showError('start-time-error', 'Please select a start date');
+                return false;
+            }
+            console.log('🟢 State 2: Start date provided ✓');
+            
+            // State 3: Validate end date (required field)
+            if (!endDate) {
+                console.log('🔴 State 3: End date is missing');
+                this.showError('end-time-error', 'Please select an end date');
+                return false;
+            }
+            console.log('🟢 State 3: End date provided ✓');
+            
+            // State 4: Validate date logic and business rules
+            const startDateObj = new Date(startDate);
+            const endDateObj = new Date(endDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset time to compare dates only
+            
+            // Check if start date is not in the past
+            if (startDateObj < today) {
+                console.log('🔴 State 4: Start date is in the past');
+                this.showError('start-time-error', 'Start date cannot be in the past');
+                return false;
+            }
+            
+            // Check if end date is after start date
+            if (startDateObj >= endDateObj) {
+                console.log('🔴 State 4: End date is not after start date');
+                this.showError('end-time-error', 'End date must be after start date');
+                return false;
+            }
+            console.log('🟢 State 4: Date logic validated successfully ✓');
+            
+            // State 5: Validate candidates (minimum requirement for voting)
+            if (candidateCards.length < 2) {
+                console.log('🔴 State 5: Not enough candidates for voting');
+                this.showError('candidates-error', 'Please add at least 2 candidates');
+                return false;
+            }
+            console.log('🟢 State 5: Sufficient candidates provided ✓');
+            
+            console.log('🟢 State 0: All validation passed! Form ready for submission');
+            return true;
+        }
+    };
+    
+    // Initialize the profanity detection system
+    FormValidator.init();
+    
+    // ======= Candidate Management Module =======
+    const CandidateManager = {
+        modal: document.getElementById('candidate-modal'),
+        nameInput: document.getElementById('modal-candidate-name'),
+        descInput: document.getElementById('modal-candidate-desc'),
+        candidatesList: document.getElementById('candidates-list'),
+        
+        init() {
+            // Bind all candidate-related event handlers
+            document.getElementById('add-candidate-btn').onclick = () => this.openModal();
+            document.getElementById('cancel-candidate').onclick = () => this.closeModal();
+            document.getElementById('close-modal').onclick = () => this.closeModal();
+            document.getElementById('save-candidate').onclick = () => this.saveCandidate();
+            
+            // Close modal when clicking outside the modal content
+            this.modal.onclick = (e) => {
+                if (e.target === this.modal) this.closeModal();
+            };
+            
+            // Save candidate when pressing Enter key in name input
+            this.nameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.saveCandidate();
+            });
+            
+            // Event delegation for candidate list (handles dynamically added candidates)
+            this.candidatesList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-candidate')) {
+                    e.target.closest('.bg-white').remove();
+                } else if (e.target.classList.contains('edit-candidate')) {
+                    this.editCandidate(e.target);
+                }
+            });
+        },
+        
+        openModal() {
+            this.modal.classList.remove('hidden');
+            this.nameInput.focus();
+        },
+        
+        closeModal() {
+            this.modal.classList.add('hidden');
+            this.nameInput.value = '';
+            this.descInput.value = '';
+            this.nameInput.classList.remove('border-red-500');
+            delete this.modal.dataset.editingIndex;
+        },
+        
+        saveCandidate() {
+            const name = this.nameInput.value.trim();
+            const desc = this.descInput.value.trim();
+            
+            // Validate candidate name using our validation system
+            const nameValidation = FormValidator.validateInput(name);
+            if (nameValidation === 1) {
+                this.nameInput.focus();
+                this.nameInput.classList.add('border-red-500');
+                return;
+            } else if (nameValidation === 100) {
+                alert('Candidate name contains inappropriate language');
+                this.nameInput.focus();
+                this.nameInput.classList.add('border-red-500');
                 return;
             }
             
-            modalNameInput.classList.remove('border-red-500');
-            
-            // Check if we're editing an existing candidate
-            if (modal.dataset.editingIndex) {
-                updateExistingCandidate(modal.dataset.editingIndex, name, desc);
-                delete modal.dataset.editingIndex;
-            } else {
-                addNewCandidate(name, desc);
+            // Validate candidate description (if provided) for inappropriate content
+            if (desc) {
+                const descValidation = FormValidator.validateInput(desc);
+                if (descValidation === 100) {
+                    alert('Candidate description contains inappropriate language');
+                    this.descInput.focus();
+                    this.descInput.classList.add('border-red-500');
+                    return;
+                }
             }
             
-            closeModal();
-        };
-
-        function addNewCandidate(name, desc) {
-            // Create candidate card exactly like design - no labels, just content
+            // Remove error styling after successful validation
+            this.nameInput.classList.remove('border-red-500');
+            this.descInput.classList.remove('border-red-500');
+            
+            // Update existing candidate or add new one based on modal state
+            if (this.modal.dataset.editingIndex) {
+                this.updateCandidate(this.modal.dataset.editingIndex, name, desc);
+                delete this.modal.dataset.editingIndex;
+            } else {
+                this.addCandidate(name, desc);
+            }
+            
+            this.closeModal();
+        },
+        
+        addCandidate(name, desc) {
             const candidateCard = document.createElement('div');
             candidateCard.className = "bg-white border border-gray-200 rounded-lg p-5 mb-4 shadow-lg hover:shadow-xl transition-shadow duration-200";
             candidateCard.innerHTML = `
@@ -165,52 +443,61 @@
                     </div>
                 </div>
             `;
+            this.candidatesList.appendChild(candidateCard);
+        },
+        
+        editCandidate(button) {
+            const card = button.closest('.bg-white');
+            const index = Array.from(this.candidatesList.children).indexOf(card);
+            const name = card.querySelector('input[name="candidates[]"]').value;
+            const desc = card.querySelector('input[name="candidate_descs[]"]').value;
             
-            candidatesList.appendChild(candidateCard);
-        }
-
-        function updateExistingCandidate(index, name, desc) {
-            const cards = candidatesList.children;
+            this.nameInput.value = name;
+            this.descInput.value = desc;
+            this.modal.dataset.editingIndex = index;
+            this.openModal();
+        },
+        
+        updateCandidate(index, name, desc) {
+            const cards = this.candidatesList.children;
             if (cards[index]) {
                 const card = cards[index];
-                // Update hidden inputs
                 card.querySelector('input[name="candidates[]"]').value = name;
                 card.querySelector('input[name="candidate_descs[]"]').value = desc;
-                // Update display text - simplified structure
                 const paragraphs = card.querySelectorAll('p');
-                paragraphs[0].textContent = name; // First p tag (candidate name)
-                paragraphs[1].textContent = desc || 'No description provided'; // Second p tag (description)
+                paragraphs[0].textContent = name;
+                paragraphs[1].textContent = desc || 'No description provided';
             }
         }
-
-        // Remove candidate and Edit candidate
-        candidatesList.addEventListener('click', function (e) {
-            if (e.target.classList.contains('remove-candidate')) {
-                e.target.closest('.bg-white').remove();
-            } else if (e.target.classList.contains('edit-candidate')) {
-                const card = e.target.closest('.bg-white');
-                const index = Array.from(candidatesList.children).indexOf(card);
-                const name = card.querySelector('input[name="candidates[]"]').value;
-                const desc = card.querySelector('input[name="candidate_descs[]"]').value;
-                
-                // Populate modal with existing data
-                modalNameInput.value = name;
-                modalDescInput.value = desc;
-                modal.dataset.editingIndex = index;
-                
-                // Open modal for editing
-                modal.classList.remove('hidden');
-                modalNameInput.focus();
+    };
+    
+    // ======= Form Submission Handler =======
+    const submitBtn = document.getElementById('create-event-btn');
+    console.log('🔍 Submit button found:', submitBtn);
+    
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function(e) {
+            console.log('🚀 Create Event button clicked');
+            e.preventDefault(); // Prevent default form submission
+            
+            const isValid = FormValidator.validateWithStateMachine();
+            
+            if (isValid) {
+                console.log('✅ Validation passed - submitting form');
+                form.submit(); // Submit form directly to server
+            } else {
+                console.log('❌ Validation failed - form not submitted');
             }
         });
-
-        // Handle Enter key in modal
-        modalNameInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                saveBtn.click();
-            }
-        });
-    </script>
-</body>
-
-</html>
+        console.log('✅ Event listener attached to submit button');
+    } else {
+        console.error('❌ Submit button not found!');
+    }
+    
+    // Initialize all modules and components
+    CandidateManager.init();
+    
+    console.log('🎯 Event Form Ready!');
+});
+</script>
+{% endblock %}
