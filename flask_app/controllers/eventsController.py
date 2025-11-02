@@ -158,7 +158,6 @@ def createEventRoute():
         return redirect('/admin2')
     
     return redirect(url_for('eventList'))
-    # 002 - End of server-side validation additions
 
 @app.route('/eventList')
 def eventList():
