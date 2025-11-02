@@ -75,7 +75,6 @@ def createEventRoute():
     description = request.form.get('description', '').strip()
     start_time = request.form.get('start_time', '').strip()
     end_time = request.form.get('end_time', '').strip()
-    candidates = request.form.getlist('candidates[]')
     candidate_descs = request.form.getlist('candidate_descs[]')
     
     # Validation - check in priority order and show only the most important error
