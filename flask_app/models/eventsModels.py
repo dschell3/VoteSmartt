@@ -61,6 +61,26 @@ class Events:
         return events
 
     @classmethod
+    def getAllWithCreators(cls):
+        """Get all events with creator information (first_name, last_name)"""
+        query = """
+        SELECT e.*, u.first_name, u.last_name
+        FROM event e
+        LEFT JOIN user u ON e.created_byFK = u.user_id
+        ORDER BY e.start_time ASC;
+        """
+        result = connectToMySQL(db).query_db(query)
+        events = []
+        for row in result:
+            # Create event object with additional creator info
+            event = cls(row)
+            event.creator_first_name = row.get('first_name', '')
+            event.creator_last_name = row.get('last_name', '')
+            event.creator_full_name = f"{row.get('first_name', '')} {row.get('last_name', '')}".strip()
+            events.append(event)
+        return events
+
+    @classmethod
     def getOne(cls, data):
         query = "SELECT * FROM event WHERE event_id = %(event_id)s;"
         result = connectToMySQL(db).query_db(query, data)

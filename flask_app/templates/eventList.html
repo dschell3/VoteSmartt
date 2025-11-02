@@ -97,6 +97,16 @@
             <div class="relative z-20 flex items-start justify-between gap-4">
                 <div>
                     <h3 class="text-lg font-semibold text-slate-900">{{ events.title }}</h3>
+                    {% if events.creator_full_name %}
+                    <p class="mt-1 text-xs text-slate-500">
+                        <span class="inline-flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                            </svg>
+                            Created by {{ events.creator_full_name }}
+                        </span>
+                    </p>
+                    {% endif %}
                     <p class="mt-2 text-sm text-slate-600 line-clamp-3">{{ events.description }}</p>
                 </div>
                 <div class="shrink-0 text-right">
@@ -123,11 +133,18 @@
             <div class="mt-4 flex items-center justify-between z-20 relative">
                 <div class="flex items-center gap-2 event-actions opacity-90">
                     <a href="/event/{{ events.event_id }}" class="text-sm text-blue-600 hover:underline">View</a>
+                    <!-- Only show Edit/Delete buttons if user is the creator or admin -->
+                    {% if session.user_id == events.created_byFK or session.isAdminByID == 1 %}
                     <a href="/events/{{ events.event_id }}/edit"
                         class="text-sm text-slate-600 hover:text-slate-800">Edit</a>
-                    <form action="/events/{{ events.event_id }}/delete" method="post" class="inline">
-                        <button type="submit" class="text-sm text-red-600 hover:underline">Delete</button>
-                    </form>
+                    <button type="button" 
+                            class="text-sm text-red-600 hover:underline delete-event-btn"
+                            data-event-id="{{ events.event_id }}"
+                            data-event-title="{{ events.title }}"
+                            data-creator-name="{{ events.creator_full_name }}">
+                        Delete
+                    </button>
+                    {% endif %}
                 </div>
             </div>
             <!-- subtle overlay to show clickable card on hover -->
@@ -407,5 +424,49 @@
         if (searchInput) searchInput.addEventListener('input', debounceApply);
         if (filterSelect) filterSelect.addEventListener('change', applyFilters);
     }
+
+    // Delete event confirmation
+    function setupDeleteConfirmation() {
+        const deleteButtons = document.querySelectorAll('.delete-event-btn');
+        
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const eventId = this.getAttribute('data-event-id');
+                const eventTitle = this.getAttribute('data-event-title');
+                const creatorName = this.getAttribute('data-creator-name');
+                
+                const confirmed = confirm(
+                    `Are you sure you want to delete the event "${eventTitle}"?\n\n` +
+                    `Created by: ${creatorName}\n\n` +
+                    `This action cannot be undone.`
+                );
+                
+                if (confirmed) {
+                    // Create a form and submit it
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/events/${eventId}/delete`;
+                    
+                    // Add CSRF token if needed (you might need to add this)
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                    if (csrfToken) {
+                        const tokenInput = document.createElement('input');
+                        tokenInput.type = 'hidden';
+                        tokenInput.name = 'csrf_token';
+                        tokenInput.value = csrfToken.getAttribute('content');
+                        form.appendChild(tokenInput);
+                    }
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+    }
+
+    // Initialize everything when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        setupDeleteConfirmation();
+    });
 </script>
 {% endblock %}
