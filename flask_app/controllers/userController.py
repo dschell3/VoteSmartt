@@ -86,10 +86,17 @@ def require_login(redirect_to="/unauthorized"):
     
     return None  # No redirect needed
 
-# FIXME: Implement actual email sending logic
+from flask import current_app
+from flask_app.utils.mailer import send_contact_email
+
+
 def send_email(to_address, subject, body):
-    """Placeholder function to send emails"""
-    ...
+    """Send an email to `to_address` using the mail helper.
+
+    This wraps the mail helper so controllers can call send_email(...) directly.
+    """
+    recipients = [to_address]
+    send_contact_email(subject, body, recipients)
 
 @app.route('/unauthorized')
 def unauthorized_page():
@@ -121,6 +128,50 @@ def login_page():
 def contact_page():
     user_data = get_user_session_data()
     return render_template('contact.html', **user_data)
+
+
+# Contact form submission handler
+@app.route('/contactRoute', methods=['POST'])
+def contact_route():
+    """Handle contact form submissions and send an email to site admin."""
+    # Collect form data
+    name = request.form.get('first_name', '').strip()
+    email = request.form.get('email', '').strip()
+    phone = request.form.get('phone', '').strip()
+    message = request.form.get('message', '').strip()
+
+    # Basic validation
+    if not name or not email or not message:
+        flash('Please provide your name, email, and message.', 'error')
+        return redirect('/contact')
+
+    # Compose subject & body
+    subject = f"New contact form submission from {name}"
+    body_lines = [
+        f"Name: {name}",
+        f"Email: {email}",
+        f"Phone: {phone}",
+        "",
+        "Message:",
+        message,
+    ]
+    body = "\n".join(body_lines)
+
+    # Determine recipient (default to configured MAIL_USERNAME)
+    recipient = current_app.config.get('MAIL_USERNAME')
+    if not recipient:
+        # If no recipient configured, fail gracefully
+        flash('Mailing is not configured on this server. Please contact support another way.', 'error')
+        return redirect('/contact')
+
+    try:
+        send_email(recipient, subject, body)
+        flash('Thanks — your message has been sent. We will reply shortly.', 'success')
+    except Exception as e:
+        print(f"Error sending contact email: {e}")
+        flash('There was a problem sending your message. Please try again later.', 'error')
+
+    return redirect('/contact')
 
 # ================================
 # AUTHENTICATION ROUTES
