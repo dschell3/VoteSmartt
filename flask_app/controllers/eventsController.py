@@ -206,7 +206,6 @@ def deleteEvent(event_id):
         return redirect(redirect_url)
     
     # Get current user data
-    user_data = get_user_session_data()
     user_id = session.get('user_id')
     is_admin = session.get('isAdminByID', 0) == 1
     
