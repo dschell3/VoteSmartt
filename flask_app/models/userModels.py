@@ -140,8 +140,8 @@ class User:
         )
         return {"ok": True}
 
-    # TODO: Admin methods to promote/demote users
-    # TODO: Admin method to delete users
+    # TODO: Admin methods to promote users
+    # TODO: Admin method to delete users...how would this impact their previous votes?
     
     # TODO: Admin should not be able to reset their own password via this method
     @classmethod
@@ -153,6 +153,8 @@ class User:
             return False
         return cls.updatePassword({'user_id': user.user_id, 'password': data['password']})
 
+
+    # ===== INPUT VALIDATION METHODS ===== 
     @staticmethod
     def validatePassword(password: str) -> bool:
         """Return True if the password meets minimum security requirements."""
@@ -169,3 +171,12 @@ class User:
         return True
 
     # TODO - Static methods to validate email and phone number formats
+    @staticmethod
+    def validateEmail(email: str) -> bool:
+        """Return True if the email format is valid."""
+        ...
+
+    @staticmethod
+    def validatePhone(phone: str) -> bool:
+        """Return True if the phone number format is valid."""
+        ...
