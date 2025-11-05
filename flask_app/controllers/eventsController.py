@@ -117,7 +117,7 @@ def createEventRoute():
     
     # Priority 5: Candidates (lower priority)
     else:
-        valid_candidates = [c.strip() for c in candidates if c.strip()]
+        valid_candidates = [c.strip() for c in candidate if c.strip()]
         if len(valid_candidates) < 2:
             error_message = 'Please add at least 2 candidates'
         else:
@@ -207,7 +207,7 @@ def deleteEvent(event_id):
     
     # Get current user data
     user_id = session.get('user_id')
-    is_admin = session.get('isAdminByID', 0) == 1
+    user = User.getUserByID({'user_id': user_id})
     
     # Get the event to check ownership
     event = Events.getOne({"event_id": event_id})
@@ -216,7 +216,7 @@ def deleteEvent(event_id):
         return redirect("/events")
     
     # Check if user is the creator or an admin
-    if event.created_byFK != user_id and not is_admin:
+    if event.created_byFK != user_id and not (user and user.can_manage_events()):
         flash("You can only delete events that you created.", "error")
         return redirect("/events")
     

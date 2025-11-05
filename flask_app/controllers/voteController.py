@@ -15,14 +15,14 @@ def require_login(redirect_to="/unauthorized"):
 # block to ensure admins cannot vote
 def require_not_admin():
     u = User.getUserByID({'user_id': session['user_id']})
-    if u and u.is_admin:
+    if u and  not u.can_cast_vote():
         flash("Administrators cannot vote on events.", "error")
         return True
     return False
 
 def require_admin():
     u = User.getUserByID({'user_id': session.get('user_id')})
-    if not u or u.is_admin == False:
+    if not u or not u.can_manage_events():
         flash("Admins only.", "error")
         return True
     return False

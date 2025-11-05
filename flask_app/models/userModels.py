@@ -26,11 +26,6 @@ class User:
     @property
     def is_admin(self) -> bool:
         return self.isAdmin == 1
-    
-    # TODO - Add permission methods after UML discussion with Jang
-    # If ok can make calls in controllers to check user.can_manage_events() etc.
-
-    # TODO - Component testing for methods in /models
 
     # ===== ROLE-BASED CAPABILITIES =====
     # These methods define what actions each role can perform
