@@ -11,7 +11,7 @@ db = "mydb"
 class User:
     db = db
     # columns in user table are: user_id, first_name, last_name, email,
-    #                            password, isAdminByID, created_at, phone
+    #                            password, isAdmin, created_at, phone
     
     def __init__(self, data):
         self.user_id = data['user_id']
@@ -21,13 +21,35 @@ class User:
         self.password = data['password']
         self.phone = data['phone']
         self.created_at = data['created_at']
-        self.isAdminByID = int(data.get('isAdminByID', 0)) # always set an int 0/1
-        # FIXME...isAdminByID Default already set to 0 in DB schema? role not on UML
+        self.isAdmin = int(data.get('isAdmin', 0)) # always set an int 0/1
         
     @property
     def is_admin(self) -> bool:
-        return self.isAdminByID == 1
+        return self.isAdmin == 1
 
+    # ===== ROLE-BASED CAPABILITIES =====
+    # These methods define what actions each role can perform
+    # Used for easy to read explicit permission checks, make code + UML consistent
+    
+    def can_cast_vote(self) -> bool:
+        """Only non-admin users (voters) can cast votes
+        Admins are prohibited from voting to maintain integrity"""
+        return not self.is_admin
+    
+    def can_view_events(self) -> bool:
+        """All users can view events"""
+        return True
+
+    def can_manage_events(self) -> bool:
+        """Only admins can create/edit/delete voting events"""
+        return self.is_admin
+    
+    def can_manage_users(self) -> bool:
+        """Only admins can manage user accounts"""
+        return self.is_admin
+
+
+    # ===== CLASS METHODS FOR DB INTERACTIONS =====
     @classmethod
     def register(cls, data):
         query = '''
@@ -39,11 +61,16 @@ class User:
         '''
         return connectToMySQL(db).query_db(query, data)
     
+    # TODO - Registration method for admin users
+    @classmethod
+    def register_admin(cls, data):
+        ...
+
     @classmethod
     def isAdminByID(cls, data):
-        query = "SELECT isAdminByID FROM user WHERE user_id = %(user_id)s;"
+        query = "SELECT isAdmin FROM user WHERE user_id = %(user_id)s;"
         result = connectToMySQL(db).query_db(query, data)
-        return bool(result and result[0].get("isAdminByID") == 1)
+        return bool(result and result[0].get("isAdmin") == 1)
 
     @classmethod
     def getUserByEmail(cls, data):
@@ -70,7 +97,7 @@ class User:
     def getAllUsers(cls):
         # Get all users ordered by creation date descending, w/o password information
         query = """
-        SELECT user_id, first_name, last_name, email, phone, created_at, isAdminByID
+        SELECT user_id, first_name, last_name, email, phone, created_at, isAdmin
         FROM user
         ORDER BY created_at DESC;
         """
@@ -99,6 +126,7 @@ class User:
         """
         return connectToMySQL(db).query_db(query, data)
     
+    # refactor later to simplify/combine with resetPasswordByEmail and use the send_email in userController
     @classmethod
     def sendPasswordResetEmail(cls, data):
         """Check if the email belongs to a registered user; if so, send a reset link."""
@@ -118,6 +146,10 @@ class User:
         )
         return {"ok": True}
 
+    # TODO: Admin methods to promote users
+    # TODO: Admin method to delete users...how would this impact their previous votes?
+    
+    # TODO: Admin should not be able to reset their own password via this method
     @classmethod
     def resetPasswordByEmail(cls, data):
         """Directly update the user's password if the email exists.
@@ -127,6 +159,8 @@ class User:
             return False
         return cls.updatePassword({'user_id': user.user_id, 'password': data['password']})
 
+
+    # ===== INPUT VALIDATION METHODS ===== 
     @staticmethod
     def validatePassword(password: str) -> bool:
         """Return True if the password meets minimum security requirements."""
@@ -141,3 +175,14 @@ class User:
         if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
             return False
         return True
+
+    # TODO - Static methods to validate email and phone number formats
+    @staticmethod
+    def validateEmail(email: str) -> bool:
+        """Return True if the email format is valid."""
+        ...
+
+    @staticmethod
+    def validatePhone(phone: str) -> bool:
+        """Return True if the phone number format is valid."""
+        ...
