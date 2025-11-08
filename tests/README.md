@@ -1,4 +1,4 @@
-# Component Tests for optionModels.py
+# Component Tests for *Models.py
 
 ## Overview
 Simple standalone unit tests for the Option model class that mock database connections.
@@ -6,16 +6,19 @@ Simple standalone unit tests for the Option model class that mock database conne
 ## Prerequisites
 ```bash
 pip install pytest --break-system-packages
+pip install flask flask-mail flask-bcrypt pymysql python-dotenv
 ```
 
-## Running the Tests
-
-### Run all tests in the file:
+## Running the Tests...replace * with model being tested
+```bash
+pytest tests/test_*.py -v
+```
+### Ex. Run tests for optionModels.py:
 ```bash
 pytest tests/test_optionModels.py -v
 ```
 
-### Run a specific test:
+### If you want to run a specific test:
 ```bash
 pytest tests/test_optionModels.py::test_option_init_creates_instance_with_correct_attributes -v
 ```
@@ -49,7 +52,7 @@ pytest tests/test_optionModels.py --cov=flask_app.models.optionModels --cov-repo
 - ✓ Calls delete query with correct parameters
 - ✓ Handles nonexistent events
 
-### 5. **Integration Test**
+### 5. **Basic Cluster Integration Test**
 - ✓ Tests workflow: create → retrieve → delete
 
 ## Test Structure
@@ -72,15 +75,14 @@ def mock_db_connection():
         yield mock_connect
 ```
 
-When a test needs specific database behavior:
+# When a test needs specific database behavior:
 ```python
 # Make the mock return specific data
 mock_query = Mock(return_value=[...])
 mock_db_connection.return_value.query_db = mock_query
 ```
 
-## Expected Output
-
+## Expected Output - test_optionModels.py
 When all tests pass, you'll see:
 ```
 tests/test_optionModels.py::test_option_init_creates_instance_with_correct_attributes PASSED

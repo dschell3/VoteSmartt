@@ -49,6 +49,7 @@ class User:
         return self.is_admin
 
 
+    # ===== CLASS METHODS FOR DB INTERACTIONS =====
     @classmethod
     def register(cls, data):
         query = '''
@@ -60,6 +61,11 @@ class User:
         '''
         return connectToMySQL(db).query_db(query, data)
     
+    # TODO - Registration method for admin users
+    @classmethod
+    def register_admin(cls, data):
+        ...
+
     @classmethod
     def isAdminByID(cls, data):
         query = "SELECT isAdmin FROM user WHERE user_id = %(user_id)s;"
