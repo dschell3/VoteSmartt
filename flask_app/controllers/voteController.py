@@ -6,13 +6,6 @@ from flask_app.models.eventsModels import Events
 from datetime import datetime
 from flask_app.utils.helpers import require_login, require_voter, get_current_user
 
-def require_admin():
-    u = User.getUserByID({'user_id': session.get('user_id')})
-    if not u or not u.can_manage_events():
-        flash("Admins only.", "error")
-        return True
-    return False
-
 @app.route('/vote/cast', methods=['POST'])
 def cast_vote():
     """

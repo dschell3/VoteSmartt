@@ -5,8 +5,11 @@ from flask_app.models.eventsModels import Events
 from flask_app.models.userModels import User
 from flask_bcrypt import Bcrypt
 from urllib.parse import urlencode
-from flask_app.utils.helpers import require_login, get_user_session_data
+from flask_app.utils.helpers import require_login, get_user_session_data, get_current_user
+from flask_app.utils.validators import format_phone, validate_all_registration_fields, validate_email, validate_password, validate_phone, validate_name
 from flask_app.models.voteModels import Vote
+from flask import current_app
+from flask_app.utils.mailer import send_contact_email
 
 bcrypt = Bcrypt(app)
 
@@ -14,25 +17,6 @@ bcrypt = Bcrypt(app)
 # HELPER FUNCTIONS
 # ================================
 
-def get_user_session_data():
-    """Helper function to get user session data for templates"""
-    logged_in = "user_id" in session
-    user_data = {'logged_in': logged_in}
-    
-    if logged_in:
-        user_id = session["user_id"]
-        user = User.getUserByID({"user_id": user_id})
-        if user:
-            user_data.update({
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'email': user.email,
-                'phone': user.phone,
-                'user_id': user.user_id,
-                'created_at': user.created_at
-            })
-    
-    return user_data
 
 def get_user_voting_stats(user_id):
     """Get voting statistics for dashboard (placeholder data)"""
@@ -57,29 +41,6 @@ def get_upcoming_elections(limit=10):
     """Get upcoming elections for voting guides (placeholder data)"""
     return Events.getUpcoming(limit=limit)
 
-def require_login(redirect_to="/unauthorized"):
-    """Helper function to check if user is logged in"""
-    if "user_id" not in session:
-        # Avoid showing the playful message when redirecting to the sign-in page
-        if redirect_to == "/login":
-            flash("Please log in to access this page")
-        else:
-            flash("Should you really be here? Please sign in to continue.")
-        return redirect_to
-    
-    user_id = session["user_id"]
-    user = User.getUserByID({"user_id": user_id})
-    if not user:
-        session.clear()
-        flash("Session expired. Please log in again.")
-        return redirect_to
-    
-    return None  # No redirect needed
-
-from flask import current_app
-from flask_app.utils.mailer import send_contact_email
-
-
 def send_email(to_address, subject, body):
     """Send an email to `to_address` using the mail helper.
 
@@ -87,6 +48,10 @@ def send_email(to_address, subject, body):
     """
     recipients = [to_address]
     send_contact_email(subject, body, recipients)
+
+# ================================
+# ERROR & UNAUTHORIZED PAGES
+# ================================
 
 @app.route('/unauthorized')
 def unauthorized_page():
@@ -169,40 +134,55 @@ def contact_route():
 
 @app.route("/registerRoute", methods=['POST']) # Registration handler
 def register():
-    # Validate input data
+    """Handle user registration with validation"""
+    # Get form data
     first_name = request.form.get('first_name', '').strip()
     last_name = request.form.get('last_name', '').strip()
     email = request.form.get('email', '').strip().lower()
     password = request.form.get('password', '')
     phone = request.form.get('phone', '').strip()
     
-    # Server-side validation
+    # Validate using centralized validators
     errors = []
     
-    if len(first_name) < 2:
-        errors.append("First name must be at least 2 characters")
+    # Validate first name
+    error = validate_name(first_name, "First name")
+    if error:
+        errors.append(error)
     
-    if len(last_name) < 2:
-        errors.append("Last name must be at least 2 characters")
+    # Validate last name
+    error = validate_name(last_name, "Last name")
+    if error:
+        errors.append(error)
     
-    if not email or '@' not in email:
-        errors.append("Please enter a valid email address")
+    # Validate email
+    error = validate_email(email)
+    if error:
+        errors.append(error)
     
-    if not User.validatePassword(password):
-        errors.append("Password does not meet requirements")
+    # Validate password
+    error = validate_password(password)
+    if error:
+        errors.append(error)
     
-    if len(phone) < 10:
-        errors.append("Please enter a valid phone number")
+    # Validate phone
+    error = validate_phone(phone)
+    if error:
+        errors.append(error)
     
-    # Check if email already exists
+    # Check if email already exists (custom validation)
     existing_user = User.getUserByEmail({'email': email})
     if existing_user:
         errors.append("An account with this email already exists. Please try logging in instead.")
     
+    # If there are any errors, show them and redirect back
     if errors:
         for error in errors:
             flash(error)
         return redirect("/register")
+    
+    # Format phone number consistently
+    formatted_phone = format_phone(phone)
     
     # Create new user
     pw_hash = bcrypt.generate_password_hash(password)
@@ -211,7 +191,7 @@ def register():
         'last_name': last_name,
         'email': email,
         'password': pw_hash,
-        'phone': phone,
+        'phone': formatted_phone,  # Use formatted phone
     }
     
     try:
@@ -353,9 +333,9 @@ def update_profile():
     if redirect_url:
         return redirect(redirect_url)
     
-    user_id = session["user_id"]
+    user = get_current_user()
     data = {
-        'user_id': user_id,
+        'user_id': user.user_id,
         'first_name': request.form.get('first_name', '').strip(),
         'last_name': request.form.get('last_name', '').strip(),
         'email': request.form.get('email', '').strip().lower(),
@@ -381,8 +361,8 @@ def change_password():
     if redirect_url:
         return redirect(redirect_url)
     
-    user_id = session["user_id"]
-    user = User.getUserByID({"user_id": user_id})
+    user = get_current_user()
+    user = User.getUserByID({"user_id": user.user_id})
     
     current_password = request.form.get('current_password', '')
     new_password = request.form.get('new_password', '')
@@ -412,7 +392,7 @@ def change_password():
     try:
         pw_hash = bcrypt.generate_password_hash(new_password)
         data = {
-            'user_id': user_id,
+            'user_id': user.user_id,
             'password': pw_hash
         }
         
