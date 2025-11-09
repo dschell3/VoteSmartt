@@ -16,26 +16,24 @@ class Result:
         for r in rows:
             r['percentage'] = round((r['votes'] / total * 100), 1) if total else 0.0
         return rows 
-    
-    # can use calculate() to help to get the results for the methods below
-    # access via self.rows
-    def getWinner(self):
+
+    def getWinner(self):        # returns Dict of winning option or None
         if not self.rows:
             return None
         return self.rows[0] # rows are sorted by votes desc in calculate()
 
-    def getTotalVotes(self):
+    def getTotalVotes(self):    # returns int total votes cast in the event
         if not self.rows:
             return 0
         return sum(r['votes'] for r in self.rows)
 
-    def getWinnerVoteTotal(self):
+    def getWinnerVoteTotal(self):   # returns int number of votes for winning option
         winner = self.getWinner()
         if not winner:
             return 0
         return winner['votes']
 
-    def getWinnerPercentage(self):
+    def getWinnerPercentage(self):  # returns float percentage of votes for winning option
         winner = self.getWinner()
         if not winner:
             return 0.0
