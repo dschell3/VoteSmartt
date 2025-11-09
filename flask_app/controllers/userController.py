@@ -1,10 +1,8 @@
-from datetime import datetime
-from flask import Flask, jsonify, request, flash, url_for, redirect, session, render_template
+from flask import request, flash, url_for, redirect, session, render_template
 from flask_app import app
 from flask_app.models.eventsModels import Events
 from flask_app.models.userModels import User
 from flask_bcrypt import Bcrypt
-from urllib.parse import urlencode
 from flask_app.utils.helpers import require_login, get_user_session_data, get_current_user
 from flask_app.utils.validators import format_phone, validate_all_registration_fields, validate_email, validate_password, validate_phone, validate_name
 from flask_app.models.voteModels import Vote

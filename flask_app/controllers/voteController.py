@@ -1,9 +1,8 @@
-from flask import request, redirect, flash, session
+from flask import request, redirect, flash
 from flask_app import app
 from flask_app.models.userModels import User
 from flask_app.models.voteModels import Vote
 from flask_app.models.eventsModels import Events
-from datetime import datetime
 from flask_app.utils.helpers import require_login, require_voter, get_current_user
 
 @app.route('/vote/cast', methods=['POST'])

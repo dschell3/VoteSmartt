@@ -18,7 +18,6 @@ class Option:
         results = connectToMySQL(db).query_db(query, data)
         return [cls(row) for row in results]
     
-    # TODO - Needs to be tested...voter needs to see options for an event
     @classmethod
     def getAll(cls):
         query = "SELECT * FROM `option`;"

@@ -1,7 +1,6 @@
-from flask import Flask, jsonify, flash, url_for, redirect, session, render_template, request
+from flask import flash, url_for, redirect, session, render_template, request
 from flask_app import app
 from flask_app.models.eventsModels import Events
-from flask_app.models.userModels import User
 from flask_app.models.optionModels import Option
 from datetime import datetime
 from flask_app.utils.helpers import require_login, get_current_user, get_user_session_data, is_logged_in
