@@ -37,6 +37,7 @@ def get_user_session_data():
 def get_user_voting_stats(user_id):
     """Get voting statistics for dashboard (placeholder data)"""
     # TODO: Replace with actual database queries when voting system is implemented
+    # Create a User model method to get these stats?
     return {
         'total_votes': 'N/A',  # Will be replaced with actual count
         'participation_rate': 'N/A',  # Will be calculated from events participated / total events
