@@ -117,16 +117,22 @@ class Events:
         """
         return connectToMySQL(cls.db).query_db(query)
     
+    # TODO - Needs to be tested, Update UML class diagram to show otional limit param
     @classmethod
-    def getAllUpcoming(cls):
+    def getUpcoming(cls, limit=None):
         query = """
         SELECT e.*
         FROM event e
         WHERE e.start_time > NOW()
         ORDER BY e.start_time ASC;
         """
-        return connectToMySQL(cls.db).query_db(query)
-    
+        if limit:
+            query += f" LIMIT {limit}"
+        query += ";"
+
+        result = connectToMySQL(cls.db).query_db(query)
+        return [cls(row) for row in result] if result else []
+
     @classmethod
     def getAllClosed(cls):
         query = """

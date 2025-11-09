@@ -50,22 +50,11 @@ def get_user_voting_stats(user_id):
 # So have the controller extract session data and pass to model methods
 def get_recent_votes(user_id, limit=3):
     """Get recent voting activity (placeholder data)"""
-    # TODO: Replace with actual database queries when voting system is implemented...DONE?
     return Vote.getRecentForUser({'user_id': user_id, 'limit': limit})
 
 def get_upcoming_elections(limit=10):
     """Get upcoming elections for voting guides (placeholder data)"""
-    # TODO: Replace with actual database queries when event system is expanded
-    
-    events = Events.getAll()
-    now = datetime.now()
-    upcoming = [
-    e for e in events
-    if Events.parse_datetime(getattr(e, 'start_time', None)) and
-       Events.parse_datetime(e.start_time) > datetime.now()
-    ]
-    return sorted(upcoming, key=lambda e: Events.parse_datetime(e.start_time))[:limit]
-    # Will return list of upcoming elections
+    return Events.getUpcoming(limit=limit)
 
 def require_login(redirect_to="/unauthorized"):
     """Helper function to check if user is logged in"""
