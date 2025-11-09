@@ -58,10 +58,10 @@ pytest tests/test_optionModels.py --cov=flask_app.models.optionModels --cov-repo
 ## Test Structure
 
 Each test is **standalone** and uses **mocked database connections**, meaning:
-- ✅ No actual database required
-- ✅ Fast execution
-- ✅ No side effects
-- ✅ Can run anywhere
+- ✓  No actual database required
+- ✓  Fast execution
+- ✓  No side effects
+- ✓  Can run anywhere
 
 ## Understanding the Mocks
 
@@ -86,13 +86,7 @@ mock_db_connection.return_value.query_db = mock_query
 When all tests pass, you'll see:
 ```
 tests/test_optionModels.py::test_option_init_creates_instance_with_correct_attributes PASSED
-tests/test_optionModels.py::test_option_init_handles_different_data_types PASSED
-tests/test_optionModels.py::test_getByEventId_returns_list_of_options PASSED
-tests/test_optionModels.py::test_getByEventId_returns_empty_list_when_no_options PASSED
-tests/test_optionModels.py::test_create_inserts_option_into_database PASSED
-tests/test_optionModels.py::test_create_returns_database_response PASSED
-tests/test_optionModels.py::test_deleteByEventId_calls_delete_query PASSED
-tests/test_optionModels.py::test_deleteByEventId_handles_nonexistent_event PASSED
+...
 tests/test_optionModels.py::test_option_workflow_create_retrieve_delete PASSED
 
 ======= 9 passed in 0.XX s =======
@@ -104,13 +98,7 @@ tests/test_optionModels.py::test_option_workflow_create_retrieve_delete PASSED
 Make sure you're running pytest from the project root directory where `flask_app/` exists.
 
 ### ModuleNotFoundError
-Ensure your PYTHONPATH includes the project root:
-```bash
-export PYTHONPATH="${PYTHONPATH}:$(pwd)"
-pytest tests/test_optionModels.py -v
-```
-
-Or run with Python module syntax:
+run with Python module syntax:
 ```bash
 python -m pytest tests/test_optionModels.py -v
 ```

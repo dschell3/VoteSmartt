@@ -38,14 +38,40 @@ class Vote:
     @classmethod  
     def getRecentForUser(cls, data):
         query = """
-        SELECT * FROM vote
-        WHERE vote_user_id = %(user_id)s
-        ORDER BY voted_at DESC
+        SELECT 
+            v.vote_id,
+            v.voted_at,
+            e.event_id,
+            e.title as event_name,
+            e.start_time,
+            e.end_time,
+            o.option_text
+        FROM vote v
+        JOIN `option` o ON o.option_id = v.vote_option_id
+        JOIN event e ON e.event_id = o.option_event_id
+        WHERE v.vote_user_id = %(user_id)s
+        ORDER BY v.voted_at DESC
         LIMIT %(limit)s;
         """
         result = connectToMySQL(db).query_db(query, data)
-        return [cls(r) for r in (result or [])]
-    
+        
+        if not result:
+            return []
+        
+        votes = []
+        for row in result:
+            status = Events.compute_status(row['start_time'], row['end_time'])
+            votes.append({
+                'vote_id': row['vote_id'],
+                'event_name': row['event_name'],
+                'date': row['voted_at'],
+                'status': status.lower(),
+                'vote_type': row['option_text'],
+                'event_id': row['event_id']
+            })
+        
+        return votes
+        
     @classmethod
     def castVote(cls, data):
         query = '''

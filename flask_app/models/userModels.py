@@ -65,6 +65,10 @@ class User:
     @classmethod
     def register_admin(cls, data):
         ...
+    
+    # TODO: Admin methods to promote users
+    # TODO: Admin method to delete users...how would this impact their previous votes?
+    # TODO: Admin should not be able to reset their own password via this method
 
     @classmethod
     def isAdminByID(cls, data):
@@ -146,10 +150,6 @@ class User:
         )
         return {"ok": True}
 
-    # TODO: Admin methods to promote users
-    # TODO: Admin method to delete users...how would this impact their previous votes?
-    
-    # TODO: Admin should not be able to reset their own password via this method
     @classmethod
     def resetPasswordByEmail(cls, data):
         """Directly update the user's password if the email exists.
@@ -176,13 +176,22 @@ class User:
             return False
         return True
 
-    # TODO - Static methods to validate email and phone number formats
     @staticmethod
     def validateEmail(email: str) -> bool:
-        """Return True if the email format is valid."""
-        ...
+        """return True if the email format is valid."""
+        if not email or not isinstance(email, str):
+            return False
+        return EMAIL_REGEX.match(email) is not None
 
     @staticmethod
     def validatePhone(phone: str) -> bool:
-        """Return True if the phone number format is valid."""
-        ...
+        """return True if the phone number format is valid."""
+        if not phone or not isinstance(phone, str):
+            return False
+        phone_digits = re.sub(r'\D', '', phone)  # Remove non-digit characters
+        return len(phone_digits) == 10           # Valid US phone number length
+    
+    # TODO - Static method to validate names (first/last) ?
+    # e.g., non-empty, reasonable length, no invalid characters
+
+    # TODO - Static method to normalize phone number format for storage/display?

@@ -44,14 +44,14 @@ def get_user_voting_stats(user_id):
         'last_vote_date': 'N/A'  # Date of most recent vote
     }
 
-# this just reimplements Vote.getRecentForUser...remove?
+# TODO - ASK JANG
+# this just reimplements Vote.getRecentForUser w/ session data...should the session data remain
+# in controllers like this? Basically yes, since models shouldn't depend on session state
+# So have the controller extract session data and pass to model methods
 def get_recent_votes(user_id, limit=3):
     """Get recent voting activity (placeholder data)"""
-    # TODO: Replace with actual database queries when voting system is implemented
-    
-    rows = Vote.getRecentForUser({'user_id': user_id, 'limit': limit}) or []
-    return rows  # Will return list of recent votes
-
+    # TODO: Replace with actual database queries when voting system is implemented...DONE?
+    return Vote.getRecentForUser({'user_id': user_id, 'limit': limit})
 
 def get_upcoming_elections(limit=10):
     """Get upcoming elections for voting guides (placeholder data)"""

@@ -213,7 +213,7 @@ def test_deleteByEventId_handles_nonexistent_event(mock_db_connection):
 
 
 # ============================================================================
-# INTEGRATION-STYLE TEST (optional - tests multiple methods together)
+# INTEGRATION-STYLE TEST (optional - cluster tests multiple methods together)
 # ============================================================================
 
 def test_option_workflow_create_retrieve_delete(mock_db_connection, sample_option_list):
