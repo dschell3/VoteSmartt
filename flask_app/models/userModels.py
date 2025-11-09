@@ -1,10 +1,11 @@
 from flask_app.config.mysqlconnection import connectToMySQL
-import re, secrets, hashlib
+import secrets, hashlib
 from flask import flash
 from flask_app import app
 from datetime import datetime, timedelta
-
-EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$') 
+from flask_app.utils.validators import (
+    validate_all_registration_fields, validate_email,
+    validate_name, validate_password, validate_phone )
 
 db = "mydb"
 
@@ -139,8 +140,8 @@ class User:
             # Return generic OK to avoid revealing whether email exists
             return {"ok": True}
 
-        # FIXME: Ask Jang how to create a link/token for password reset
-        # FIXME: Implement actual send_email() function
+        # TODO: Ask Jang how to implement email sending using existing app infrastructure
+        # TODO: use send_email function from userController
         reset_link = f"http://localhost:5000/reset_password?email={data['email']}"
         from flask_app.controllers.userController import send_email
         send_email(
@@ -164,32 +165,20 @@ class User:
     @staticmethod
     def validatePassword(password: str) -> bool:
         """Return True if the password meets minimum security requirements."""
-        if not password or len(password) < 8:
-            return False
-        if not re.search(r"[A-Z]", password):
-            return False
-        if not re.search(r"[a-z]", password):
-            return False
-        if not re.search(r"\d", password):
-            return False
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-            return False
-        return True
+        error = validate_password(password)
+        return error is None
 
     @staticmethod
     def validateEmail(email: str) -> bool:
         """return True if the email format is valid."""
-        if not email or not isinstance(email, str):
-            return False
-        return EMAIL_REGEX.match(email) is not None
+        error = validate_email(email)
+        return error is None
 
     @staticmethod
     def validatePhone(phone: str) -> bool:
         """return True if the phone number format is valid."""
-        if not phone or not isinstance(phone, str):
-            return False
-        phone_digits = re.sub(r'\D', '', phone)  # Remove non-digit characters
-        return len(phone_digits) == 10           # Valid US phone number length
+        error = validate_phone(phone)
+        return error is None
     
     # TODO - Static method to validate names (first/last) ?
     # e.g., non-empty, reasonable length, no invalid characters

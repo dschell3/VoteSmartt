@@ -121,41 +121,14 @@ def createEventRoute():
 
 @app.route('/eventList')
 def eventList():
+    """Display list of all events, sorted by status and start time"""
     redirect_url = require_login()
     if redirect_url:
         return redirect(redirect_url)
+    
     user_data = get_user_session_data()
-    allEvents = Events.getAllWithCreators()
-    # Compute server-side status for each event so templates have a reliable value
-    for ev in allEvents:
-        try:
-            ev.status = Events.compute_status(ev.start_time, ev.end_time)
-        except Exception:
-            ev.status = 'Unknown'
-    # Sort events so that Open events appear first, then Waiting, then Closed.
-    # Within each status, sort by start_time ascending (earliest first).
-    status_priority = {
-        'Open': 0,
-        'Waiting': 1,
-        'Closed': 2,
-        'Unknown': 3
-    }
-
-    def _safe_parse_start(ev):
-        """Return a datetime for sorting; None becomes far-future to push it to the end."""
-        dt = Events.parse_datetime(ev.start_time)
-        if dt is None:
-            # Use a far-future date so events without start_time appear after dated ones
-            return datetime.max
-        return dt
-
-    # sort by (status priority, start_time)
-    try:
-        allEvents.sort(key=lambda e: (status_priority.get(getattr(e, 'status', 'Unknown'), 3), _safe_parse_start(e)))
-    except Exception:
-        # If something goes wrong with sorting, fallback to the original order
-        pass
-
+    allEvents = Events.getAllWithCreators()  # returns sorted events with status
+    
     return render_template('eventList.html', allEvents=allEvents, **user_data)
 
 
