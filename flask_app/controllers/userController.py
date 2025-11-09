@@ -5,7 +5,7 @@ from flask_app.models.eventsModels import Events
 from flask_app.models.userModels import User
 from flask_bcrypt import Bcrypt
 from urllib.parse import urlencode
-
+from flask_app.utils.helpers import require_login, get_user_session_data
 from flask_app.models.voteModels import Vote
 
 bcrypt = Bcrypt(app)
