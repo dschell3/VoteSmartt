@@ -26,6 +26,31 @@ class BadWordsCheck {
      * This method is called automatically when creating a new BadWordsCheck instance
      */
     init() {
+        /**
+         * Profanity Filter Word List - Inclusion Criteria and Scope
+         * 
+         * This list contains words and phrases that are filtered to maintain a respectful 
+         * and inclusive environment for all users. The inclusion criteria are:
+         * 
+         * 1. General Profanity: Common vulgar and obscene language (English and Chinese)
+         * 2. Sexual Content: Explicit sexual references and anatomical terms
+         * 3. Internet Slang: Abbreviated profanity commonly used in online communication
+         * 4. Hate Speech: Terms that target individuals or groups based on:
+         *    - Ethnicity and race
+         *    - Religion and faith
+         *    - Nationality and origin
+         * 5. Harassment: Phrases expressing violence, death wishes, or personal attacks
+         * 
+         * Cultural Context and Nuanced Terms:
+         * - Some terms have complex cultural meanings that may be offensive in certain contexts
+         * - Religious terms (lines 58-59): Derogatory combinations targeting specific faiths
+         * - Ethnic/racial slurs (lines 60-61): Terms with harmful historical or cultural connotations
+         * - These are included to prevent harassment and maintain community standards
+         * - The filter aims to block clearly offensive usage while being context-aware
+         * 
+         * Maintenance: This list should be reviewed periodically to ensure it remains
+         * appropriate and effective. Consider cultural sensitivity and evolving language.
+         */
         this.badWords = [
             'fuck', 'fucking', 'fucked', 'fucker', 'fck', 'fuk', 'f*ck', 'f**k',
             'shit', 'shitty', 'bullshit', 'sh*t', 'sh1t',
@@ -55,9 +80,15 @@ class BadWordsCheck {
             'sb', 'SB', 'cnm', 'CNM', 'nmsl', 'NMSL',
             'wtf', 'WTF', 'stfu', 'STFU',
             'cao', 'ri', 'gan', 'tm', 'md',
+            // Religious slurs: Derogatory terms targeting specific religious groups
+            // These combine religious identifiers with offensive language
             '绿教', '清真教', '穆斯林狗', '真主垃圾',
             '基督教狗', '佛教傻逼', '道教垃圾',
+            // Ethnic and racial slurs: Terms with harmful cultural/historical connotations
+            // These target people based on ethnicity, race, or skin color
             '黄皮猴子', '白皮猪', '黑人滚', '犹太狗',
+            // Nationality-based slurs: Derogatory terms targeting national/ethnic origins
+            // These use offensive stereotypes and demeaning language
             '印度阿三', '越南猴子', '韩国棒子',
             '6324', '草泥马', '法克', 'fxxk',
             '你妈死了', '全家死光', '去死吧',
