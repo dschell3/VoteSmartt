@@ -1,53 +1,14 @@
-from flask import Flask, jsonify, request, flash, url_for, redirect, session, render_template, request
+from flask import flash, url_for, redirect, session, render_template, request
 from flask_app import app
 from flask_app.models.eventsModels import Events
-from flask_app.models.userModels import User
+from flask_app.models.optionModels import Option
+from flask_app.models.voteModels import Vote
 from datetime import datetime
+from flask_app.utils.helpers import require_login, get_current_user, get_user_session_data, is_logged_in
+
 
 # moved compute_status and _parse_datetime to Events model for reuse
 # so other controllers can call it too
-
-def get_user_session_data():
-    """Helper function to get user session data for templates"""
-    logged_in = "user_id" in session
-    user_data = {'logged_in': logged_in}
-    
-    if logged_in:
-        user_id = session["user_id"]
-        user = User.getUserByID({"user_id": user_id})
-        if user:
-            user_data.update({
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'email': user.email,
-                'phone': user.phone,
-                'user_id': user.user_id,
-                'created_at': user.created_at
-            })
-    
-    return user_data
-
-def is_logged_in():
-    return 'user_id' in session
-
-def require_login(redirect_to="/unauthorized"):
-    """Helper function to check if user is logged in"""
-    if "user_id" not in session:
-        if redirect_to == "/login":
-            flash("Please log in to access this page")
-        else:
-            flash("Should you really be here? Please sign in to continue.")
-        return redirect_to
-    
-    user_id = session["user_id"]
-    user = User.getUserByID({"user_id": user_id})
-    if not user:
-        session.clear()
-        flash("Session expired. Please log in again.")
-        return redirect_to
-    
-    return None  # No redirect needed
-
 
 @app.route('/admin2')
 def adminPage():
@@ -60,64 +21,239 @@ def adminPage():
 
 @app.route('/createEventRoute', methods=['POST'])
 def createEventRoute():
-    user = User.getUserByID({'user_id': session['user_id']})
-    print("THIS IS THE ID",session['user_id'])
+    # 001 - Added comprehensive server-side validation for form submission
+    # Ensure user is logged in
+    redirect_url = require_login()
+    if redirect_url:
+        return redirect(redirect_url)
+    
+    user = get_current_user()
+    print("THIS IS THE ID", user.user_id)
     first_name = user.first_name
+    
+    # Server-side validation
+    title = request.form.get('title', '').strip()
+    description = request.form.get('description', '').strip()
+    start_time = request.form.get('start_time', '').strip()
+    end_time = request.form.get('end_time', '').strip()
+    candidate = request.form.getlist('candidates[]')
+    candidate_descs = request.form.getlist('candidate_descs[]')
+    # Build candidate list early so it's always available (avoid elif-chain scoping issues)
+    valid_candidates = [c.strip() for c in candidate if (c or '').strip()]
+    
+    # Validation - check in priority order and show only the most important error
+    error_message = None
+    
+    # Priority 1: Event name (most important)
+    if not title:
+        error_message = 'Please enter an event name'
+    elif len(title) > 255:
+        error_message = 'Event name is too long (maximum 255 characters)'
+    
+    # Priority 2: Start date (if name is OK)
+    elif not start_time:
+        error_message = 'Please select a start date'
+    
+    # Priority 3: End date (if name and start date are OK)
+    elif not end_time:
+        error_message = 'Please select an end date'
+    
+    # Priority 4: Date validation (if all dates are provided)
+    elif start_time and end_time:
+        try:
+            # Accept full datetime (preferred) and date-only as fallback
+            def _parse_dt(val: str):
+                v = (val or '').strip()
+                fmts = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%dT%H:%M', '%Y-%m-%d']
+                for f in fmts:
+                    try:
+                        return datetime.strptime(v, f)
+                    except Exception:
+                        continue
+                return None
+
+            start_dt = _parse_dt(start_time)
+            end_dt = _parse_dt(end_time)
+            if not start_dt or not end_dt:
+                raise ValueError('Invalid datetime format')
+
+            now = datetime.now()
+
+            # If user provided only dates (00:00 produced), treat as dates for past check
+            if start_dt.hour == 0 and start_dt.minute == 0 and 'T' not in start_time and ' ' not in start_time.strip()[10:]:
+                # date-only submitted; compare by date
+                if start_dt.date() < now.date():
+                    error_message = 'Start date cannot be in the past'
+            else:
+                if start_dt < now:
+                    error_message = 'Start time cannot be in the past'
+
+            if not error_message:
+                if end_dt < start_dt:
+                    error_message = 'End time cannot be before start time'
+
+            # 10-year sanity window
+            if not error_message:
+                if start_dt.year > now.year + 10 or end_dt.year > now.year + 10:
+                    error_message = 'Event dates cannot be more than 10 years in the future'
+
+        except ValueError:
+            error_message = 'Invalid date format'
+    
+    # Priority 5: Description length (optional field, only check if provided)
+    if not error_message and description and len(description) > 1000:
+        error_message = 'Event description is too long (maximum 1000 characters)'
+
+    # Priority 6: Candidates (always validated once earlier checks pass)
+    if not error_message:
+        if len(valid_candidates) < 2:
+            error_message = 'Please add at least 2 candidates'
+        else:
+            # Check candidate length
+            for cand in valid_candidates:
+                if len(cand) > 100:
+                    error_message = f'Candidate name "{cand}" is too long (maximum 100 characters)'
+                    break
+    
+    # If there's a validation error, show only one message
+    if error_message:
+        flash(error_message, 'error')
+        return redirect('/admin2')
+    
+    # Build normalized full datetime strings (YYYY-MM-DD HH:MM:SS)
+    def _normalize_full(val_date_only: str, val_local: str):
+        # Prefer datetime-local value if present
+        raw = (val_local or '').strip() or (val_date_only or '').strip()
+        if not raw:
+            return ''
+        # Replace 'T' with space
+        raw = raw.replace('T', ' ')
+        # Add seconds if missing
+        if len(raw) == 16:  # YYYY-MM-DD HH:MM
+            raw = raw + ':00'
+        # If still date-only
+        if len(raw) == 10:  # YYYY-MM-DD
+            raw = raw + ' 00:00:00'
+        return raw
+
+    start_time_local = request.form.get('start_time_local', '').strip()
+    end_time_local = request.form.get('end_time_local', '').strip()
+    normalized_start = _normalize_full(start_time, start_time_local)
+    normalized_end = _normalize_full(end_time, end_time_local)
+
+    # All validation passed, create the event using normalized times
     data = {
-        'title': request.form['title'],
-        'description': request.form['description'],
-        'start_time': request.form['start_time'],
-        'end_time': request.form['end_time'],
+        'title': title,
+        'description': description,
+        'start_time': normalized_start,
+        'end_time': normalized_end,
         'created_byFK': session['user_id'],
         # status will be computed below
     }
+    
     # compute initial status from provided times
     try:
         data['status'] = Events.compute_status(data.get('start_time'), data.get('end_time'))
     except Exception:
         data['status'] = 'Unknown'
 
-    Events.createEvent(data)
+    # Create the event and capture its new ID so we can persist candidates
+    new_event_id = None
+    try:
+        new_event_id = Events.createEvent(data)
+        flash('Event created successfully!', 'success')
+    except Exception as e:
+        flash('Error creating event. Please try again.', 'error')
+        return redirect('/admin2')
+
+    # Persist candidate names (descriptions deferred per choice C)
+    # NOTE: valid_candidates was built during validation; we ignore candidate_descs for now.
+    if new_event_id:
+        # Deduplicate while preserving order
+        seen = set()
+        ordered_unique = []
+        for c in valid_candidates:
+            if c not in seen:
+                seen.add(c)
+                ordered_unique.append(c)
+        try:
+            for cand in ordered_unique:
+                Option.create({'option_text': cand, 'option_event_id': new_event_id})
+        except Exception as e:
+            # Non‑fatal: event exists even if candidate insertion partially fails
+            print(f"Candidate insertion error for event {new_event_id}: {e}")
+            flash('Event created but some candidates failed to save.', 'error')
+    else:
+        print("[createEventRoute] No new_event_id; skipping candidate persistence.")
+    
     return redirect(url_for('eventList'))
 
 @app.route('/eventList')
 def eventList():
+    """Display list of all events, sorted by status and start time"""
     redirect_url = require_login()
     if redirect_url:
         return redirect(redirect_url)
+    
     user_data = get_user_session_data()
-    allEvents = Events.getAll()
-    # Compute server-side status for each event so templates have a reliable value
-    for ev in allEvents:
-        try:
-            ev.status = Events.compute_status(ev.start_time, ev.end_time)
-        except Exception:
-            ev.status = 'Unknown'
-    # Sort events so that Open events appear first, then Waiting, then Closed.
-    # Within each status, sort by start_time ascending (earliest first).
-    status_priority = {
-        'Open': 0,
-        'Waiting': 1,
-        'Closed': 2,
-        'Unknown': 3
-    }
-
-    def _safe_parse_start(ev):
-        """Return a datetime for sorting; None becomes far-future to push it to the end."""
-        dt = Events.parse_datetime(ev.start_time)
-        if dt is None:
-            # Use a far-future date so events without start_time appear after dated ones
-            return datetime.max
-        return dt
-
-    # sort by (status priority, start_time)
-    try:
-        allEvents.sort(key=lambda e: (status_priority.get(getattr(e, 'status', 'Unknown'), 3), _safe_parse_start(e)))
-    except Exception:
-        # If something goes wrong with sorting, fallback to the original order
-        pass
-
+    allEvents = Events.getAllWithCreators()  # returns sorted events with status
+    
     return render_template('eventList.html', allEvents=allEvents, **user_data)
+
+@app.route('/events')
+def legacyEventsAlias():
+    """Backward-compatible alias for old /events links -> redirect to eventList."""
+    return redirect(url_for('eventList'))
+
+
+@app.route("/events/<int:event_id>/delete", methods=['POST'])
+def deleteEvent(event_id):
+    """Delete an event then redirect safely.
+
+    Improvements:
+    - Use named route redirect (eventList) for consistency.
+    - Graceful handling if user object or permissions method not present.
+    - Avoid redirecting to hard-coded /events (not defined) to prevent 404.
+    - Minimize branching; single exit redirect.
+    """
+    redirect_url = require_login()
+    if redirect_url:
+        return redirect(redirect_url)
+
+    user = None
+    try:
+        user = get_current_user()
+    except Exception:
+        user = None
+
+    event = Events.getOne({"event_id": event_id})
+    if not event:
+        flash("Event not found.", "error")
+        return redirect(url_for('eventList'))
+
+    # Permission check (tolerate missing method can_manage_events)
+    can_manage = False
+    if user:
+        try:
+            can_manage = getattr(user, 'can_manage_events', lambda: False)()
+        except Exception:
+            can_manage = False
+
+    if not user or (event.created_byFK != getattr(user, 'user_id', None) and not can_manage):
+        flash("You can only delete events that you created.", "error")
+        return redirect(url_for('eventList'))
+
+    try:
+        result = Events.deleteEvent({"event_id": event_id})
+        if result:
+            flash(f"Event '{event.title}' deleted.", "success")
+        else:
+            flash("Failed to delete the event.", "error")
+    except Exception as e:
+        print(f"Delete event error: {e}")
+        flash("An unexpected error occurred while deleting the event.", "error")
+
+    return redirect(url_for('eventList'))
 
 
 @app.route("/event/<int:event_id>")
@@ -127,6 +263,8 @@ def singleEvent(event_id):
         return redirect(redirect_url)
     user_data = get_user_session_data()
     event = Events.getOne({"event_id": event_id})
+    if not event:
+        return render_template('singleEvent.html', event=None, **user_data)
     # gather recommendations (simple next 3 upcoming events excluding current)
     try:
         recs = Events.getRecommendations({ 'event_id': event_id })
@@ -139,5 +277,271 @@ def singleEvent(event_id):
             r.status = Events.compute_status(r.start_time, r.end_time)
         except Exception:
             r.status = 'Unknown'
+    # options for this event
+    options = []
+    try:
+        options = Option.getByEventId({'event_id': event_id})
+    except Exception:
+        options = []
 
-    return render_template('singleEvent.html', event=event, recommendations=recs, **user_data)
+    # is event open for voting?
+    try:
+        status = Events.compute_status(event.start_time, event.end_time)
+    except Exception:
+        status = 'Unknown'
+    is_open = (status == 'Open')
+
+    # existing vote for this user (to preselect / allow update)
+    selected_option_id = None
+    try:
+        cur_user = get_current_user()
+        if cur_user:
+            existing = Vote.getByUserAndEvent({'user_id': cur_user.user_id, 'event_id': event_id})
+            if existing:
+                selected_option_id = existing.vote_option_id
+    except Exception:
+        selected_option_id = None
+
+    # tallies if not open (show results)
+    tallies = []
+    if not is_open:
+        try:
+            tallies = Vote.tallyVotesForEvent({'event_id': event_id}) or []
+        except Exception:
+            tallies = []
+
+    return render_template('singleEvent.html', event=event, recommendations=recs, options=options, is_open=is_open, event_status=status, selected_option_id=selected_option_id, tallies=tallies, **user_data)
+
+
+# ==========================
+# Minimal EDIT routes (GET/POST) reusing existing template and validation
+# ==========================
+
+def _fmt_local_dt(raw_val):
+    """Format a DB datetime or string to HTML datetime-local value (YYYY-MM-DDTHH:MM)."""
+    try:
+        dt = Events.parse_datetime(raw_val)
+        return dt.strftime('%Y-%m-%dT%H:%M') if dt else ''
+    except Exception:
+        return ''
+
+
+def _normalize_full(val_date_only: str, val_local: str):
+    """Normalize posted datetime values to 'YYYY-MM-DD HH:MM:SS'. Prefer local (datetime-local) value."""
+    raw = (val_local or '').strip() or (val_date_only or '').strip()
+    if not raw:
+        return ''
+    raw = raw.replace('T', ' ')
+    if len(raw) == 16:  # YYYY-MM-DD HH:MM
+        raw = raw + ':00'
+    if len(raw) == 10:  # YYYY-MM-DD
+        raw = raw + ' 00:00:00'
+    return raw
+
+
+def _can_edit_fields_by_status(status):
+    """Return booleans controlling which fields are editable under a given status.
+    Policy: Waiting -> can edit start/end/title/desc; Open -> can edit end/title/desc; Closed -> only desc.
+    """
+    status = (status or '').strip()
+    can_title = True
+    can_desc = True
+    can_start = False
+    can_end = False
+    if status == 'Waiting':
+        can_start = True
+        can_end = True
+    elif status == 'Open':
+        can_start = False
+        can_end = True
+    elif status == 'Closed':
+        can_title = False
+        can_desc = True
+        can_start = False
+        can_end = False
+    else:
+        # Unknown -> safest: allow title/desc only
+        can_title = True
+        can_desc = True
+        can_start = False
+        can_end = False
+    return can_title, can_desc, can_start, can_end
+
+
+@app.route('/events/<int:event_id>/edit')
+def editEventGet(event_id):
+    """Render edit page reusing eventForms.html with edit_mode."""
+    redirect_url = require_login()
+    if redirect_url:
+        return redirect(redirect_url)
+
+    user = None
+    try:
+        user = get_current_user()
+    except Exception:
+        user = None
+
+    event = Events.getOne({"event_id": event_id})
+    if not event:
+        flash("Event not found.", "error")
+        return redirect(url_for('eventList'))
+
+    # Permission: creator or admin
+    can_manage = False
+    if user:
+        try:
+            is_admin = 1 if session.get('isAdminByID', 0) == 1 else 0
+            can_manage = getattr(user, 'can_manage_events', lambda: False)() or (event.created_byFK == getattr(user, 'user_id', None)) or bool(is_admin)
+        except Exception:
+            can_manage = (event.created_byFK == getattr(user, 'user_id', None))
+    if not user or not can_manage:
+        flash("You can only edit events that you created.", "error")
+        return redirect(url_for('eventList'))
+
+    # Compute current status to drive editability
+    try:
+        status = Events.compute_status(event.start_time, event.end_time)
+    except Exception:
+        status = 'Unknown'
+
+    can_title, can_desc, can_start, can_end = _can_edit_fields_by_status(status)
+
+    user_data = get_user_session_data()
+    # Prefill strings for datetime-local inputs
+    prefill_start_local = _fmt_local_dt(event.start_time)
+    prefill_end_local = _fmt_local_dt(event.end_time)
+
+    return render_template(
+        'eventForms.html',
+        edit_mode=True,
+        event=event,
+        prefill_start_local=prefill_start_local,
+        prefill_end_local=prefill_end_local,
+        can_edit_title=can_title,
+        can_edit_desc=can_desc,
+        can_edit_start=can_start,
+        can_edit_end=can_end,
+        **user_data
+    )
+
+
+@app.route('/events/<int:event_id>/edit', methods=['POST'])
+def editEventPost(event_id):
+    """Handle edit submission with minimal validation and field restrictions by status."""
+    redirect_url = require_login()
+    if redirect_url:
+        return redirect(redirect_url)
+
+    user = None
+    try:
+        user = get_current_user()
+    except Exception:
+        user = None
+
+    event = Events.getOne({"event_id": event_id})
+    if not event:
+        flash("Event not found.", "error")
+        return redirect(url_for('eventList'))
+
+    # Permission check
+    can_manage = False
+    if user:
+        try:
+            is_admin = 1 if session.get('isAdminByID', 0) == 1 else 0
+            can_manage = getattr(user, 'can_manage_events', lambda: False)() or (event.created_byFK == getattr(user, 'user_id', None)) or bool(is_admin)
+        except Exception:
+            can_manage = (event.created_byFK == getattr(user, 'user_id', None))
+    if not user or not can_manage:
+        flash("You can only edit events that you created.", "error")
+        return redirect(url_for('eventList'))
+
+    # Current status
+    try:
+        status = Events.compute_status(event.start_time, event.end_time)
+    except Exception:
+        status = 'Unknown'
+    can_title, can_desc, can_start, can_end = _can_edit_fields_by_status(status)
+
+    # Read fields
+    title = request.form.get('title', '').strip()
+    description = request.form.get('description', '').strip()
+    start_time = request.form.get('start_time', '').strip()
+    end_time = request.form.get('end_time', '').strip()
+    start_time_local = request.form.get('start_time_local', '').strip()
+    end_time_local = request.form.get('end_time_local', '').strip()
+
+    # Basic validation similar to create, but skip candidates and adjust by status
+    error_message = None
+
+    # Title/desc validation
+    if can_title:
+        if not title:
+            error_message = 'Please enter an event name'
+        elif len(title) > 255:
+            error_message = 'Event name is too long (maximum 255 characters)'
+    else:
+        # Keep original title when not editable
+        title = event.title
+
+    if not error_message and description and len(description) > 1000:
+        error_message = 'Event description is too long (maximum 1000 characters)'
+
+    # Normalize datetimes; if not editable, keep original DB values
+    normalized_start = _normalize_full(start_time, start_time_local) if can_start else (event.start_time or '')
+    normalized_end = _normalize_full(end_time, end_time_local) if can_end else (event.end_time or '')
+
+    # Parse for logical checks
+    start_dt = Events.parse_datetime(normalized_start)
+    end_dt = Events.parse_datetime(normalized_end)
+    now = datetime.now()
+
+    # Enforce temporal rules based on status
+    if not error_message:
+        if can_start and not start_dt:
+            error_message = 'Please select a start date'
+        if not error_message and can_end and not end_dt:
+            error_message = 'Please select an end date'
+
+    if not error_message and start_dt and end_dt:
+        if end_dt <= start_dt:
+            error_message = 'End time cannot be before or equal to start time'
+
+    # Additional rules by status
+    if not error_message:
+        if status == 'Waiting' and start_dt and start_dt < now:
+            error_message = 'Start time cannot be in the past'
+        if status == 'Open':
+            # Only end time is editable; ensure it's in the future and after original start
+            orig_start = Events.parse_datetime(event.start_time)
+            if can_end and end_dt:
+                if orig_start and end_dt <= orig_start:
+                    error_message = 'End time must be after start time'
+                elif end_dt <= now:
+                    error_message = 'End time must be in the future for an open event'
+        if status == 'Closed':
+            # Only description allowed; ensure we keep all others unchanged
+            title = event.title
+            normalized_start = event.start_time
+            normalized_end = event.end_time
+
+    if error_message:
+        flash(error_message, 'error')
+        return redirect(url_for('editEventGet', event_id=event_id))
+
+    # Persist update
+    data = {
+        'event_id': event_id,
+        'title': title,
+        'description': description if can_desc else event.description,
+        'start_time': normalized_start,
+        'end_time': normalized_end,
+    }
+    try:
+        Events.editEvent(data)
+        flash('Event updated successfully!', 'success')
+    except Exception as e:
+        print(f"Edit event error: {e}")
+        flash('Error updating event. Please try again.', 'error')
+        return redirect(url_for('editEventGet', event_id=event_id))
+
+    return redirect(url_for('eventList'))

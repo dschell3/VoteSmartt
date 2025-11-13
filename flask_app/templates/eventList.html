@@ -97,6 +97,16 @@
             <div class="relative z-20 flex items-start justify-between gap-4">
                 <div>
                     <h3 class="text-lg font-semibold text-slate-900">{{ events.title }}</h3>
+                    {% if events.creator_full_name %}
+                    <p class="mt-1 text-xs text-slate-500">
+                        <span class="inline-flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                            </svg>
+                            Created by {{ events.creator_full_name }}
+                        </span>
+                    </p>
+                    {% endif %}
                     <p class="mt-2 text-sm text-slate-600 line-clamp-3">{{ events.description }}</p>
                 </div>
                 <div class="shrink-0 text-right">
@@ -108,6 +118,12 @@
                         <span class="inline-flex items-center gap-2 text-xs font-medium text-indigo-600">
                             <span class="timer-dot w-2 h-2 rounded-full bg-indigo-500/90"></span>
                             <span class="event-timer" data-start="{{ events.start_time or '' }}">&mdash;</span>
+                        </span>
+                    </div>
+                    <div class="mt-1 text-right">
+                        <span class="inline-flex items-center gap-2 text-xs text-slate-500">
+                            <span class="timer-dot w-2 h-2 rounded-full bg-slate-400/80"></span>
+                            <span class="event-end-timer" data-end="{{ events.end_time or '' }}">&mdash;</span>
                         </span>
                     </div>
                     <!-- Status badge (Waiting / Open / Closed) -->
@@ -123,11 +139,18 @@
             <div class="mt-4 flex items-center justify-between z-20 relative">
                 <div class="flex items-center gap-2 event-actions opacity-90">
                     <a href="/event/{{ events.event_id }}" class="text-sm text-blue-600 hover:underline">View</a>
+                    <!-- Only show Edit/Delete buttons if user is the creator or admin -->
+                    {% if session.user_id == events.created_byFK or session.isAdminByID == 1 %}
                     <a href="/events/{{ events.event_id }}/edit"
                         class="text-sm text-slate-600 hover:text-slate-800">Edit</a>
-                    <form action="/events/{{ events.event_id }}/delete" method="post" class="inline">
-                        <button type="submit" class="text-sm text-red-600 hover:underline">Delete</button>
-                    </form>
+                    <button type="button" 
+                            class="text-sm text-red-600 hover:underline delete-event-btn"
+                            data-event-id="{{ events.event_id }}"
+                            data-event-title="{{ events.title }}"
+                            data-creator-name="{{ events.creator_full_name }}">
+                        Delete
+                    </button>
+                    {% endif %}
                 </div>
             </div>
             <!-- subtle overlay to show clickable card on hover -->
@@ -162,36 +185,18 @@
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/dayjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/customParseFormat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/relativeTime.min.js"></script>
+<script src="{{ url_for('static', filename='js/time-utils.js') }}"></script>
 <script>
     // Enable Day.js plugins
     dayjs.extend(dayjs_plugin_customParseFormat);
     dayjs.extend(dayjs_plugin_relativeTime);
 
     function tryParse(raw) {
-        if (!raw) return null;
-        // Try ISO / common DB formats first
-        let d = dayjs(raw);
-        if (d.isValid()) return d;
-
-        // Try specific common formats
-        const formats = ['YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DDTHH:mm:ss', 'YYYY-MM-DD'];
-        for (const f of formats) {
-            d = dayjs(raw, f);
-            if (d.isValid()) return d;
-        }
-
-        return null;
+        return (window.TimeUtils && TimeUtils.tryParse) ? TimeUtils.tryParse(raw) : null;
     }
 
     function formatSingle(raw) {
-        const d = tryParse(raw);
-        if (!d) return '—';
-
-        // Determine if time-of-day is present in the raw string
-        const hasTime = /\d{1,2}:\d{2}/.test(raw);
-        const datePart = d.format(hasTime ? 'MMM D, YYYY · h:mm A' : 'MMM D, YYYY');
-        const relative = d.fromNow();
-        return `${datePart} — ${relative}`;
+        return (window.TimeUtils && TimeUtils.formatSingle) ? TimeUtils.formatSingle(raw) : '—';
     }
 
     function formatEventTimes() {
@@ -299,33 +304,34 @@
     });
 
     function humanDuration(ms) {
-        if (ms <= 0) return 'Started';
-        const sec = Math.floor(ms / 1000) % 60;
-        const min = Math.floor(ms / (1000 * 60)) % 60;
-        const hrs = Math.floor(ms / (1000 * 60 * 60)) % 24;
-        const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-        if (days > 0) return `${days}d ${hrs}h`;
-        if (hrs > 0) return `${hrs}h ${min}m`;
-        if (min > 0) return `${min}m ${sec}s`;
-        return `${sec}s`;
+        return (window.TimeUtils && TimeUtils.humanDuration) ? TimeUtils.humanDuration(ms) : `${Math.floor(ms/1000)}s`;
     }
 
     function startEventTimers() {
-        const timers = Array.from(document.querySelectorAll('.event-timer'));
-        if (!timers.length) return;
+        const startTimers = Array.from(document.querySelectorAll('.event-timer'));
+        const endTimers = Array.from(document.querySelectorAll('.event-end-timer'));
+        if (!startTimers.length && !endTimers.length) return;
 
         function tick() {
             const now = dayjs();
-            timers.forEach(el => {
+            // Start timers
+            startTimers.forEach(el => {
                 const startRaw = el.getAttribute('data-start') || '';
                 const start = tryParse(startRaw);
-                if (!start) {
-                    el.textContent = '—';
-                    return;
-                }
+                if (!start) { el.textContent = '—'; return; }
                 const diff = start.diff(now);
                 el.textContent = diff > 0 ? `Starts in ${humanDuration(diff)}` : `Started ${humanDuration(-diff)} ago`;
             });
+
+            // End timers
+            endTimers.forEach(el => {
+                const endRaw = el.getAttribute('data-end') || '';
+                const end = tryParse(endRaw);
+                if (!end) { el.textContent = '—'; return; }
+                const diffEnd = end.diff(now);
+                el.textContent = diffEnd > 0 ? `Ends in ${humanDuration(diffEnd)}` : `Ended ${humanDuration(-diffEnd)} ago`;
+            });
+
             // Update statuses each tick as well
             updateEventStatuses();
         }
@@ -407,5 +413,49 @@
         if (searchInput) searchInput.addEventListener('input', debounceApply);
         if (filterSelect) filterSelect.addEventListener('change', applyFilters);
     }
+
+    // Delete event confirmation
+    function setupDeleteConfirmation() {
+        const deleteButtons = document.querySelectorAll('.delete-event-btn');
+        
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const eventId = this.getAttribute('data-event-id');
+                const eventTitle = this.getAttribute('data-event-title');
+                const creatorName = this.getAttribute('data-creator-name');
+                
+                const confirmed = confirm(
+                    `Are you sure you want to delete the event "${eventTitle}"?\n\n` +
+                    `Created by: ${creatorName}\n\n` +
+                    `This action cannot be undone.`
+                );
+                
+                if (confirmed) {
+                    // Create a form and submit it
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/events/${eventId}/delete`;
+                    
+                    // Add CSRF token if needed (you might need to add this)
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                    if (csrfToken) {
+                        const tokenInput = document.createElement('input');
+                        tokenInput.type = 'hidden';
+                        tokenInput.name = 'csrf_token';
+                        tokenInput.value = csrfToken.getAttribute('content');
+                        form.appendChild(tokenInput);
+                    }
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+    }
+
+    // Initialize everything when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        setupDeleteConfirmation();
+    });
 </script>
 {% endblock %}

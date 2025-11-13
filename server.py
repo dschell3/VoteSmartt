@@ -1,4 +1,5 @@
 from flask_app import app
+<<<<<<< HEAD
 from flask_app.controllers import userController, eventsController
 import os
 
@@ -13,6 +14,13 @@ def get_port_from_env(default: int = 5000) -> int:
         return int(port_env) if port_env else default
     except ValueError:
         return default
+=======
+# Ensure all route modules are imported so their @app.route decorators execute.
+# Previously voteController was not imported, causing POST /vote/cast to 404.
+from flask_app.controllers import userController, eventsController, voteController  # noqa: F401
+from flask import Flask
+import socket
+>>>>>>> 424ac723b98a7b5d4b61fffb5957db8302d64a80
 
 
 if __name__ == '__main__':

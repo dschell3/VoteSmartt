@@ -19,6 +19,15 @@ class Option:
         return [cls(row) for row in results]
     
     @classmethod
+    def getAll(cls):
+        query = "SELECT * FROM `option`;"
+        result = connectToMySQL(db).query_db(query)
+        events = []
+        for i in result:
+            events.append(cls(i))
+        return events
+    
+    @classmethod
     def create(cls, data):
         query = '''
         INSERT INTO `option` (option_text, option_event_id)
@@ -32,13 +41,4 @@ class Option:
         return connectToMySQL(db).query_db(query, data)
     
     # Additional methods for updating or retrieving options can be added here as needed.
-
-    # Is a method to get all options needed? If so, implement similarly to Events.getAll()
-
-    # Is a method to update an option needed? If so, implement similarly to Events.editEvent()
-
-    # Is a method to delete an option by its own ID needed? If so, implement similarly to Events.deleteEvent()
-
-    # Is a method to get vote counts for options needed? If so, implement as required.
-
     

@@ -1,17 +1,14 @@
 from flask_app.config.mysqlconnection import connectToMySQL
-import re, secrets, hashlib
-from flask import flash
-from flask_app import app
-from datetime import datetime, timedelta
-
-EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$') 
+from flask_app.utils.validators import (
+    validate_all_registration_fields, validate_email,
+    validate_name, validate_password, validate_phone )
 
 db = "mydb"
 
 class User:
     db = db
     # columns in user table are: user_id, first_name, last_name, email,
-    #                            password, isAdminByID, created_at, phone
+    #                            password, isAdmin, created_at, phone
     
     def __init__(self, data):
         self.user_id = data['user_id']
@@ -21,13 +18,34 @@ class User:
         self.password = data['password']
         self.phone = data['phone']
         self.created_at = data['created_at']
-        self.isAdminByID = int(data.get('isAdminByID', 0)) # always set an int 0/1
-        # FIXME...isAdminByID Default already set to 0 in DB schema? role not on UML
+        # self.isAdmin = int(data.get('isAdmin', 0)) // Backup in case of errors
+        # Handle isAdmin field safely - convert None to 0, then to int
+        isAdmin_value = data.get('isAdmin', 0)
+        self.isAdmin = int(isAdmin_value) if isAdmin_value is not None else 0
         
     @property
     def is_admin(self) -> bool:
-        return self.isAdminByID == 1
+        return self.isAdmin == 1
 
+    # ===== ROLE-BASED CAPABILITIES =====
+    # These methods define what actions each role can perform
+    # Used for easy to read explicit permission checks, make code + UML consistent
+    
+    def can_cast_vote(self) -> bool:
+        """Only non-admin users (voters) can cast votes
+        Admins are prohibited from voting to maintain integrity"""
+        return not self.is_admin
+
+    def can_manage_events(self) -> bool:
+        """Only admins can create/edit/delete voting events"""
+        return self.is_admin
+    
+    def can_manage_users(self) -> bool:
+        """Only admins can manage user accounts"""
+        return self.is_admin
+
+
+    # ===== CLASS METHODS FOR DB INTERACTIONS =====
     @classmethod
     def register(cls, data):
         query = '''
@@ -39,11 +57,14 @@ class User:
         '''
         return connectToMySQL(db).query_db(query, data)
     
+    # TODO - Registration method for admin users
     @classmethod
-    def isAdminByID(cls, data):
-        query = "SELECT isAdminByID FROM user WHERE user_id = %(user_id)s;"
-        result = connectToMySQL(db).query_db(query, data)
-        return bool(result and result[0].get("isAdminByID") == 1)
+    def register_admin(cls, data):
+        ...
+    
+    # TODO: Admin methods to promote users
+    # TODO: Admin method to delete users...how would this impact their previous votes?
+    # TODO: Admin should not be able to reset their own password via this method
 
     @classmethod
     def getUserByEmail(cls, data):
@@ -70,7 +91,7 @@ class User:
     def getAllUsers(cls):
         # Get all users ordered by creation date descending, w/o password information
         query = """
-        SELECT user_id, first_name, last_name, email, phone, created_at, isAdminByID
+        SELECT user_id, first_name, last_name, email, phone, created_at, isAdmin
         FROM user
         ORDER BY created_at DESC;
         """
@@ -99,6 +120,7 @@ class User:
         """
         return connectToMySQL(db).query_db(query, data)
     
+    # refactor later to simplify/combine with resetPasswordByEmail and use the send_email in userController
     @classmethod
     def sendPasswordResetEmail(cls, data):
         """Check if the email belongs to a registered user; if so, send a reset link."""
@@ -106,28 +128,22 @@ class User:
         if not user:
             # Return generic OK to avoid revealing whether email exists
             return {"ok": True}
-        # Generate a one-time token, store only its hash and expiry, and email the raw token in a link.
+
+        # TODO: Ask Jang how to implement email sending using existing app infrastructure
+        # TODO: use send_email function from userController
+        reset_link = f"http://localhost:5000/reset_password?email={data['email']}"
         try:
-            token = cls._create_password_reset_token_for_user(user)
-        except Exception:
-            # If DB update fails (missing columns etc.), fall back to sending an email-only link
-            token = None
-
-        base = app.config.get('BASE_URL', 'http://localhost:5000')
-        if token:
-            reset_link = f"{base}/reset_password?email={data['email']}&token={token}"
-        else:
-            reset_link = f"{base}/reset_password?email={data['email']}"
-
-        from flask_app.controllers.userController import send_email
-        send_email(
-            to_address=data['email'],
-            subject="Password Reset Request",
-            body=(f"You requested a password reset. Click the link below to set a new password.\n"
-                  f"This link will expire in 30 minutes.\n\n{reset_link}\n\n"
-                  "If you didn't request this, you can safely ignore this email." )
-        )
-        return {"ok": True}
+            from flask_app.controllers.userController import send_email
+            send_email(
+                to_address=data['email'],
+                subject="Password Reset Request",
+                body=f"Click the link below to reset your password:\n{reset_link}"
+            )
+            return {"ok": True}
+        except Exception as e:
+            # Fail gracefully to avoid leaking user existence and to prevent 500s in AJAX flow
+            print(f"Password reset email send failed: {e}")
+            return {"ok": True}
 
     @classmethod
     def _create_password_reset_token_for_user(cls, user):
@@ -220,17 +236,102 @@ class User:
             return False
         return cls.updatePassword({'user_id': user.user_id, 'password': data['password']})
 
+    # ===== PASSWORD RESET TOKEN FLOW =====
+    @classmethod
+    def createPasswordResetToken(cls, email: str, ttl_minutes: int = 30):
+        """Create a one-time password reset token for the given email.
+
+        Returns a tuple (ok: bool, raw_token: str or None).
+        If email doesn't exist, returns (True, None) to avoid leaking info.
+        """
+        user = cls.getUserByEmail({'email': email})
+        if not user:
+            return True, None
+
+        raw_token = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+
+        expires_at = datetime.utcnow() + timedelta(minutes=ttl_minutes)
+        query = (
+            """
+            INSERT INTO password_reset_token
+                (user_id, token_hash, expires_at, created_at)
+            VALUES
+                (%(user_id)s, %(token_hash)s, %(expires_at)s, NOW());
+            """
+        )
+        data = {
+            'user_id': user.user_id,
+            'token_hash': token_hash,
+            'expires_at': expires_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        ok = connectToMySQL(db).query_db(query, data)
+        if not ok:
+            # Fail silently (do not reveal user existence)
+            return True, None
+        return True, raw_token
+
+    @classmethod
+    def verifyPasswordResetToken(cls, raw_token: str):
+        """Verify token validity. Returns dict with token row + user, or None.
+
+        Output example: { 'token_id': 1, 'user_id': 2, 'email': 'x', ... }
+        """
+        if not raw_token:
+            return None
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        query = (
+            """
+            SELECT t.id as token_id, t.user_id, t.expires_at, t.used_at,
+                   u.email, u.password
+            FROM password_reset_token t
+            JOIN user u ON u.user_id = t.user_id
+            WHERE t.token_hash = %(token_hash)s
+              AND (t.used_at IS NULL)
+              AND (t.expires_at > NOW());
+            """
+        )
+        rows = connectToMySQL(db).query_db(query, {'token_hash': token_hash})
+        if not rows:
+            return None
+        return rows[0]
+
+    @classmethod
+    def consumePasswordResetToken(cls, raw_token: str):
+        """Mark a token as used. Returns True/False."""
+        if not raw_token:
+            return False
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        query = (
+            """
+            UPDATE password_reset_token
+            SET used_at = NOW()
+            WHERE token_hash = %(token_hash)s AND used_at IS NULL;
+            """
+        )
+        return bool(connectToMySQL(db).query_db(query, {'token_hash': token_hash}))
+
+
+    # ===== INPUT VALIDATION METHODS ===== 
     @staticmethod
     def validatePassword(password: str) -> bool:
         """Return True if the password meets minimum security requirements."""
-        if not password or len(password) < 8:
-            return False
-        if not re.search(r"[A-Z]", password):
-            return False
-        if not re.search(r"[a-z]", password):
-            return False
-        if not re.search(r"\d", password):
-            return False
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-            return False
-        return True
+        error = validate_password(password)
+        return error is None
+
+    @staticmethod
+    def validateEmail(email: str) -> bool:
+        """return True if the email format is valid."""
+        error = validate_email(email)
+        return error is None
+
+    @staticmethod
+    def validatePhone(phone: str) -> bool:
+        """return True if the phone number format is valid."""
+        error = validate_phone(phone)
+        return error is None
+    
+    # TODO - Static method to validate names (first/last) ?
+    # e.g., non-empty, reasonable length, no invalid characters
+
+    # TODO - Static method to normalize phone number format for storage/display?

@@ -1,0 +1,40 @@
+{
+  "title": "CREDITS",
+  "people": [
+    {
+      "name": "Jang Singh",
+      "role": "Project Manager & Documentation",
+  "desc": "Coordinates schedule, requirements, and phase documentation.",
+      "avatar_url": null,
+      "github": null
+    },
+    {
+      "name": "Alex",
+      "role": "Backend Developer",
+  "desc": "Implements routes, validation, models, and voting business rules.",
+      "avatar_url": null,
+      "github": null
+    },
+    {
+      "name": "Darren",
+      "role": "Designer / Frontend",
+  "desc": "Iterates UI/UX and unifies visual guidelines.",
+      "avatar_url": null,
+      "github": null
+    },
+    {
+      "name": "Ceaser",
+      "role": "Analyst / Frontend",
+  "desc": "Contributes to requirement analysis and parts of frontend implementation.",
+      "avatar_url": null,
+      "github": null
+    },
+    {
+      "name": "Jarret",
+      "role": "QA Engineer",
+  "desc": "Test cases and regression verification to improve stability.",
+      "avatar_url": null,
+      "github": null
+    }
+  ]
+}
