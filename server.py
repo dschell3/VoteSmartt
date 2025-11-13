@@ -1,5 +1,7 @@
 from flask_app import app
-from flask_app.controllers import userController, eventsController
+# Ensure all route modules are imported so their @app.route decorators execute.
+# Previously voteController was not imported, causing POST /vote/cast to 404.
+from flask_app.controllers import userController, eventsController, voteController  # noqa: F401
 from flask import Flask
 import socket
 

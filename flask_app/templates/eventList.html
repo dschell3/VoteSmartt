@@ -120,6 +120,12 @@
                             <span class="event-timer" data-start="{{ events.start_time or '' }}">&mdash;</span>
                         </span>
                     </div>
+                    <div class="mt-1 text-right">
+                        <span class="inline-flex items-center gap-2 text-xs text-slate-500">
+                            <span class="timer-dot w-2 h-2 rounded-full bg-slate-400/80"></span>
+                            <span class="event-end-timer" data-end="{{ events.end_time or '' }}">&mdash;</span>
+                        </span>
+                    </div>
                     <!-- Status badge (Waiting / Open / Closed) -->
                     <div class="mt-3 text-right">
                         <span
@@ -179,36 +185,18 @@
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/dayjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/customParseFormat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/relativeTime.min.js"></script>
+<script src="{{ url_for('static', filename='js/time-utils.js') }}"></script>
 <script>
     // Enable Day.js plugins
     dayjs.extend(dayjs_plugin_customParseFormat);
     dayjs.extend(dayjs_plugin_relativeTime);
 
     function tryParse(raw) {
-        if (!raw) return null;
-        // Try ISO / common DB formats first
-        let d = dayjs(raw);
-        if (d.isValid()) return d;
-
-        // Try specific common formats
-        const formats = ['YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DDTHH:mm:ss', 'YYYY-MM-DD'];
-        for (const f of formats) {
-            d = dayjs(raw, f);
-            if (d.isValid()) return d;
-        }
-
-        return null;
+        return (window.TimeUtils && TimeUtils.tryParse) ? TimeUtils.tryParse(raw) : null;
     }
 
     function formatSingle(raw) {
-        const d = tryParse(raw);
-        if (!d) return '—';
-
-        // Determine if time-of-day is present in the raw string
-        const hasTime = /\d{1,2}:\d{2}/.test(raw);
-        const datePart = d.format(hasTime ? 'MMM D, YYYY · h:mm A' : 'MMM D, YYYY');
-        const relative = d.fromNow();
-        return `${datePart} — ${relative}`;
+        return (window.TimeUtils && TimeUtils.formatSingle) ? TimeUtils.formatSingle(raw) : '—';
     }
 
     function formatEventTimes() {
@@ -316,33 +304,34 @@
     });
 
     function humanDuration(ms) {
-        if (ms <= 0) return 'Started';
-        const sec = Math.floor(ms / 1000) % 60;
-        const min = Math.floor(ms / (1000 * 60)) % 60;
-        const hrs = Math.floor(ms / (1000 * 60 * 60)) % 24;
-        const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-        if (days > 0) return `${days}d ${hrs}h`;
-        if (hrs > 0) return `${hrs}h ${min}m`;
-        if (min > 0) return `${min}m ${sec}s`;
-        return `${sec}s`;
+        return (window.TimeUtils && TimeUtils.humanDuration) ? TimeUtils.humanDuration(ms) : `${Math.floor(ms/1000)}s`;
     }
 
     function startEventTimers() {
-        const timers = Array.from(document.querySelectorAll('.event-timer'));
-        if (!timers.length) return;
+        const startTimers = Array.from(document.querySelectorAll('.event-timer'));
+        const endTimers = Array.from(document.querySelectorAll('.event-end-timer'));
+        if (!startTimers.length && !endTimers.length) return;
 
         function tick() {
             const now = dayjs();
-            timers.forEach(el => {
+            // Start timers
+            startTimers.forEach(el => {
                 const startRaw = el.getAttribute('data-start') || '';
                 const start = tryParse(startRaw);
-                if (!start) {
-                    el.textContent = '—';
-                    return;
-                }
+                if (!start) { el.textContent = '—'; return; }
                 const diff = start.diff(now);
                 el.textContent = diff > 0 ? `Starts in ${humanDuration(diff)}` : `Started ${humanDuration(-diff)} ago`;
             });
+
+            // End timers
+            endTimers.forEach(el => {
+                const endRaw = el.getAttribute('data-end') || '';
+                const end = tryParse(endRaw);
+                if (!end) { el.textContent = '—'; return; }
+                const diffEnd = end.diff(now);
+                el.textContent = diffEnd > 0 ? `Ends in ${humanDuration(diffEnd)}` : `Ended ${humanDuration(-diffEnd)} ago`;
+            });
+
             // Update statuses each tick as well
             updateEventStatuses();
         }

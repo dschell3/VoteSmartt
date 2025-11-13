@@ -1,9 +1,156 @@
 {% extends 'base.html' %}
 
-{% block title %}Create Event - VoteSmart{% endblock %}
+{% block title %}{{ 'Edit Event' if edit_mode else 'Create Event' }} - VoteSmart{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Enhanced datetime-local styling for better user experience */
+    input[type="datetime-local"] {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    input[type="datetime-local"]:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        transform: translateY(-1px);
+    }
+    
+    input[type="datetime-local"]:hover {
+        border-color: #6b7280;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Style for datetime-local components */
+    input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: transparent;
+    }
+    
+    input[type="datetime-local"]::-webkit-datetime-edit-month-field,
+    input[type="datetime-local"]::-webkit-datetime-edit-day-field,
+    input[type="datetime-local"]::-webkit-datetime-edit-year-field,
+    input[type="datetime-local"]::-webkit-datetime-edit-hour-field,
+    input[type="datetime-local"]::-webkit-datetime-edit-minute-field,
+    input[type="datetime-local"]::-webkit-datetime-edit-ampm-field {
+        background: transparent;
+        border: none;
+        color: #374151;
+        font-weight: 500;
+        padding: 2px 4px;
+        border-radius: 3px;
+        transition: background-color 0.2s ease;
+    }
+    
+    input[type="datetime-local"]::-webkit-datetime-edit-month-field:focus,
+    input[type="datetime-local"]::-webkit-datetime-edit-day-field:focus,
+    input[type="datetime-local"]::-webkit-datetime-edit-year-field:focus,
+    input[type="datetime-local"]::-webkit-datetime-edit-hour-field:focus,
+    input[type="datetime-local"]::-webkit-datetime-edit-minute-field:focus,
+    input[type="datetime-local"]::-webkit-datetime-edit-ampm-field:focus {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #1f2937;
+    }
+    
+    /* Enhanced separator styling */
+    input[type="datetime-local"]::-webkit-datetime-edit-text {
+        color: #6b7280;
+        font-weight: 600;
+        padding: 0 2px;
+    }
+    
+    /* Calendar and clock icon styling */
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%234b5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><circle cx="12" cy="16" r="2"></circle></svg>');
+        background-size: 20px;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+    }
+    
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+        background-color: rgba(59, 130, 246, 0.1);
+        border-radius: 4px;
+    }
+    
+    /* Enhanced styling for restricted datetime inputs */
+    input[type="datetime-local"][min]:invalid {
+        border-color: #f87171;
+        background-color: rgba(248, 113, 113, 0.05);
+    }
+    
+    /* Visual feedback for datetime fields with restrictions */
+    input[type="datetime-local"][min] {
+        position: relative;
+        border-left: 3px solid #3b82f6;
+    }
+    
+    /* Specific styling for start time (system time restriction) */
+    input[type="datetime-local"]#start_time[min] {
+        border-left-color: #10b981; /* Green border for system time restriction */
+    }
+    
+    /* Specific styling for end time (start time restriction) */
+    input[type="datetime-local"]#end_time[min] {
+        border-left-color: #f59e0b; /* Orange border for start time restriction */
+    }
+    
+    /* Hover effect for restricted fields */
+    input[type="datetime-local"][min]:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+    }
+    
+    /* Time display styling */
+    #start-time-display, #end-time-display {
+        font-style: italic;
+        color: #9ca3af;
+        transition: color 0.2s ease;
+        font-weight: 500;
+    }
+    
+    /* Error styling for datetime inputs */
+    input[type="datetime-local"].border-red-500 {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+    }
+    
+    input[type="datetime-local"].bg-red-50 {
+        background-color: rgba(254, 242, 242, 0.8) !important;
+    }
+    
+    /* Global time range error styling */
+    #time-range-error {
+        background-color: rgba(254, 242, 242, 0.8);
+        border: 1px solid #fecaca;
+        border-radius: 6px;
+        padding: 8px 12px;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="bg-gray-100 min-h-screen">
+<div id="page-root" class="bg-gray-100 min-h-screen" data-edit-mode="{{ '1' if edit_mode else '0' }}">
     {% if not logged_in %}
         <!-- Login prompt for unauthenticated users -->
         <div class="flex justify-center items-center min-h-screen">
@@ -35,7 +182,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
-                    <span class="text-gray-800 font-medium">Create Event</span>
+                    <span class="text-gray-800 font-medium">{{ 'Edit Event' if edit_mode else 'Create Event' }}</span>
                 </nav>
             </div>
         </div>
@@ -49,7 +196,7 @@
                 
                 <!-- Form on the right -->
                 <div class="w-full md:w-1/2">
-                    <h2 class="text-3xl font-extrabold text-center mb-6 text-gray-800">Event Creation</h2>
+                    <h2 class="text-3xl font-extrabold text-center mb-6 text-gray-800">{{ 'Edit Event' if edit_mode else 'Event Creation' }}</h2>
                     
                     <!-- User welcome message -->
                     {% if logged_in and first_name %}
@@ -70,36 +217,47 @@
                         {% endif %}
                     {% endwith %}
                     
-                    <form action="/createEventRoute" method="post" novalidate class="space-y-6" autocomplete="off">
+                    <form id="event-form" action="{{ '/events/' ~ event.event_id ~ '/edit' if edit_mode else '/createEventRoute' }}" method="post" novalidate class="space-y-6" autocomplete="off">
                         <!-- Event Name -->
                         <div>
                             <label for="title" class="block font-medium mb-2 text-gray-700 text-base">Event <span class="text-red-500">*</span></label>
-                            <input id="title" name="title" type="text" placeholder="Enter new event" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white placeholder-gray-400 text-base" />
+                            <input id="title" name="title" type="text" placeholder="Enter new event" value="{{ event.title if edit_mode and event else '' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white placeholder-gray-400 text-base" {% if edit_mode and not can_edit_title %}disabled{% endif %} />
                             <div id="title-error" class="text-red-500 text-xs mt-1 hidden"></div>
                         </div>
                         
                         <!-- Event Description (Optional) -->
                         <div>
                             <label for="description" class="block font-medium mb-2 text-gray-700 text-base">Event Description</label>
-                            <input id="description" name="description" type="text" placeholder="Description of the event (optional)" class="w-full px-4 py-3 border border-gray-300 rounded-lg mb-2 text-gray-700 bg-white placeholder-gray-400 text-base" />
+                            <input id="description" name="description" type="text" placeholder="Description of the event (optional)" value="{{ event.description if edit_mode and event else '' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg mb-2 text-gray-700 bg-white placeholder-gray-400 text-base" {% if edit_mode and not can_edit_desc %}disabled{% endif %} />
                             <div id="description-error" class="text-red-500 text-xs mt-1 hidden"></div>
                         </div>
                         
-                        <!-- Date Fields -->
+                        <!-- Date & Time Fields -->
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label for="start_time" class="block font-medium mb-2 text-gray-700 text-base">Start Date <span class="text-red-500">*</span></label>
-                                <input id="start_time" name="start_time" type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white" />
+                                <label for="start_time" class="block font-medium mb-2 text-gray-700 text-base">Start Date & Time <span class="text-red-500">*</span></label>
+                                <!-- Keep datetime-local for UX but post normalized yyyy-mm-dd via hidden input -->
+                                <input id="start_time" name="start_time_local" type="datetime-local" value="{{ prefill_start_local if edit_mode else '' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white" {% if edit_mode and not can_edit_start %}disabled{% endif %} />
+                                <input type="hidden" id="start_time_hidden" name="start_time" />
+                                <!-- Selected time display -->
+                                <div id="start-time-display" class="text-xs text-gray-500 mt-1 min-h-4"></div>
                                 <div id="start-time-error" class="text-red-500 text-xs mt-1 hidden"></div>
                             </div>
                             <div>
-                                <label for="end_time" class="block font-medium mb-2 text-gray-700 text-base">End Date <span class="text-red-500">*</span></label>
-                                <input id="end_time" name="end_time" type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white" />
+                                <label for="end_time" class="block font-medium mb-2 text-gray-700 text-base">End Date & Time <span class="text-red-500">*</span></label>
+                                <!-- Keep datetime-local for UX but post normalized yyyy-mm-dd via hidden input -->
+                                <input id="end_time" name="end_time_local" type="datetime-local" value="{{ prefill_end_local if edit_mode else '' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white" {% if edit_mode and not can_edit_end %}disabled{% endif %} />
+                                <input type="hidden" id="end_time_hidden" name="end_time" />
+                                <!-- Selected time display -->
+                                <div id="end-time-display" class="text-xs text-gray-500 mt-1 min-h-4"></div>
                                 <div id="end-time-error" class="text-red-500 text-xs mt-1 hidden"></div>
                             </div>
                         </div>
+                        <!-- Time range validation error (global) -->
+                        <div id="time-range-error" class="text-red-500 text-sm mt-2 hidden font-medium"></div>
                         
                         <!-- Candidates Section -->
+                        {% if not edit_mode %}
                         <div class="mt-8">
                             <h3 class="text-xl font-bold mb-4 text-gray-800">Candidates</h3>
                             <button type="button" id="add-candidate-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-base mb-4 flex items-center justify-center">
@@ -113,8 +271,9 @@
                             </div>
                             <div id="candidates-error" class="text-red-500 text-xs mb-4 hidden"></div>
                         </div>
+                        {% endif %}
                         
-                        <button type="submit" id="create-event-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-lg">Create Event</button>
+                        <button type="submit" id="create-event-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-lg">{{ 'Save Changes' if edit_mode else 'Create Event' }}</button>
                     </form>
                 </div>
             </div>
@@ -157,19 +316,253 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Reuse existing Day.js library from the project for date/time handling -->
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/dayjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/customParseFormat.min.js"></script>
 <!-- Import our custom profanity detection library for content filtering -->
 <script src="/static/js/badWordsCheck.js"></script>
 <script>
+// Expose edit mode to JS from data attribute (avoids inline Jinja in JS)
+var IS_EDIT_MODE = (function(){
+    try {
+        var root = document.getElementById('page-root');
+        return root && root.dataset && root.dataset.editMode === '1';
+    } catch (e) { return false; }
+})();
 console.log('🎯 Event Form Validation & Management Loading...');
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎯 DOM Ready - Initializing Event Form');
     
-    const form = document.querySelector('form[action="/createEventRoute"]');
+    // Initialize Day.js with custom parse format (reusing project's existing setup)
+    dayjs.extend(dayjs_plugin_customParseFormat);
+    
+    const form = document.getElementById('event-form');
     if (!form) {
         console.error('❌ Form not found!');
         return;
     }
+    
+    // ======= DateTime Display & Validation Manager =======
+    const DateTimeDisplayManager = {
+        init() {
+            console.log('📅 Initializing DateTime Display & Validation Manager');
+            
+            // Get references to datetime-local inputs and display elements
+            this.startTime = document.getElementById('start_time');
+            this.endTime = document.getElementById('end_time');
+            this.startTimeDisplay = document.getElementById('start-time-display');
+            this.endTimeDisplay = document.getElementById('end-time-display');
+            this.timeRangeError = document.getElementById('time-range-error');
+            
+            // Add event listeners for real-time updates
+            this.startTime.addEventListener('change', () => this.updateDisplayAndValidate());
+            this.endTime.addEventListener('change', () => this.updateDisplayAndValidate());
+            
+            // Initialize displays
+            this.updateDisplayAndValidate();
+            
+            console.log('✅ DateTime Display & Validation Manager initialized successfully');
+        },
+        
+        updateDisplayAndValidate() {
+            // Update time displays
+            this.updateTimeDisplay('start');
+            this.updateTimeDisplay('end');
+            
+            // Validate time range
+            this.validateTimeRange();
+        },
+        
+        updateTimeDisplay(type) {
+            const input = type === 'start' ? this.startTime : this.endTime;
+            const display = type === 'start' ? this.startTimeDisplay : this.endTimeDisplay;
+            
+            const value = input.value;
+            if (value) {
+                // Use Day.js to format the selected datetime nicely
+                const selectedDateTime = dayjs(value);
+                const formattedTime = selectedDateTime.format('dddd, MMMM D, YYYY [at] h:mm A');
+                display.textContent = `Selected: ${formattedTime}`;
+                display.classList.remove('hidden');
+            } else {
+                display.textContent = '';
+                display.classList.add('hidden');
+            }
+        },
+        
+        validateTimeRange() {
+            const startValue = this.startTime.value;
+            const endValue = this.endTime.value;
+            
+            // Clear previous error state
+            this.timeRangeError.classList.add('hidden');
+            this.timeRangeError.textContent = '';
+            
+            // Only validate if both times are selected
+            if (startValue && endValue) {
+                const startDateTime = dayjs(startValue);
+                const endDateTime = dayjs(endValue);
+                
+                if (endDateTime.isBefore(startDateTime) || endDateTime.isSame(startDateTime)) {
+                    // Show error message
+                    this.timeRangeError.textContent = '❌ End time must be after start time. Please adjust your selection.';
+                    this.timeRangeError.classList.remove('hidden');
+                    
+                    // Add visual indication to the problematic field
+                    this.endTime.classList.add('border-red-500', 'bg-red-50');
+                    
+                    console.log('🔴 Time range validation failed');
+                    return false;
+                } else {
+                    // Remove error styling
+                    this.endTime.classList.remove('border-red-500', 'bg-red-50');
+                    console.log('🟢 Time range validation passed');
+                    return true;
+                }
+            }
+            
+            // If not both times selected, remove any error styling
+            this.endTime.classList.remove('border-red-500', 'bg-red-50');
+            return true; // Don't block submission if times aren't fully selected yet
+        },
+        
+        // Method to check if current selection is valid (for form submission)
+        isValidTimeRange() {
+            return this.validateTimeRange();
+        }
+    };
+    
+    // ======= DateTime Range Restriction Manager (enhanced with system time check) =======
+    const DateTimeRangeManager = {
+        init() {
+            console.log('⏰ Initializing Enhanced DateTime Range Restriction Manager');
+            
+            // Get references to datetime-local inputs
+            this.startTime = document.getElementById('start_time');
+            this.endTime = document.getElementById('end_time');
+            
+            // Set initial system time restrictions
+            this.updateSystemTimeRestrictions();
+            
+            // Add event listener to start time to restrict end time options
+            this.startTime.addEventListener('change', () => this.updateEndTimeRestrictions());
+            
+            // Update system time restrictions every minute to keep it current
+            setInterval(() => this.updateSystemTimeRestrictions(), 60000);
+            
+            console.log('✅ Enhanced DateTime Range Restriction Manager initialized successfully');
+        },
+        
+        updateSystemTimeRestrictions() {
+            // Get current system time using Day.js
+            const now = dayjs();
+            
+            // Format current time for datetime-local min attribute (YYYY-MM-DDTHH:mm)
+            const minStartTime = now.format('YYYY-MM-DDTHH:mm');
+            
+            // Set minimum time for start time field to current system time
+            this.startTime.setAttribute('min', minStartTime);
+            
+            // Check if current start time is before system time and clear if necessary
+            const currentStartValue = this.startTime.value;
+            if (currentStartValue) {
+                const currentStartDateTime = dayjs(currentStartValue);
+                if (currentStartDateTime.isBefore(now)) {
+                    this.startTime.value = '';
+                    this.endTime.value = ''; // Also clear end time since start time changed
+                    console.log('🔄 Cleared start time as it was before current system time');
+                    
+                    // Show notification to user
+                    this.showTemporaryMessage('Start time cleared - cannot be in the past. Current time: ' + now.format('MM/DD/YYYY h:mm A'), 'warning');
+                }
+            }
+            
+            console.log('🕐 Start time restricted to after system time:', minStartTime);
+            
+            // Also update end time restrictions if start time exists
+            if (this.startTime.value) {
+                this.updateEndTimeRestrictions();
+            }
+        },
+        
+        updateEndTimeRestrictions() {
+            const startValue = this.startTime.value;
+            
+            if (startValue) {
+                // Use Day.js to parse the start time (reusing project's date handling)
+                const startDateTime = dayjs(startValue);
+                
+                // Set the minimum datetime for end time to be after start time
+                // Add 1 minute to ensure end time is always after start time
+                const minEndDateTime = startDateTime.add(1, 'minute');
+                
+                // Format for datetime-local min attribute (YYYY-MM-DDTHH:mm)
+                const minEndValue = minEndDateTime.format('YYYY-MM-DDTHH:mm');
+                
+                // Set the min attribute to restrict earlier selections
+                this.endTime.setAttribute('min', minEndValue);
+                
+                // If current end time is before the new minimum, clear it
+                const currentEndValue = this.endTime.value;
+                if (currentEndValue) {
+                    const currentEndDateTime = dayjs(currentEndValue);
+                    if (currentEndDateTime.isBefore(minEndDateTime)) {
+                        this.endTime.value = '';
+                        console.log('🔄 Cleared end time as it was before new start time');
+                        
+                        // Show a subtle notification to user
+                        this.showTemporaryMessage('End time cleared - please select a time after ' + startDateTime.format('MM/DD/YYYY h:mm A'), 'info');
+                    }
+                }
+                
+                console.log('⚠️ End time restricted to after:', minEndValue);
+            } else {
+                // Remove restriction if no start time is selected
+                this.endTime.removeAttribute('min');
+                console.log('✅ End time restriction removed');
+            }
+        },
+        
+        showTemporaryMessage(message, type = 'info') {
+            // Create a temporary message element with different styles based on type
+            const messageEl = document.createElement('div');
+            let bgColor = 'bg-blue-500'; // default info
+            let icon = '💡';
+            
+            if (type === 'warning') {
+                bgColor = 'bg-orange-500';
+                icon = '⚠️';
+            } else if (type === 'success') {
+                bgColor = 'bg-green-500';
+                icon = '✅';
+            } else if (type === 'error') {
+                bgColor = 'bg-red-500';
+                icon = '❌';
+            }
+            
+            messageEl.className = `fixed top-4 right-4 ${bgColor} text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300 max-w-sm`;
+            messageEl.innerHTML = `<span class="mr-2">${icon}</span><span>${message}</span>`;
+            messageEl.style.transform = 'translateX(100%)';
+            
+            document.body.appendChild(messageEl);
+            
+            // Animate in
+            setTimeout(() => {
+                messageEl.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Remove after 4 seconds (longer for better readability)
+            setTimeout(() => {
+                messageEl.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (messageEl.parentNode) {
+                        messageEl.parentNode.removeChild(messageEl);
+                    }
+                }, 300);
+            }, 4000);
+        }
+    };
     
     // ======= State Machine Form Validation Module =======
     const FormValidator = {
@@ -221,7 +614,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Clear all error messages from the form to reset validation state
         clearAllErrors() {
-            const errorIds = ['title-error', 'description-error', 'start-time-error', 'end-time-error', 'candidates-error'];
+            const errorIds = ['title-error', 'description-error', 'start-time-error', 'end-time-error', 'candidates-error', 'time-range-error'];
             errorIds.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
@@ -229,6 +622,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     element.innerHTML = '';
                 }
             });
+            
+            // Also clear visual error styling from datetime inputs
+            const endTimeInput = document.getElementById('end_time');
+            if (endTimeInput) {
+                endTimeInput.classList.remove('border-red-500', 'bg-red-50');
+            }
         },
         
         // Display error message for a specific form field
@@ -298,29 +697,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             console.log('🟢 State 3: End date provided ✓');
             
-            // State 4: Validate date logic and business rules
-            const startDateObj = new Date(startDate);
-            const endDateObj = new Date(endDate);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0); // Reset time to compare dates only
+            // State 4: Validate date and time logic using Day.js (consistent with project's approach)
+            const startDateTime = dayjs(startDate); // datetime-local format is ISO compatible
+            const endDateTime = dayjs(endDate);
+            const now = dayjs();
             
-            // Check if start date is not in the past
-            if (startDateObj < today) {
-                console.log('🔴 State 4: Start date is in the past');
-                this.showError('start-time-error', 'Start date cannot be in the past');
+            // Check if start datetime is not in the past (skip in edit mode)
+            if (!IS_EDIT_MODE && startDateTime.isBefore(now)) {
+                console.log('🔴 State 4: Start date and time is in the past');
+                this.showError('start-time-error', 'Start date and time cannot be in the past');
                 return false;
             }
             
-            // Check if end date is after start date
-            if (startDateObj >= endDateObj) {
-                console.log('🔴 State 4: End date is not after start date');
-                this.showError('end-time-error', 'End date must be after start date');
-                return false;
+            // Use the new DateTimeDisplayManager for time range validation
+            if (!DateTimeDisplayManager.isValidTimeRange()) {
+                console.log('🔴 State 4: Invalid time range detected by DateTimeDisplayManager');
+                return false; // Error message already shown by DateTimeDisplayManager
             }
-            console.log('🟢 State 4: Date logic validated successfully ✓');
+            
+            console.log('🟢 State 4: Date and time logic validated successfully ✓');
             
             // State 5: Validate candidates (minimum requirement for voting)
-            if (candidateCards.length < 2) {
+            // In edit mode, we skip enforcing candidate count
+            if (!IS_EDIT_MODE && candidateCards.length < 2) {
                 console.log('🔴 State 5: Not enough candidates for voting');
                 this.showError('candidates-error', 'Please add at least 2 candidates');
                 return false;
@@ -479,15 +878,57 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.addEventListener('click', function(e) {
             console.log('🚀 Create Event button clicked');
             e.preventDefault(); // Prevent default form submission
-            
-            const isValid = FormValidator.validateWithStateMachine();
-            
-            if (isValid) {
-                console.log('✅ Validation passed - submitting form');
-                form.submit(); // Submit form directly to server
+
+            const titleEl = document.getElementById('title');
+            const descEl = document.getElementById('description');
+            const startLocalEl = document.getElementById('start_time');
+            const endLocalEl = document.getElementById('end_time');
+            const startHiddenEl = document.getElementById('start_time_hidden');
+            const endHiddenEl = document.getElementById('end_time_hidden');
+
+            const title = titleEl.value.trim();
+            const description = descEl.value.trim();
+            const startLocal = startLocalEl.value; // yyyy-MM-ddTHH:MM
+            const endLocal = endLocalEl.value;
+
+            console.log('📋 Raw form data before normalization:', { title, description, startLocal, endLocal });
+
+            // Try state-machine validator first; fallback to simple checks
+            let isValid = true;
+            if (typeof FormValidator !== 'undefined' && FormValidator.validateWithStateMachine) {
+                try { isValid = FormValidator.validateWithStateMachine(); } catch (err) { console.warn('⚠️ Validator error, fallback to simple checks', err); }
             } else {
-                console.log('❌ Validation failed - form not submitted');
+                isValid = title && description && startLocal && endLocal;
             }
+            if (!isValid) {
+                console.log('❌ Validation failed - form not submitted');
+                return;
+            }
+
+            // Populate hidden fields with FULL datetime (retain minutes) -> "YYYY-MM-DD HH:MM:SS"
+            function toFullDateTime(dt) {
+                if (!dt) return '';
+                const [datePart, timePartRaw] = dt.split('T');
+                if (!datePart || !timePartRaw) return '';
+                // Ensure we have seconds; datetime-local usually gives HH:MM
+                const timePart = /\d{2}:\d{2}:\d{2}/.test(timePartRaw)
+                    ? timePartRaw
+                    : timePartRaw + ':00';
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return '';
+                return `${datePart} ${timePart}`; // space form matches DB DATETIME
+            }
+            const fullStart = toFullDateTime(startLocal);
+            const fullEnd = toFullDateTime(endLocal);
+            startHiddenEl.value = fullStart;
+            endHiddenEl.value = fullEnd;
+            console.log('📅 Normalized full datetimes set to hidden:', { fullStart, fullEnd });
+
+            if (!fullStart || !fullEnd) {
+                alert('日期时间格式不正确，请重新选择');
+                return;
+            }
+
+            form.submit(); // Submit form directly to server with full datetime values
         });
         console.log('✅ Event listener attached to submit button');
     } else {
@@ -495,7 +936,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Initialize all modules and components
-    CandidateManager.init();
+    DateTimeDisplayManager.init(); // Handles time display and validation
+    // Only apply strict min-time restrictions and candidate UI in create mode
+    if (!IS_EDIT_MODE) {
+        DateTimeRangeManager.init();
+        CandidateManager.init();
+    }
     
     console.log('🎯 Event Form Ready!');
 });

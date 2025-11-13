@@ -1,6 +1,7 @@
 from flask import request, redirect, flash, session
 from flask_app import app
 from flask_app.models.userModels import User
+from flask_app.models.optionModels import Option
 from flask_app.models.voteModels import Vote
 from flask_app.models.eventsModels import Events
 from datetime import datetime
@@ -35,10 +36,24 @@ def cast_vote():
     event_id = request.form.get('event_id')
     option_id = request.form.get('option_id')
 
+    # Basic logging for troubleshooting
+    try:
+        print(f"[cast_vote] Incoming: event_id={event_id}, option_id={option_id}, user_id={getattr(user,'user_id',None)}")
+    except Exception:
+        pass
+
     # Validate form data
     if not event_id or not option_id:
         flash("Missing event or option.", "error")
         return redirect('/eventList') 
+
+    # Normalize to ints and validate
+    try:
+        event_id = int(event_id)
+        option_id = int(option_id)
+    except Exception:
+        flash("Invalid vote data.", "error")
+        return redirect('/eventList')
 
     # Ensure event exists
     event = Events.getOne({'event_id': event_id})
@@ -50,6 +65,17 @@ def cast_vote():
     if Events.compute_status(event.start_time, event.end_time) != "Open":
         flash("Voting is closed for this event.", "error")
         return redirect(f"/event/{event_id}")
+
+    # Extra safety: ensure the option belongs to this event
+    try:
+        valid_options = Option.getByEventId({'event_id': event_id})
+        valid_ids = {o.option_id for o in valid_options}
+        if option_id not in valid_ids:
+            flash("Selected option is not valid for this event.", "error")
+            return redirect(f"/event/{event_id}")
+    except Exception:
+        # If validation fails unexpectedly, continue without blocking
+        pass
 
     # Check if user has already voted in this event, if they have update their vote
     existing = Vote.getByUserAndEvent({
@@ -125,5 +151,8 @@ def delete_vote():
         flash("Your vote has been retracted.", "success")
     else:
         flash("Could not retract your vote.", "error")
+
+    # Always redirect back to the event page to refresh state
+    return redirect(f"/event/{event_id}")
 
 # Additional vote-related routes can be added here

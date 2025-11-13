@@ -94,6 +94,67 @@
                     {{ event.description }}
                 </div>
             </div>
+
+            <!-- Ballot / Results -->
+            <div class="mt-6 event-card" id="ballot">
+                {% if is_open %}
+                    <h3 class="text-lg font-semibold mb-4">Cast your vote</h3>
+                    {% if not options %}
+                        <div class="text-sm text-slate-500">No options available for voting.</div>
+                    {% else %}
+                        <form action="/vote/cast" method="post" class="space-y-3">
+                            <input type="hidden" name="event_id" value="{{ event.event_id }}" />
+                            <div class="space-y-2">
+                                {% for o in options %}
+                                <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer {{ 'bg-indigo-50 border-indigo-200' if selected_option_id==o.option_id else 'border-slate-200 hover:border-slate-300' }}">
+                                    <input type="radio" class="mt-1" name="option_id" value="{{ o.option_id }}" {{ 'checked' if selected_option_id==o.option_id }} />
+                                    <div>
+                                        <div class="font-medium text-slate-800">{{ o.option_text }}</div>
+                                    </div>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            <div class="flex items-center gap-3 pt-2">
+                                <button type="submit" class="cta-primary">{{ 'Update Vote' if selected_option_id else 'Submit Vote' }}</button>
+                                {% if selected_option_id %}
+                                <!-- Avoid nested forms: use HTML5 formaction to post to delete endpoint -->
+                                <button type="submit"
+                                        class="cta-ghost"
+                                        formmethod="post"
+                                        formaction="/vote/delete"
+                                        onclick="return confirm('Retract your vote?');">
+                                    Retract Vote
+                                </button>
+                                {% endif %}
+                            </div>
+                            {% if selected_option_id %}
+                            <div class="text-xs text-slate-500">You have voted already. You can update or retract while the event remains open.</div>
+                            {% endif %}
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <h3 class="text-lg font-semibold mb-4">Results</h3>
+                    {% if not tallies %}
+                        <div class="text-sm text-slate-500">No votes yet.</div>
+                    {% else %}
+                        <div class="space-y-3" id="results">
+                            {% set max_votes = (tallies|map(attribute='votes')|list|max) if tallies else 0 %}
+                            {% for row in tallies %}
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <div class="font-medium text-slate-800">{{ row.option_text }}</div>
+                                    <div class="text-slate-500">{{ row.votes }}</div>
+                                </div>
+                                {% set pct = (100.0*row.votes/max_votes) if max_votes else 0 %}
+                                <div class="h-2 bg-slate-100 rounded">
+                                    <div class="h-2 bg-indigo-500 rounded result-bar" data-pct="{{ pct|round(0, 'floor') }}"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
         </section>
 
         <!-- Sidebar: recommendations & quick actions -->
@@ -101,7 +162,11 @@
             <div class="event-card">
                 <h3 class="text-lg font-semibold">Quick actions</h3>
                 <div class="mt-3 flex flex-col gap-3">
-                    <a href="#" class="cta-primary text-center">Vote now</a>
+                    {% if is_open %}
+                        <a href="#ballot" class="cta-primary text-center">Vote now</a>
+                    {% else %}
+                        <a href="#ballot" class="cta-ghost text-center">View results</a>
+                    {% endif %}
                     <a href="#" class="cta-ghost text-center">Share</a>
                     <a href="#" class="cta-ghost text-center">Report</a>
                 </div>
@@ -139,45 +204,20 @@
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/customParseFormat.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/relativeTime.min.js"></script>
+    <script src="{{ url_for('static', filename='js/time-utils.js') }}"></script>
     <script>
         dayjs.extend(dayjs_plugin_customParseFormat);
         dayjs.extend(dayjs_plugin_relativeTime);
 
-        function tryParse(raw) {
-            if (!raw) return null;
-            let d = dayjs(raw);
-            if (d.isValid()) return d;
-            const formats = ['YYYY-MM-DD HH:mm:ss','YYYY-MM-DDTHH:mm:ss','YYYY-MM-DD'];
-            for (const f of formats) {
-                d = dayjs(raw, f);
-                if (d.isValid()) return d;
-            }
-            return null;
-        }
+        function tryParse(raw) { return (window.TimeUtils && TimeUtils.tryParse) ? TimeUtils.tryParse(raw) : null; }
 
         function formatDisplay(elId, raw) {
             const el = document.getElementById(elId);
             if (!el) return;
-            const d = tryParse(raw);
-            if (!d) { el.textContent = '—'; return; }
-            const hasTime = /\d{1,2}:\d{2}/.test(raw);
-            el.textContent = d.format(hasTime ? 'MMM D, YYYY · h:mm A' : 'MMM D, YYYY') + ' — ' + d.fromNow();
+            el.textContent = (window.TimeUtils && TimeUtils.formatSingle) ? TimeUtils.formatSingle(raw) : '—';
         }
 
-        function computeStatus(startRaw,endRaw) {
-            const now = dayjs();
-            const start = tryParse(startRaw);
-            const end = tryParse(endRaw);
-            if (!start && !end) return 'Unknown';
-            if (start && end) {
-                if (now.isBefore(start)) return 'Waiting';
-                if (now.isAfter(end)) return 'Closed';
-                return 'Open';
-            }
-            if (start && !end) return now.isBefore(start) ? 'Waiting' : 'Open';
-            if (!start && end) return now.isAfter(end) ? 'Closed' : 'Open';
-            return 'Unknown';
-        }
+        function computeStatus(startRaw,endRaw) { return (window.TimeUtils && TimeUtils.computeStatus) ? TimeUtils.computeStatus(startRaw,endRaw) : 'Unknown'; }
 
         document.addEventListener('DOMContentLoaded', function(){
             const startRaw = '{{ event.start_time or "" }}';
@@ -207,20 +247,16 @@
                 }
             }
 
-            function humanDuration(ms) {
-                if (ms <= 0) return 'Started';
-                const sec = Math.floor(ms/1000) % 60;
-                const min = Math.floor(ms/60000) % 60;
-                const hrs = Math.floor(ms/3600000) % 24;
-                const days = Math.floor(ms/86400000);
-                if (days>0) return days + 'd ' + hrs + 'h';
-                if (hrs>0) return hrs + 'h ' + min + 'm';
-                if (min>0) return min + 'm ' + sec + 's';
-                return sec + 's';
-            }
+            function humanDuration(ms) { return (window.TimeUtils && TimeUtils.humanDuration) ? TimeUtils.humanDuration(ms) : `${Math.floor(ms/1000)}s`; }
 
             tick();
             setInterval(tick,1000);
+
+            // Set results bar widths when present
+            document.querySelectorAll('.result-bar').forEach(function(el){
+                var pct = parseFloat(el.getAttribute('data-pct') || '0');
+                if (!isNaN(pct)) { el.style.width = pct + '%'; }
+            });
         });
     </script>
 {% endblock %}
