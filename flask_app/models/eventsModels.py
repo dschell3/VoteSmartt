@@ -1,8 +1,5 @@
 from flask_app.config.mysqlconnection import connectToMySQL
-import re
 from datetime import datetime
-# Should dt_parse be imported from dateutil? or move the method created in controller here?
-
 
 db = "mydb"
 
@@ -51,16 +48,6 @@ class Events:
                 '''
         return connectToMySQL(db).query_db(query, data)
 
-    @classmethod
-    def getAll(cls):
-        query = "SELECT * FROM event;"
-        result = connectToMySQL(db).query_db(query)
-        events = []
-        for i in result:
-            events.append(cls(i))
-        return events
-
-    # Test on render
     @classmethod
     def getAllWithCreators(cls):
         """

@@ -1,8 +1,4 @@
 from flask_app.config.mysqlconnection import connectToMySQL
-import secrets, hashlib
-from flask import flash
-from flask_app import app
-from datetime import datetime, timedelta
 from flask_app.utils.validators import (
     validate_all_registration_fields, validate_email,
     validate_name, validate_password, validate_phone )
@@ -39,10 +35,6 @@ class User:
         """Only non-admin users (voters) can cast votes
         Admins are prohibited from voting to maintain integrity"""
         return not self.is_admin
-    
-    def can_view_events(self) -> bool:
-        """All users can view events"""
-        return True
 
     def can_manage_events(self) -> bool:
         """Only admins can create/edit/delete voting events"""
@@ -73,12 +65,6 @@ class User:
     # TODO: Admin methods to promote users
     # TODO: Admin method to delete users...how would this impact their previous votes?
     # TODO: Admin should not be able to reset their own password via this method
-
-    @classmethod
-    def isAdminByID(cls, data):
-        query = "SELECT isAdmin FROM user WHERE user_id = %(user_id)s;"
-        result = connectToMySQL(db).query_db(query, data)
-        return bool(result and result[0].get("isAdmin") == 1)
 
     @classmethod
     def getUserByEmail(cls, data):
