@@ -8,6 +8,8 @@ from flask_app.utils.validators import format_phone, validate_all_registration_f
 from flask_app.models.voteModels import Vote
 from flask import current_app
 from flask_app.utils.mailer import send_contact_email
+import json, os
+from datetime import datetime
 
 bcrypt = Bcrypt(app)
 
@@ -64,6 +66,36 @@ def unauthorized_page():
 def homepage():
     user_data = get_user_session_data()
     return render_template('homepage.html', **user_data)
+
+# ================================
+# ABOUT & CREDITS (Public, JSON-driven)
+# ================================
+
+_DATA_BASE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'data')
+
+def _load_json(filename, fallback):
+    """Load a JSON file from static/data. On failure, return the fallback.
+    This keeps page rendering robust and avoids 500s even when JSON is missing or invalid.
+    """
+    path = os.path.join(_DATA_BASE_PATH, filename)
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[ABOUT/CREDITS] Failed loading {filename}: {e}")
+        return fallback
+
+@app.route('/about')
+def about_page():
+    user_data = get_user_session_data()
+    data = _load_json('about.json', { 'title': 'About Us', 'intro': 'Content coming soon.', 'members': [] })
+    return render_template('about.html', data=data, **user_data)
+
+@app.route('/credits')
+def credits_page():
+    user_data = get_user_session_data()
+    data = _load_json('credits.json', { 'title': 'CREDITS', 'people': [] })
+    return render_template('credits.html', data=data, **user_data)
 
 @app.route('/register') # Registration page route
 def register_page():
@@ -244,29 +276,69 @@ def forgot_password_request():
         flash("Please enter your email address", "error")
         return redirect("/forgot_password")
 
-    # Send reset email if account exists (but don’t reveal status)
-    User.sendPasswordResetEmail({'email': email})
+    # Throttle: allow one request per 60 seconds per session
+    now_ts = datetime.utcnow().timestamp()
+    last_ts = session.get('forgot_last_ts')
+    if last_ts and (now_ts - float(last_ts)) < 60:
+        remaining = int(60 - (now_ts - float(last_ts))) or 1
+        flash(f"Please wait {remaining} seconds before requesting another reset link.", "error")
+        return redirect('/forgot_password')
+
+    # Create token (return generic success even if email does not exist to avoid information leakage)
+    ok, raw_token = User.createPasswordResetToken(email)
+
+    # Compose reset link with token
+    try:
+        reset_url = url_for('reset_password_page', token=raw_token, _external=True) if raw_token else None
+        # Always print in debug mode to aid local testing, regardless of mail status
+        if reset_url and current_app and getattr(current_app, 'debug', False):
+            print(f"[DEV][PASSWORD RESET] Reset link generated for {email}: {reset_url}")
+        mail_user = current_app.config.get('MAIL_USERNAME')
+        mail_pass = current_app.config.get('MAIL_PASSWORD') or current_app.config.get('MAIL_PASSWORD')
+        # Only attempt to send if mail credentials appear configured
+        if reset_url and mail_user and mail_pass:
+            try:
+                send_email(email, "Password Reset Request", f"Click the link below to reset your password:\n{reset_url}\n\nIf you did not request this, you can safely ignore this email.")
+            except Exception as e:
+                # Fallback: log link for developer visibility
+                print(f"[DEV][PASSWORD RESET] Email send failed: {e}; reset link for {email}: {reset_url}")
+        else:
+            # Dev fallback when mail not configured
+            if reset_url:
+                print(f"[DEV][PASSWORD RESET] Mail config missing; reset link for {email}: {reset_url}")
+    except Exception as e:
+        # Broad catch in case url_for/external building fails unexpectedly
+        print(f"[DEV][PASSWORD RESET] Unexpected failure preparing reset email: {e}")
+
     flash("If an account with that email exists, a reset link has been sent.", "success")
+    # record throttle timestamp on success path as well (regardless of whether email exists)
+    session['forgot_last_ts'] = now_ts
     return redirect("/login")
 
+# Backward-compatible alias for older templates/modals
+@app.route("/forgotRoute", methods=['POST'])
+def forgot_password_request_alias():
+    return forgot_password_request()
 
-@app.route("/reset_password", methods=['GET']) # Password reset page
+
+@app.route("/reset_password", methods=['GET']) # Password reset page (token-based)
 def reset_password_page():
-    email = request.args.get('email', '').strip().lower()
-    if not email:
-        flash("Invalid or missing email parameter.", "error")
-        return redirect("/login")
+    token = request.args.get('token', '').strip()
+    info = User.verifyPasswordResetToken(token)
+    if not token or not info:
+        flash("The reset link is invalid or has expired.", "error")
+        return redirect("/forgot_password")
 
-    return render_template("reset_password.html", email=email)
+    return render_template("reset_password.html", token=token)
     
 
-@app.route("/resetPassword", methods=['POST']) # Password reset handler
+@app.route("/resetPassword", methods=['POST']) # Password reset handler (token-based)
 def reset_password_submit():
-    email = request.form.get('email', '').strip().lower()
+    token = request.form.get('token', '').strip()
     new_password = request.form.get('new_password', '')
     confirm_password = request.form.get('confirm_password', '')
 
-    if not email or not new_password or not confirm_password:
+    if not token or not new_password or not confirm_password:
         flash("All fields are required", "error")
         return redirect(request.referrer or '/login')
 
@@ -274,16 +346,35 @@ def reset_password_submit():
         flash("Passwords do not match", "error")
         return redirect(request.referrer or '/login')
 
-    if not User.validatePassword(new_password):
-        # frontend shows specifics; backend just gates with a boolean
-        flash("Password does not meet requirements", "error")
+    # Validate strength using centralized validator (detailed message)
+    pw_error = validate_password(new_password)
+    if pw_error:
+        flash(pw_error, "error")
         return redirect(request.referrer or '/login')
 
-    pw_hash = bcrypt.generate_password_hash(new_password)
-    ok = User.resetPasswordByEmail({'email': email, 'password': pw_hash})
-    if not ok:
-        flash("No account found for that email.", "error")
+    # Verify token again to prevent reuse and race conditions
+    info = User.verifyPasswordResetToken(token)
+    if not info:
+        flash("The reset link is invalid or has expired.", "error")
         return redirect('/forgot_password')
+
+    # Disallow reusing current password
+    try:
+        if bcrypt.check_password_hash(info['password'], new_password):
+            flash("New password cannot be the same as your current password.", "error")
+            return redirect(request.referrer or '/login')
+    except Exception:
+        pass
+
+    # Update password by user_id
+    pw_hash = bcrypt.generate_password_hash(new_password)
+    ok = User.updatePassword({'user_id': info['user_id'], 'password': pw_hash})
+    if not ok:
+        flash("Failed to update password. Please try again.", "error")
+        return redirect('/forgot_password')
+
+    # Consume token
+    User.consumePasswordResetToken(token)
 
     flash("Password successfully updated. Please log in.", "success")
     return redirect('/login')
@@ -381,9 +472,15 @@ def change_password():
         flash("New passwords do not match", "error")
         return redirect("/settings")
     
-    # Validate new password strength
-    if not User.validatePassword(new_password):
-        flash("New password does not meet requirements", "error")
+    # Validate new password strength (detailed message)
+    pw_error = validate_password(new_password)
+    if pw_error:
+        flash(pw_error, "error")
+        return redirect("/settings")
+
+    # Disallow using the same password
+    if bcrypt.check_password_hash(user.password, new_password):
+        flash("New password cannot be the same as your current password.", "error")
         return redirect("/settings")
     
     # Update password

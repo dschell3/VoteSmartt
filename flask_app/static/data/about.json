@@ -1,0 +1,42 @@
+{
+  "title": "About Us",
+  "intro": "We are a multi‑disciplinary team focused on building a secure, scalable, and user‑friendly online voting system. Below are core members (sample data; edit this JSON directly).",
+  "members": [
+    {
+      "id": "manager",
+      "name": "Jang Singh",
+      "role": "Project Manager",
+  "bio": "Leads planning, requirement clarification, and documentation quality.",
+      "avatar_url": null,
+      "github": null,
+      "linkedin": null
+    },
+    {
+      "id": "backend",
+      "name": "Alex",
+      "role": "Backend Developer",
+  "bio": "Implements core business logic, database access, and security hardening.",
+      "avatar_url": null,
+      "github": null,
+      "linkedin": null
+    },
+    {
+      "id": "frontend",
+      "name": "Darren",
+      "role": "UI/UX Designer",
+  "bio": "Drives interaction consistency and visual experience to improve usability.",
+      "avatar_url": null,
+      "github": null,
+      "linkedin": null
+    },
+    {
+      "id": "qa",
+      "name": "Jarret",
+      "role": "QA / Test Engineer",
+  "bio": "Designs test cases and ensures stability and regression quality.",
+      "avatar_url": null,
+      "github": null,
+      "linkedin": null
+    }
+  ]
+}

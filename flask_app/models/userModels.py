@@ -18,7 +18,10 @@ class User:
         self.password = data['password']
         self.phone = data['phone']
         self.created_at = data['created_at']
-        self.isAdmin = int(data.get('isAdmin', 0)) # always set an int 0/1
+        # self.isAdmin = int(data.get('isAdmin', 0)) // Backup in case of errors
+        # Handle isAdmin field safely - convert None to 0, then to int
+        isAdmin_value = data.get('isAdmin', 0)
+        self.isAdmin = int(isAdmin_value) if isAdmin_value is not None else 0
         
     @property
     def is_admin(self) -> bool:
@@ -129,13 +132,18 @@ class User:
         # TODO: Ask Jang how to implement email sending using existing app infrastructure
         # TODO: use send_email function from userController
         reset_link = f"http://localhost:5000/reset_password?email={data['email']}"
-        from flask_app.controllers.userController import send_email
-        send_email(
-            to_address=data['email'],
-            subject="Password Reset Request",
-            body=f"Click the link below to reset your password:\n{reset_link}"
-        )
-        return {"ok": True}
+        try:
+            from flask_app.controllers.userController import send_email
+            send_email(
+                to_address=data['email'],
+                subject="Password Reset Request",
+                body=f"Click the link below to reset your password:\n{reset_link}"
+            )
+            return {"ok": True}
+        except Exception as e:
+            # Fail gracefully to avoid leaking user existence and to prevent 500s in AJAX flow
+            print(f"Password reset email send failed: {e}")
+            return {"ok": True}
 
     @classmethod
     def resetPasswordByEmail(cls, data):
@@ -145,6 +153,81 @@ class User:
         if not user:
             return False
         return cls.updatePassword({'user_id': user.user_id, 'password': data['password']})
+
+    # ===== PASSWORD RESET TOKEN FLOW =====
+    @classmethod
+    def createPasswordResetToken(cls, email: str, ttl_minutes: int = 30):
+        """Create a one-time password reset token for the given email.
+
+        Returns a tuple (ok: bool, raw_token: str or None).
+        If email doesn't exist, returns (True, None) to avoid leaking info.
+        """
+        user = cls.getUserByEmail({'email': email})
+        if not user:
+            return True, None
+
+        raw_token = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+
+        expires_at = datetime.utcnow() + timedelta(minutes=ttl_minutes)
+        query = (
+            """
+            INSERT INTO password_reset_token
+                (user_id, token_hash, expires_at, created_at)
+            VALUES
+                (%(user_id)s, %(token_hash)s, %(expires_at)s, NOW());
+            """
+        )
+        data = {
+            'user_id': user.user_id,
+            'token_hash': token_hash,
+            'expires_at': expires_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        ok = connectToMySQL(db).query_db(query, data)
+        if not ok:
+            # Fail silently (do not reveal user existence)
+            return True, None
+        return True, raw_token
+
+    @classmethod
+    def verifyPasswordResetToken(cls, raw_token: str):
+        """Verify token validity. Returns dict with token row + user, or None.
+
+        Output example: { 'token_id': 1, 'user_id': 2, 'email': 'x', ... }
+        """
+        if not raw_token:
+            return None
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        query = (
+            """
+            SELECT t.id as token_id, t.user_id, t.expires_at, t.used_at,
+                   u.email, u.password
+            FROM password_reset_token t
+            JOIN user u ON u.user_id = t.user_id
+            WHERE t.token_hash = %(token_hash)s
+              AND (t.used_at IS NULL)
+              AND (t.expires_at > NOW());
+            """
+        )
+        rows = connectToMySQL(db).query_db(query, {'token_hash': token_hash})
+        if not rows:
+            return None
+        return rows[0]
+
+    @classmethod
+    def consumePasswordResetToken(cls, raw_token: str):
+        """Mark a token as used. Returns True/False."""
+        if not raw_token:
+            return False
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        query = (
+            """
+            UPDATE password_reset_token
+            SET used_at = NOW()
+            WHERE token_hash = %(token_hash)s AND used_at IS NULL;
+            """
+        )
+        return bool(connectToMySQL(db).query_db(query, {'token_hash': token_hash}))
 
 
     # ===== INPUT VALIDATION METHODS ===== 

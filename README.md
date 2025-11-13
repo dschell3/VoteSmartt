@@ -77,10 +77,10 @@ Name: Jarret, Role: QA/Test Engineer, Responsibilities: Test plans, unit/integra
    Activate Environment `source venv/bin/activate`
    Install dependencies: `pip install -r requirements.txt` (might be different command for windows)
 
-4. Run Application
-    `python server.py`   
-    The app will be accessible at http://127.0.0.1:{any available port}/  
-    <!-- The app will automatically select an available port if the default port is in use. -->
+4. Run Application  
+  `python server.py`  
+  The app will be accessible at http://127.0.0.1:{dynamic_port}/ (server chooses a free port).  
+  You can also set a fixed port (e.g. for Docker) by editing `server.py` to use a constant.
 
 <!-- For developers -->
  Once done with the setup and a page is showing up on the browser reach out to project manager to setup git branches.
@@ -98,6 +98,63 @@ Name: Jarret, Role: QA/Test Engineer, Responsibilities: Test plans, unit/integra
 
 
 ## Documentation
+## Migrations & Diagnostics
+Scripts have been organized under `scripts/`:
+
+```
+scripts/
+  migrations/
+    create_option_table.py          # Idempotent creation of the `option` table
+    migrate_fk_vote_to_option.py    # Idempotent fix for vote.vote_option_id foreign key
+    docs/sql/migrations/2025-11-11_fix_vote_fk.sql  # Raw SQL (use only if FK still points to `choices`)
+  diagnostics/
+    inspect_schema.py               # Lists key tables and foreign keys
+    list_event_option_counts.py     # Recent events with candidate counts
+```
+
+Usage examples:
+
+Create option table (safe to run multiple times):
+```
+python scripts/migrations/create_option_table.py
+```
+
+Fix foreign key if legacy schema pointed to `choices`:
+```
+python scripts/migrations/migrate_fk_vote_to_option.py
+```
+
+Schema inspection:
+```
+python scripts/diagnostics/inspect_schema.py
+```
+
+Event / option counts:
+```
+python scripts/diagnostics/list_event_option_counts.py
+```
+
+Manual foreign-key smoke test (development only):
+```
+python tests/manual/test_fk_insert.py
+```
+
+## Voting Flow (Backend Summary)
+Routes:
+- `POST /vote/cast`  Submit or update the user's vote for an open event.
+- `POST /vote/delete` Retract an existing vote while event is still open.
+
+Server-side validations include:
+1. Auth & role check (must be logged in and not an admin for voting).
+2. Event existence & status (`Open`).
+3. Option belongs to the targeted event.
+4. One vote per user per event (update instead of duplicate insert).
+
+Future enhancements (optional):
+- Live results visibility toggle (currently results show after event closes; could allow "show after vote" strategy).  
+- Caching tallies for high‑traffic events.  
+- Replacing `print()` diagnostics with structured logging.
+
 Detailed documentation (requirements, design diagrams, test plans) will be maintained in the /docs directory and updated at the completion of each Waterfall phase.
 
 
