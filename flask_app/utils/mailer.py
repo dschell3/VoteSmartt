@@ -18,6 +18,11 @@ def send_contact_email(subject: str, body: str, recipients: list):
     # Use configured default sender (MAIL_DEFAULT_SENDER) if available
     try:
         mail.send(msg)
-    except Exception:
-        # Re-raise to be handled by caller (the controller will flash an error)
+    except Exception as e:
+        # Log the error to console and re-raise so callers can handle it.
+        try:
+            if current_app:
+                current_app.logger.error(f"Error sending mail to {recipients}: {e}")
+        except Exception:
+            print(f"Error sending mail to {recipients}: {e}")
         raise

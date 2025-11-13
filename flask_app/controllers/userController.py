@@ -282,14 +282,50 @@ def forgot_password_request():
     return redirect("/login")
 
 
+# Backwards-compatible endpoints used by the frontend modal and older templates
+@app.route('/forgotRoute', methods=['POST'])
+@app.route('/forgotpassword', methods=['POST'])
+def forgot_password_alias():
+    """Alias endpoints that delegate to the canonical forgot_password_request handler.
+
+    The frontend base template posts to `/forgotRoute` and some older templates post to
+    `/forgotpassword` (lowercase). Keep compatibility by routing them here.
+    """
+    return forgot_password_request()
+
+
 @app.route("/reset_password", methods=['GET']) # Password reset page
 def reset_password_page():
     email = request.args.get('email', '').strip().lower()
-    if not email:
-        flash("Invalid or missing email parameter.", "error")
-        return redirect("/login")
+    token = request.args.get('token', '').strip()
 
-    return render_template("reset_password.html", email=email)
+    # Allow more helpful behaviour when token is missing/invalid so the user doesn't see a blank page.
+    if not email and not token:
+        flash("Invalid or missing reset parameters.", "error")
+        return redirect("/forgot_password")
+
+    # If token present, verify it for the given email and show an informative message on failure.
+    error = None
+    user = None
+    if email:
+        user = User.getUserByEmail({'email': email})
+
+    if token:
+        if not user:
+            error = "Invalid reset link. Please request a new password reset."
+        else:
+            # Use model verification helper; if it returns False, token is invalid/expired
+            if not User._verify_reset_token_for_user(user, token):
+                error = "This reset link is invalid or has expired. Please request a new one."
+
+    # Debug: print useful info to the server console so we can see what was received and why
+    try:
+        print(f"[reset_password_page] email={email!r} token={token!r} error={error!r}")
+    except Exception:
+        pass
+
+    # Render the reset form. If `error` is set, the template will show a helpful message instead of a blank page.
+    return render_template("reset_password.html", email=email, token=token, error=error)
     
 
 @app.route("/resetPassword", methods=['POST']) # Password reset handler
@@ -297,6 +333,7 @@ def reset_password_submit():
     email = request.form.get('email', '').strip().lower()
     new_password = request.form.get('new_password', '')
     confirm_password = request.form.get('confirm_password', '')
+    token = request.form.get('token', '').strip()
 
     if not email or not new_password or not confirm_password:
         flash("All fields are required", "error")
@@ -312,9 +349,15 @@ def reset_password_submit():
         return redirect(request.referrer or '/login')
 
     pw_hash = bcrypt.generate_password_hash(new_password)
-    ok = User.resetPasswordByEmail({'email': email, 'password': pw_hash})
+
+    # Require a token for secure resets
+    if not token:
+        flash("Invalid or missing reset token.", "error")
+        return redirect('/forgot_password')
+
+    ok = User.resetPasswordWithToken({'email': email, 'token': token, 'password': pw_hash})
     if not ok:
-        flash("No account found for that email.", "error")
+        flash("Unable to update password. The reset token may be invalid or expired.", "error")
         return redirect('/forgot_password')
 
     flash("Password successfully updated. Please log in.", "success")
