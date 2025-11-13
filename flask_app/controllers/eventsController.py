@@ -51,12 +51,7 @@ def require_login(redirect_to="/unauthorized"):
 
 @app.route('/admin2')
 def adminPage():
-    # Require login to access the event creation page and pass session user data
-    redirect_url = require_login()
-    if redirect_url:
-        return redirect(redirect_url)
-    user_data = get_user_session_data()
-    return render_template('eventForms.html', **user_data)
+    return render_template('eventForms.html')
 
 @app.route('/createEventRoute', methods=['POST'])
 def createEventRoute():
