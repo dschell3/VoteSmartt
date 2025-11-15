@@ -31,3 +31,7 @@ def page_not_found(e):
 	ctx = get_user_session_data()
 	return render_template('404.html', **ctx), 404
 
+# Import controllers to register routes
+from flask_app.controllers import userController
+from flask_app.controllers import eventsController
+from flask_app.controllers import voteController

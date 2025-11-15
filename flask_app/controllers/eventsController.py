@@ -17,6 +17,7 @@ def adminPage():
     if redirect_url:
         return redirect(redirect_url)
     user_data = get_user_session_data()
+    user_data['edit_mode'] = False  # Indicate creation mode
     return render_template('eventForms.html', **user_data)
 
 @app.route('/createEventRoute', methods=['POST'])
