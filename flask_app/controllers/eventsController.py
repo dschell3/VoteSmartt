@@ -18,11 +18,7 @@ def adminPage():
         return redirect(redirect_url)
     user_data = get_user_session_data()
     user_data['edit_mode'] = False  # Indicate creation mode
-
-    # DEBUG - Remove after testing
-    print(f"[ADMIN PAGE DEBUG] Rendering eventForms.html with edit_mode={user_data.get('edit_mode')}")
-    print(f"[ADMIN PAGE DEBUG] User data keys: {list(user_data.keys())}")
-
+    
     return render_template('eventForms.html', **user_data)
 
 @app.route('/createEventRoute', methods=['POST'])

@@ -151,11 +151,6 @@
 
 {% block content %}
 <div id="page-root" class="bg-gray-100 min-h-screen" data-edit-mode="{{ '1' if edit_mode else '0' }}">
-    <!-- DEBUG: Remove this after testing -->
-    <div style="background: red; color: white; padding: 20px; margin: 20px;">
-        DEBUG INFO: edit_mode = {{ edit_mode }} | Type: {{ edit_mode.__class__.__name__ }}
-    </div>
-    <!-- END DEBUG -->
     {% if not logged_in %}
         <!-- Login prompt for unauthenticated users -->
         <div class="flex justify-center items-center min-h-screen">
