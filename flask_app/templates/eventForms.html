@@ -941,15 +941,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // ======= Form Submission Handler =======
+  // ======= Form Submission Handler =======
     const submitBtn = document.getElementById('create-event-btn');
     console.log('🔍 Submit button found:', submitBtn);
-    
+
     if (submitBtn) {
         submitBtn.addEventListener('click', function(e) {
             console.log('🚀 Create Event button clicked');
             e.preventDefault(); // Prevent default form submission
 
+            const form = document.getElementById('event-form');
             const titleEl = document.getElementById('title');
             const descEl = document.getElementById('description');
             const startLocalEl = document.getElementById('start_time');
@@ -959,7 +960,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const title = titleEl.value.trim();
             const description = descEl.value.trim();
-            const startLocal = startLocalEl.value; // yyyy-MM-ddTHH:MM
+            const startLocal = startLocalEl.value; // yyyy-MM-ddTHH:MM in browser's local timezone
             const endLocal = endLocalEl.value;
 
             console.log('📋 Raw form data before normalization:', { title, description, startLocal, endLocal });
@@ -967,59 +968,66 @@ document.addEventListener('DOMContentLoaded', function() {
             // Try state-machine validator first; fallback to simple checks
             let isValid = true;
             if (typeof FormValidator !== 'undefined' && FormValidator.validateWithStateMachine) {
-                try { isValid = FormValidator.validateWithStateMachine(); } catch (err) { console.warn('⚠️ Validator error, fallback to simple checks', err); }
+                try { 
+                    isValid = FormValidator.validateWithStateMachine(); 
+                } catch (err) { 
+                    console.warn('⚠️ Validator error, fallback to simple checks', err); 
+                }
             } else {
                 isValid = title && description && startLocal && endLocal;
             }
+            
             if (!isValid) {
                 console.log('❌ Validation failed - form not submitted');
                 return;
             }
 
-            // Populate hidden fields with UTC datetime -> "YYYY-MM-DD HH:MM:SS"
+            // ===== Convert local datetime to UTC =====
             function toUTCDateTime(localDateTimeString) {
-            if (!localDateTimeString) return '';
-    
-            // Parse the datetime-local value (which is in user's local timezone)
-            const localDate = new Date(localDateTimeString);
-    
-            // Check if valid
-            if (isNaN(localDate.getTime())) {
-                console.error('Invalid date:', localDateTimeString);
-                return '';
+                if (!localDateTimeString) return '';
+                
+                // Parse the datetime-local value (which is in user's local timezone)
+                const localDate = new Date(localDateTimeString);
+                
+                // Check if valid
+                if (isNaN(localDate.getTime())) {
+                    console.error('Invalid date:', localDateTimeString);
+                    return '';
+                }
+                
+                // Convert to UTC and format as "YYYY-MM-DD HH:MM:SS"
+                const year = localDate.getUTCFullYear();
+                const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(localDate.getUTCDate()).padStart(2, '0');
+                const hours = String(localDate.getUTCHours()).padStart(2, '0');
+                const minutes = String(localDate.getUTCMinutes()).padStart(2, '0');
+                const seconds = '00';
+                
+                const utcString = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+                console.log(`🌍 Converting ${localDateTimeString} to UTC: ${utcString}`);
+                return utcString;
             }
-    
-            // Convert to UTC and format as "YYYY-MM-DD HH:MM:SS"
-            const year = localDate.getUTCFullYear();
-            const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
-            const day = String(localDate.getUTCDate()).padStart(2, '0');
-            const hours = String(localDate.getUTCHours()).padStart(2, '0');
-            const minutes = String(localDate.getUTCMinutes()).padStart(2, '0');
-            const seconds = '00';
             
-            const utcString = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-            console.log(`🌍 Converting ${localDateTimeString} to UTC: ${utcString}`);
-            return utcString;
-        }
-
             const fullStart = toUTCDateTime(startLocal);
             const fullEnd = toUTCDateTime(endLocal);
+            
             startHiddenEl.value = fullStart;
             endHiddenEl.value = fullEnd;
-            console.log('📅 Normalized full datetimes set to hidden:', { fullStart, fullEnd });
+            
+            console.log('📅 UTC datetimes set to hidden fields:', { fullStart, fullEnd });
 
             if (!fullStart || !fullEnd) {
-                alert('日期时间格式不正确，请重新选择');
+                alert('Error converting datetime. Please try again.');
                 return;
             }
 
-            form.submit(); // Submit form directly to server with full datetime values
+            console.log('✅ Submitting form with UTC times');
+            form.submit(); // Submit form directly to server with UTC datetime values
         });
         console.log('✅ Event listener attached to submit button');
     } else {
         console.error('❌ Submit button not found!');
     }
-    
     // Initialize all modules and components
     DateTimeDisplayManager.init(); // Handles time display and validation
     // Only apply strict min-time restrictions and candidate UI in create mode
