@@ -162,10 +162,60 @@ def createEventRoute():
     # Create the event and capture its new ID so we can persist candidates
     new_event_id = None
     try:
+        print(f"[DEBUG] About to create event with data: {data}")
+        print(f"[DEBUG] Normalized start_time: {normalized_start}")
+        print(f"[DEBUG] Normalized end_time: {normalized_end}")
+        print(f"[DEBUG] Computed status: {data.get('status')}")
+        
         new_event_id = Events.createEvent(data)
+        
+        print(f"[DEBUG] Event created successfully! new_event_id = {new_event_id}")
         flash('Event created successfully!', 'success')
     except Exception as e:
+        # THIS IS THE CRITICAL PART - LOG THE ACTUAL ERROR
+        print(f"[ERROR] Failed to create event!")
+        print(f"[ERROR] Exception type: {type(e).__name__}")
+        print(f"[ERROR] Exception message: {str(e)}")
+        import traceback
+        print(f"[ERROR] Full traceback:")
+        traceback.print_exc()
+        
         flash('Error creating event. Please try again.', 'error')
+        return redirect('/admin2')
+
+    print(f"[DEBUG] After event creation, new_event_id = {new_event_id}")
+    
+    # Persist candidate names (descriptions deferred per choice C)
+    # NOTE: valid_candidates was built during validation; we ignore candidate_descs for now.
+    if new_event_id:
+        print(f"[DEBUG] Persisting {len(valid_candidates)} candidates...")
+        # Deduplicate while preserving order
+        seen = set()
+        ordered_unique = []
+        for c in valid_candidates:
+            if c not in seen:
+                seen.add(c)
+                ordered_unique.append(c)
+        try:
+            for cand in ordered_unique:
+                print(f"[DEBUG] Creating candidate: {cand}")
+                Option.create({'option_text': cand, 'option_event_id': new_event_id})
+            print(f"[DEBUG] All candidates created successfully!")
+        except Exception as e:
+            # Non‑fatal: event exists even if candidate insertion partially fails
+            print(f"[ERROR] Candidate insertion error for event {new_event_id}")
+            print(f"[ERROR] Exception: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            flash('Event created but some candidates failed to save.', 'error')
+    else:
+        print("[ERROR] No new_event_id; skipping candidate persistence.")
+        flash('Event was not created - please check the logs.', 'error')
+
+    # Only redirect to event list if we successfully created the event
+    if new_event_id:
+        return redirect(url_for('eventList'))
+    else:
         return redirect('/admin2')
 
     # Persist candidate names (descriptions deferred per choice C)
@@ -622,3 +672,34 @@ def editEventPost(event_id):
             return redirect(url_for('editEventGet', event_id=event_id))
 
     return redirect(url_for('eventList'))
+
+
+# ADD THIS TEMPORARY DEBUG ROUTE to your eventsController.py
+@app.route('/debug/timezone')
+def debug_timezone():
+    """Temporary debug route to check timezone settings"""
+    from flask_app.config.mysqlconnection import connectToMySQL
+    from datetime import datetime
+    import pytz
+    
+    results = {}
+    
+    # Check Python's datetime.now()
+    results['python_now'] = datetime.now().isoformat()
+    
+    # Check MySQL timezone settings
+    try:
+        db_connection = connectToMySQL('mydb')
+        
+        # Get MySQL's current time
+        query = "SELECT NOW() as mysql_now, @@session.time_zone as session_tz, @@global.time_zone as global_tz;"
+        db_result = db_connection.query_db(query)
+        
+        if db_result:
+            results['mysql_now'] = str(db_result[0]['mysql_now'])
+            results['mysql_session_timezone'] = db_result[0]['session_tz']
+            results['mysql_global_timezone'] = db_result[0]['global_tz']
+    except Exception as e:
+        results['mysql_error'] = str(e)
+    
+    return f"<pre>{json.dumps(results, indent=2)}</pre>"
