@@ -976,18 +976,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Populate hidden fields with FULL datetime (retain minutes) -> "YYYY-MM-DD HH:MM:SS"
-            function toFullDateTime(dt) {
-                if (!dt) return '';
-                const [datePart, timePartRaw] = dt.split('T');
-                if (!datePart || !timePartRaw) return '';
-                // Ensure we have seconds; datetime-local usually gives HH:MM
-                const timePart = /\d{2}:\d{2}:\d{2}/.test(timePartRaw)
-                    ? timePartRaw
-                    : timePartRaw + ':00';
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return '';
-                return `${datePart} ${timePart}`; // space form matches DB DATETIME
+            // Populate hidden fields with UTC datetime -> "YYYY-MM-DD HH:MM:SS"
+            function toUTCDateTime(localDateTimeString) {
+            if (!localDateTimeString) return '';
+    
+            // Parse the datetime-local value (which is in user's local timezone)
+            const localDate = new Date(localDateTimeString);
+    
+            // Check if valid
+            if (isNaN(localDate.getTime())) {
+                console.error('Invalid date:', localDateTimeString);
+                return '';
             }
+    
+            // Convert to UTC and format as "YYYY-MM-DD HH:MM:SS"
+            const year = localDate.getUTCFullYear();
+            const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(localDate.getUTCDate()).padStart(2, '0');
+            const hours = String(localDate.getUTCHours()).padStart(2, '0');
+            const minutes = String(localDate.getUTCMinutes()).padStart(2, '0');
+            const seconds = '00';
+            
+            const utcString = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            console.log(`🌍 Converting ${localDateTimeString} to UTC: ${utcString}`);
+            return utcString;
+        }
+
             const fullStart = toFullDateTime(startLocal);
             const fullEnd = toFullDateTime(endLocal);
             startHiddenEl.value = fullStart;

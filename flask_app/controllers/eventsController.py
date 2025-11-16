@@ -3,7 +3,7 @@ from flask_app import app
 from flask_app.models.eventsModels import Events
 from flask_app.models.optionModels import Option
 from flask_app.models.voteModels import Vote
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_app.utils.helpers import require_login, get_current_user, get_user_session_data, is_logged_in
 
 
@@ -79,7 +79,7 @@ def createEventRoute():
             if not start_dt or not end_dt:
                 raise ValueError('Invalid datetime format')
 
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
 
             # If user provided only dates (00:00 produced), treat as dates for past check
             if start_dt.hour == 0 and start_dt.minute == 0 and 'T' not in start_time and ' ' not in start_time.strip()[10:]:
@@ -137,7 +137,7 @@ def createEventRoute():
                 return None
             
             start_dt = _parse_dt(start_time)
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
             print(f"[VALIDATION ERROR] Parsed start_dt: {start_dt}")
             print(f"[VALIDATION ERROR] Server now(): {now}")
             if start_dt:
@@ -586,7 +586,7 @@ def editEventPost(event_id):
     # Parse for logical checks
     start_dt = Events.parse_datetime(normalized_start)
     end_dt = Events.parse_datetime(normalized_end)
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
 
     # Enforce temporal rules based on status
     if not error_message:
