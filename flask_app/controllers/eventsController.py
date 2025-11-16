@@ -413,6 +413,14 @@ def editEventGet(event_id):
     prefill_start_local = _fmt_local_dt(event.start_time)
     prefill_end_local = _fmt_local_dt(event.end_time)
 
+    # Load existing options/candidates for this event
+    existing_options = []
+    try:
+        existing_options = Option.getByEventId({'event_id': event_id})
+    except Exception as e:
+        print(f"[ERROR] Failed to load options for event {event_id}: {e}")
+        existing_options = []
+
     return render_template(
         'eventForms.html',
         edit_mode=True,
@@ -423,6 +431,7 @@ def editEventGet(event_id):
         can_edit_desc=can_desc,
         can_edit_start=can_start,
         can_edit_end=can_end,
+        existing_options=existing_options,
         **user_data
     )
 
@@ -545,5 +554,71 @@ def editEventPost(event_id):
         print(f"Edit event error: {e}")
         flash('Error updating event. Please try again.', 'error')
         return redirect(url_for('editEventGet', event_id=event_id))
+
+    # ===== CANDIDATE/OPTION MANAGEMENT (only for "Waiting" status) =====
+    # Only allow candidate editing if event is still in "Waiting" status
+    if status == 'Waiting':
+        try:
+            # Get submitted candidates from form
+            submitted_candidates = request.form.getlist('candidates[]')
+            submitted_candidate_ids = request.form.getlist('candidate_ids[]')
+            
+            # Clean up candidate data (strip whitespace, remove empty entries)
+            valid_candidates = []
+            valid_ids = []
+            for i, cand_text in enumerate(submitted_candidates):
+                cleaned = cand_text.strip()
+                if cleaned:  # Only include non-empty candidates
+                    valid_candidates.append(cleaned)
+                    # Get corresponding ID if it exists
+                    if i < len(submitted_candidate_ids):
+                        cand_id = submitted_candidate_ids[i].strip()
+                        valid_ids.append(cand_id if cand_id else None)
+                    else:
+                        valid_ids.append(None)
+            
+            # Get existing options from database
+            existing_options = Option.getByEventId({'event_id': event_id})
+            existing_option_ids = {str(opt.option_id) for opt in existing_options}
+            
+            # Track which options to keep, update, add, or delete
+            submitted_option_ids = set()
+            
+            # Process each submitted candidate
+            for idx, cand_text in enumerate(valid_candidates):
+                cand_id = valid_ids[idx]
+                
+                if cand_id and cand_id in existing_option_ids:
+                    # UPDATE existing option
+                    submitted_option_ids.add(cand_id)
+                    # Find the existing option to check if text changed
+                    existing_opt = next((opt for opt in existing_options if str(opt.option_id) == cand_id), None)
+                    if existing_opt and existing_opt.option_text != cand_text:
+                        # Only update if text actually changed
+                        Option.update({
+                            'option_id': int(cand_id),
+                            'option_text': cand_text
+                        })
+                        print(f"[DEBUG] Updated option {cand_id}: '{cand_text}'")
+                else:
+                    # CREATE new option (no ID or ID not in existing set)
+                    new_id = Option.create({
+                        'option_text': cand_text,
+                        'option_event_id': event_id
+                    })
+                    print(f"[DEBUG] Created new option: '{cand_text}' with ID {new_id}")
+            
+            # DELETE options that were removed (exist in DB but not in submission)
+            for opt in existing_options:
+                if str(opt.option_id) not in submitted_option_ids:
+                    Option.deleteById({'option_id': opt.option_id})
+                    print(f"[DEBUG] Deleted option {opt.option_id}: '{opt.option_text}'")
+            
+            print(f"[DEBUG] Candidate update complete for event {event_id}")
+            
+        except Exception as e:
+            print(f"[ERROR] Candidate update failed for event {event_id}: {e}")
+            flash('Event updated but there was an error updating candidates.', 'warning')
+            return redirect(url_for('editEventGet', event_id=event_id))
 
     return redirect(url_for('eventList'))

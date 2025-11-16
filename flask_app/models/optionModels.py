@@ -40,5 +40,38 @@ class Option:
         query = "DELETE FROM `option` WHERE option_event_id = %(event_id)s;"
         return connectToMySQL(db).query_db(query, data)
     
+    @classmethod
+    def update(cls, data):
+        """Update an existing option's text.
+        
+        Args:
+            data (dict): Must contain 'option_id' and 'option_text'
+        
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        query = """
+        UPDATE `option` 
+        SET option_text = %(option_text)s
+        WHERE option_id = %(option_id)s;
+        """
+        return connectToMySQL(db).query_db(query, data)
+    
+    @classmethod
+    def deleteById(cls, data):
+        """Delete a specific option by its ID.
+        
+        Args:
+            data (dict): Must contain 'option_id'
+        
+        Returns:
+            bool: True if successful, False otherwise
+        
+        Note:
+            This will cascade delete any votes associated with this option
+            due to the ON DELETE CASCADE foreign key constraint.
+        """
+        query = "DELETE FROM `option` WHERE option_id = %(option_id)s;"
+        return connectToMySQL(db).query_db(query, data)    
     # Additional methods for updating or retrieving options can be added here as needed.
     

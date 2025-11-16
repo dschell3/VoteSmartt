@@ -258,6 +258,7 @@
                         
                         <!-- Candidates Section -->
                         {% if not edit_mode %}
+                        <!-- CREATE MODE: Full candidate management with modal -->
                         <div class="mt-8">
                             <h3 class="text-xl font-bold mb-4 text-gray-800">Candidates</h3>
                             <button type="button" id="add-candidate-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-base mb-4 flex items-center justify-center">
@@ -271,6 +272,71 @@
                             </div>
                             <div id="candidates-error" class="text-red-500 text-xs mb-4 hidden"></div>
                         </div>
+
+                        {% else %}
+                        <!-- EDIT MODE: Show candidates only if event is "Waiting" status -->
+                        {% if can_edit_start %}
+                        <!-- can_edit_start is True only for "Waiting" status, so candidates are editable -->
+                        <div class="mt-8">
+                            <h3 class="text-xl font-bold mb-4 text-gray-800">Candidates/Options</h3>
+                            <p class="text-sm text-gray-600 mb-4">You can add, edit, or remove candidates while the event is in "Waiting" status.</p>
+                            
+                            <button type="button" id="add-candidate-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-base mb-4 flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Add Candidate
+                            </button>
+                            
+                            <div class="space-y-3 mb-6" id="candidates-list">
+                                <!-- Pre-populate with existing candidates from database -->
+                                {% for option in existing_options %}
+                                <div class="bg-white border border-gray-200 rounded-lg p-5 mb-4 shadow-lg hover:shadow-xl transition-shadow duration-200">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1">
+                                            <!-- Hidden inputs to track candidate ID and text -->
+                                            <input type="hidden" name="candidate_ids[]" value="{{ option.option_id }}" />
+                                            <input type="hidden" name="candidates[]" value="{{ option.option_text }}" />
+                                            <input type="hidden" name="candidate_descs[]" value="" />
+                                            <h4 class="font-semibold text-gray-900 text-base mb-2">Candidate</h4>
+                                            <p class="text-sm text-gray-600 mb-3">{{ option.option_text }}</p>
+                                            <p class="text-sm text-gray-600">No description provided</p>
+                                        </div>
+                                        <div class="flex space-x-2 ml-4">
+                                            <button type="button" class="edit-candidate px-3 py-1 text-blue-500 hover:text-blue-700 text-sm font-medium border border-blue-300 rounded hover:bg-blue-50 hover:border-blue-500 transition duration-200 shadow-sm hover:shadow-md">Edit</button>
+                                            <button type="button" class="remove-candidate px-3 py-1 text-red-500 hover:text-red-700 text-sm font-medium border border-red-300 rounded hover:bg-red-50 hover:border-red-500 transition duration-200 shadow-sm hover:shadow-md">Delete</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div id="candidates-error" class="text-red-500 text-xs mb-4 hidden"></div>
+                        </div>
+
+                        {% else %}
+                        <!-- Event is "Open" or "Closed" - show candidates as read-only -->
+                        <div class="mt-8">
+                            <h3 class="text-xl font-bold mb-4 text-gray-800">Candidates/Options</h3>
+                            <p class="text-sm text-gray-600 mb-4">Candidates cannot be edited once voting has started.</p>
+                            
+                            <div class="space-y-3 mb-6">
+                                {% for option in existing_options %}
+                                <div class="bg-gray-100 border border-gray-300 rounded-lg p-5">
+                                    <div class="flex items-start">
+                                        <div class="flex-1">
+                                            <h4 class="font-semibold text-gray-700 text-base mb-2">Candidate</h4>
+                                            <p class="text-sm text-gray-600">{{ option.option_text }}</p>
+                                        </div>
+                                        <div class="text-xs text-gray-500 italic">Read-only</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% if not existing_options %}
+                                <p class="text-sm text-gray-500 italic">No candidates found.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
                         {% endif %}
                         
                         <button type="submit" id="create-event-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-lg">{{ 'Save Changes' if edit_mode else 'Create Event' }}</button>
@@ -824,12 +890,17 @@ document.addEventListener('DOMContentLoaded', function() {
             this.closeModal();
         },
         
-        addCandidate(name, desc) {
+        addCandidate(name, desc, existingId = null) {
             const candidateCard = document.createElement('div');
             candidateCard.className = "bg-white border border-gray-200 rounded-lg p-5 mb-4 shadow-lg hover:shadow-xl transition-shadow duration-200";
+    
+            // In edit mode, include the existing option_id as a hidden field
+            const idField = existingId ? `<input type="hidden" name="candidate_ids[]" value="${existingId}" />` : '<input type="hidden" name="candidate_ids[]" value="" />';
+    
             candidateCard.innerHTML = `
                 <div class="flex justify-between items-start">
                     <div class="flex-1">
+                        ${idField}
                         <input type="hidden" name="candidates[]" value="${name}" />
                         <input type="hidden" name="candidate_descs[]" value="${desc}" />
                         <h4 class="font-semibold text-gray-900 text-base mb-2">Candidate</h4>
