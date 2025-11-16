@@ -672,34 +672,3 @@ def editEventPost(event_id):
             return redirect(url_for('editEventGet', event_id=event_id))
 
     return redirect(url_for('eventList'))
-
-
-# ADD THIS TEMPORARY DEBUG ROUTE to your eventsController.py
-@app.route('/debug/timezone')
-def debug_timezone():
-    """Temporary debug route to check timezone settings"""
-    from flask_app.config.mysqlconnection import connectToMySQL
-    from datetime import datetime
-    import pytz
-    
-    results = {}
-    
-    # Check Python's datetime.now()
-    results['python_now'] = datetime.now().isoformat()
-    
-    # Check MySQL timezone settings
-    try:
-        db_connection = connectToMySQL('mydb')
-        
-        # Get MySQL's current time
-        query = "SELECT NOW() as mysql_now, @@session.time_zone as session_tz, @@global.time_zone as global_tz;"
-        db_result = db_connection.query_db(query)
-        
-        if db_result:
-            results['mysql_now'] = str(db_result[0]['mysql_now'])
-            results['mysql_session_timezone'] = db_result[0]['session_tz']
-            results['mysql_global_timezone'] = db_result[0]['global_tz']
-    except Exception as e:
-        results['mysql_error'] = str(e)
-    
-    return f"<pre>{json.dumps(results, indent=2)}</pre>"

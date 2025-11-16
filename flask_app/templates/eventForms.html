@@ -769,11 +769,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const now = dayjs();
             
             // Check if start datetime is not in the past (skip in edit mode)
-            if (!IS_EDIT_MODE && startDateTime.isBefore(now)) {
+            /*if (!IS_EDIT_MODE && startDateTime.isBefore(now)) {
                 console.log('🔴 State 4: Start date and time is in the past');
                 this.showError('start-time-error', 'Start date and time cannot be in the past');
                 return false;
-            }
+            }*/
             
             // Use the new DateTimeDisplayManager for time range validation
             if (!DateTimeDisplayManager.isValidTimeRange()) {
