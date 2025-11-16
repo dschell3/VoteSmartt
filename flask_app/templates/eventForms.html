@@ -1002,8 +1002,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return utcString;
         }
 
-            const fullStart = toFullDateTime(startLocal);
-            const fullEnd = toFullDateTime(endLocal);
+            const fullStart = toUTCDateTime(startLocal);
+            const fullEnd = toUTCDateTime(endLocal);
             startHiddenEl.value = fullStart;
             endHiddenEl.value = fullEnd;
             console.log('📅 Normalized full datetimes set to hidden:', { fullStart, fullEnd });
