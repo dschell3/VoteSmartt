@@ -117,6 +117,38 @@ def createEventRoute():
                     error_message = f'Candidate name "{cand}" is too long (maximum 100 characters)'
                     break
     
+    # === DEBUGGING: Print the exact validation error ===
+    if error_message:
+        print(f"[VALIDATION ERROR] {error_message}")
+        print(f"[VALIDATION ERROR] start_time value: {start_time}")
+        print(f"[VALIDATION ERROR] end_time value: {end_time}")
+        print(f"[VALIDATION ERROR] start_time_local value: {request.form.get('start_time_local', '').strip()}")
+        print(f"[VALIDATION ERROR] end_time_local value: {request.form.get('end_time_local', '').strip()}")
+        # Also print what datetime was parsed
+        try:
+            def _parse_dt(val: str):
+                v = (val or '').strip()
+                fmts = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%dT%H:%M', '%Y-%m-%d']
+                for f in fmts:
+                    try:
+                        return datetime.strptime(v, f)
+                    except Exception:
+                        continue
+                return None
+            
+            start_dt = _parse_dt(start_time)
+            now = datetime.now()
+            print(f"[VALIDATION ERROR] Parsed start_dt: {start_dt}")
+            print(f"[VALIDATION ERROR] Server now(): {now}")
+            if start_dt:
+                print(f"[VALIDATION ERROR] start_dt < now? {start_dt < now}")
+                print(f"[VALIDATION ERROR] Difference: {(now - start_dt).total_seconds()} seconds")
+        except Exception as e:
+            print(f"[VALIDATION ERROR] Could not parse for debugging: {e}")
+        
+        flash(error_message, 'error')
+        return redirect('/admin2')
+
     # If there's a validation error, show only one message
     if error_message:
         flash(error_message, 'error')
