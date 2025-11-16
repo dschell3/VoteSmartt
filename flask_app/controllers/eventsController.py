@@ -69,7 +69,9 @@ def createEventRoute():
                 fmts = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%dT%H:%M', '%Y-%m-%d']
                 for f in fmts:
                     try:
-                        return datetime.strptime(v, f)
+                        dt = datetime.strptime(v, f)
+                        # Make timezone-aware (treat as UTC since frontend converts to UTC)
+                        return dt.replace(tzinfo=timezone.utc)
                     except Exception:
                         continue
                 return None
