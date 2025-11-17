@@ -11,8 +11,6 @@ All validation logic should go through this module to ensure:
 
 import re
 
-#TODO: - ALEX - Complete the remaining validation functions below
-
 # Email validation regex
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$')
 
@@ -20,18 +18,33 @@ def validate_name(name, field_name="Name"):
     """
     Validate first or last name.
     Returns error message or None if valid.
-    2-50 characters.
     """
-    ...
+    if not name or not isinstance(name, str):
+        return f"{field_name} is required"
+    
+    name = name.strip()
+    if len(name) < 2:
+        return f"{field_name} must be at least 2 characters"
+    
+    if len(name) > 50:
+        return f"{field_name} must be less than 50 characters"
+    
+    return None
 
 
 def validate_email(email):
     """
     Validate email format.
     Returns error message or None if valid.
-    can use EMAIL_REGEX
     """
-    ...
+    if not email or not isinstance(email, str):
+        return "Email is required"
+    
+    email = email.strip()
+    if not EMAIL_REGEX.match(email):
+        return "Please enter a valid email address"
+    
+    return None
 
 def validate_password(password):
     """
@@ -71,18 +84,33 @@ def validate_phone(phone):
     Validate phone number (US format).
     Returns error message or None if valid.
     Removes non-digit characters and checks for 10 digits.
-    10 digits required.
     """
-    ...
+    if not phone or not isinstance(phone, str):
+        return "Phone number is required"
+    
+    # Remove all non-digit characters
+    phone_digits = re.sub(r'\D', '', phone)
+    
+    if len(phone_digits) != 10:
+        return "Phone number must be 10 digits"
+    
+    return None
 
 
 def format_phone(phone):
     """
     Format phone number consistently: (123) 456-7890
-    Returns formatted phone or original if invalid.
-    10 digits required. In the format (123) 456-7890
     """
-    ...
+    if not phone:
+        return ""
+    
+    # Remove all non-digit characters
+    phone_digits = re.sub(r'\D', '', phone)
+    
+    if len(phone_digits) == 10:
+        return f"({phone_digits[:3]}) {phone_digits[3:6]}-{phone_digits[6:]}"
+    
+    return phone
 
 
 def validate_all_registration_fields(first_name, last_name, email, password, phone):
