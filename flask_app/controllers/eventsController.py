@@ -47,15 +47,6 @@ def createEventRoute():
 
     print(f"[DEBUG] Received times (local): start={start_time_local}, end={end_time_local}")
 
-    # === ADD THIS DEBUG BLOCK ===
-    start_time_local = request.form.get('start_time_local', '').strip()
-    end_time_local = request.form.get('end_time_local', '').strip()
-    print(f"[TIMEZONE DEBUG] start_time (UTC from hidden): '{start_time}'")
-    print(f"[TIMEZONE DEBUG] start_time_local (local from input): '{start_time_local}'")
-    print(f"[TIMEZONE DEBUG] end_time (UTC from hidden): '{end_time}'")
-    print(f"[TIMEZONE DEBUG] end_time_local (local from input): '{end_time_local}'")
-    # === END DEBUG BLOCK ===
-
     candidate_descs = request.form.getlist('candidate_descs[]')
     # Build candidate list early so it's always available (avoid elif-chain scoping issues)
     valid_candidates = [c.strip() for c in candidate if (c or '').strip()]
@@ -144,15 +135,14 @@ def createEventRoute():
     # === DEBUGGING: Print the exact validation error ===
     if error_message:
         print(f"[VALIDATION ERROR] {error_message}")
-        print(f"[VALIDATION ERROR] start_time value: {start_time}")
-        print(f"[VALIDATION ERROR] end_time value: {end_time}")
-        print(f"[VALIDATION ERROR] start_time_local value: {request.form.get('start_time_local', '').strip()}")
-        print(f"[VALIDATION ERROR] end_time_local value: {request.form.get('end_time_local', '').strip()}")
+        print(f"[VALIDATION ERROR] start_time_local value: {start_time_local}")  # ✅ CORRECT
+        print(f"[VALIDATION ERROR] end_time_local value: {end_time_local}")      # ✅ CORRECT
         # Also print what datetime was parsed
         try:
             def _parse_dt(val: str):
                 v = (val or '').strip()
-                fmts = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%dT%H:%M', '%Y-%m-%d']
+                v = v.replace('T', ' ')  # Add this line
+                fmts = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d']
                 for f in fmts:
                     try:
                         return datetime.strptime(v, f)
@@ -160,18 +150,24 @@ def createEventRoute():
                         continue
                 return None
             
-            start_dt = _parse_dt(start_time)
+            start_dt = _parse_dt(start_time_local)  # ✅ CORRECT - use start_time_local
             now = datetime.now(timezone.utc)
             print(f"[VALIDATION ERROR] Parsed start_dt: {start_dt}")
             print(f"[VALIDATION ERROR] Server now(): {now}")
             if start_dt:
-                print(f"[VALIDATION ERROR] start_dt < now? {start_dt < now}")
-                print(f"[VALIDATION ERROR] Difference: {(now - start_dt).total_seconds()} seconds")
+                # Convert to UTC for comparison
+                from datetime import timedelta
+                pacific_offset = timedelta(hours=-8)
+                start_dt_aware = start_dt.replace(tzinfo=timezone(pacific_offset))
+                start_dt_utc = start_dt_aware.astimezone(timezone.utc)
+                print(f"[VALIDATION ERROR] start_dt_utc < now? {start_dt_utc < now}")
+                print(f"[VALIDATION ERROR] Difference: {(now - start_dt_utc).total_seconds()} seconds")
         except Exception as e:
             print(f"[VALIDATION ERROR] Could not parse for debugging: {e}")
         
         flash(error_message, 'error')
         return redirect('/admin2')
+    
 
     # If there's a validation error, show only one message
     if error_message:
