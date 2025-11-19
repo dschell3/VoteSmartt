@@ -1033,7 +1033,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Only apply strict min-time restrictions and candidate UI in create mode
     if (!IS_EDIT_MODE) {
         DateTimeRangeManager.init();
+    }
+
+    // Initialize CandidateManager for both create AND edit mode
+    // In edit mode, it's only used if event status is "Waiting" (can_edit_start is true)
+    // The HTML template controls visibility - we just need the event handlers ready
+    const candidateListElement = document.getElementById('candidates-list');
+    const addCandidateBtn = document.getElementById('add-candidate-btn');
+    if (candidateListElement && addCandidateBtn) {
         CandidateManager.init();
+        console.log('✅ CandidateManager initialized');
     }
     
     console.log('🎯 Event Form Ready!');

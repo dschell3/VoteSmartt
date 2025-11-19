@@ -648,18 +648,24 @@ def editEventPost(event_id):
             submitted_candidate_ids = request.form.getlist('candidate_ids[]')
             
             # Clean up candidate data (strip whitespace, remove empty entries)
+            # CRITICAL FIX: Zip candidates with IDs to maintain proper pairing
             valid_candidates = []
             valid_ids = []
-            for i, cand_text in enumerate(submitted_candidates):
-                cleaned = cand_text.strip()
-                if cleaned:  # Only include non-empty candidates
-                    valid_candidates.append(cleaned)
-                    # Get corresponding ID if it exists
-                    if i < len(submitted_candidate_ids):
-                        cand_id = submitted_candidate_ids[i].strip()
-                        valid_ids.append(cand_id if cand_id else None)
-                    else:
-                        valid_ids.append(None)
+
+            # Ensure both lists have the same length by padding with empty strings if needed
+            max_len = max(len(submitted_candidates), len(submitted_candidate_ids))
+            padded_candidates = submitted_candidates + [''] * (max_len - len(submitted_candidates))
+            padded_ids = submitted_candidate_ids + [''] * (max_len - len(submitted_candidate_ids))
+
+            # Process paired data
+            for cand_text, cand_id in zip(padded_candidates, padded_ids):
+                cleaned_text = cand_text.strip()
+                cleaned_id = cand_id.strip()
+                
+                # Only include if candidate text is not empty
+                if cleaned_text:
+                    valid_candidates.append(cleaned_text)
+                    valid_ids.append(cleaned_id if cleaned_id else None)
             
             # Get existing options from database
             existing_options = Option.getByEventId({'event_id': event_id})
