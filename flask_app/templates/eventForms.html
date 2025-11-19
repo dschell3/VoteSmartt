@@ -941,13 +941,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-  // ======= Form Submission Handler =======
+    // ======= Form Submission Handler =======
     const submitBtn = document.getElementById('create-event-btn');
     console.log('🔍 Submit button found:', submitBtn);
 
     if (submitBtn) {
         submitBtn.addEventListener('click', function(e) {
-            console.log('🚀 Create Event button clicked');
+            console.log('🚀 Submit button clicked');
             e.preventDefault(); // Prevent default form submission
 
             const form = document.getElementById('event-form');
@@ -963,9 +963,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const startLocal = startLocalEl.value; // yyyy-MM-ddTHH:MM in browser's local timezone
             const endLocal = endLocalEl.value;
 
-            console.log('📋 Raw form data before normalization:', { title, description, startLocal, endLocal });
+            console.log('📋 Raw form data:', { 
+                title, 
+                description, 
+                startLocal, 
+                endLocal 
+            });
 
-            // Try state-machine validator first; fallback to simple checks
+            // Try state-machine validator first
             let isValid = true;
             if (typeof FormValidator !== 'undefined' && FormValidator.validateWithStateMachine) {
                 try { 
@@ -982,24 +987,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // ===== Convert local datetime to UTC =====
+            // ===== CRITICAL: Convert local datetime to UTC =====
+            console.log('🌍 Starting UTC conversion...');
+            
             function toUTCDateTime(localDateTimeString) {
-                if (!localDateTimeString) return '';
+                if (!localDateTimeString) {
+                    console.error('❌ Empty datetime string');
+                    return '';
+                }
+                
+                console.log(`📥 Input (local): ${localDateTimeString}`);
                 
                 // Parse components explicitly to force local timezone interpretation
                 const parts = localDateTimeString.split(/[-T:]/);
+                if (parts.length < 5) {
+                    console.error('❌ Invalid datetime format');
+                    return '';
+                }
+                
                 const year = parseInt(parts[0]);
                 const month = parseInt(parts[1]) - 1; // JS months are 0-indexed
                 const day = parseInt(parts[2]);
                 const hours = parseInt(parts[3]);
                 const minutes = parseInt(parts[4]);
                 
-                // Create Date in LOCAL timezone explicitly (this is the fix!)
+                console.log(`📊 Parsed components: Y=${year}, M=${month+1}, D=${day}, H=${hours}, Min=${minutes}`);
+                
+                // Create Date in LOCAL timezone explicitly
                 const localDate = new Date(year, month, day, hours, minutes, 0);
                 
-                console.log(`📍 Created local date: ${localDate.toString()}`);
+                if (isNaN(localDate.getTime())) {
+                    console.error('❌ Invalid date created');
+                    return '';
+                }
                 
-                // Now convert to UTC
+                console.log(`📍 Created local date: ${localDate.toString()}`);
+                console.log(`📍 Local hours: ${localDate.getHours()}`);
+                console.log(`📍 UTC hours: ${localDate.getUTCHours()} (should be ${(hours + 8) % 24} for Pacific)`);
+                
+                // Convert to UTC
                 const utcYear = localDate.getUTCFullYear();
                 const utcMonth = String(localDate.getUTCMonth() + 1).padStart(2, '0');
                 const utcDay = String(localDate.getUTCDate()).padStart(2, '0');
@@ -1008,30 +1034,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 const seconds = '00';
                 
                 const utcString = `${utcYear}-${utcMonth}-${utcDay} ${utcHours}:${utcMinutes}:${seconds}`;
-                console.log(`🌍 Converting ${localDateTimeString} (Pacific) to UTC: ${utcString}`);
+                console.log(`📤 Output (UTC): ${utcString}`);
+                console.log(`✅ Conversion successful!`);
+                
                 return utcString;
             }
             
             const fullStart = toUTCDateTime(startLocal);
             const fullEnd = toUTCDateTime(endLocal);
             
-            startHiddenEl.value = fullStart;
-            endHiddenEl.value = fullEnd;
+            console.log('🎯 Final UTC times:', { fullStart, fullEnd });
             
-            console.log('📅 UTC datetimes set to hidden fields:', { fullStart, fullEnd });
-
             if (!fullStart || !fullEnd) {
-                alert('Error converting datetime. Please try again.');
+                alert('Error converting datetime to UTC. Please check console and try again.');
+                console.error('❌ UTC conversion failed!');
                 return;
             }
 
+            // Set hidden fields with UTC times
+            startHiddenEl.value = fullStart;
+            endHiddenEl.value = fullEnd;
+            
+            console.log('📝 Hidden fields set:', {
+                start_time: startHiddenEl.value,
+                end_time: endHiddenEl.value
+            });
+
             console.log('✅ Submitting form with UTC times');
-            form.submit(); // Submit form directly to server with UTC datetime values
+            form.submit();
         });
         console.log('✅ Event listener attached to submit button');
     } else {
         console.error('❌ Submit button not found!');
     }
+
     // Initialize all modules and components
     DateTimeDisplayManager.init(); // Handles time display and validation
     // Only apply strict min-time restrictions and candidate UI in create mode
