@@ -486,14 +486,23 @@ def editEventGet(event_id):
 
     # Compute current status to drive editability
     try:
-        status = Events.compute_status(event.start_time, event.end_time)
-        # DEBUG BLOCK:
-        print(f"[DEBUG] Event {event_id} Status: {status}")
-        print(f"[DEBUG] Start: {event.start_time}, End: {event.end_time}")
-        from datetime import datetime, timezone as tz
-        print(f"[DEBUG] Current UTC: {datetime.now(tz.utc)}")
-
-    except Exception:
+        # Ensure start_time and end_time are timezone-aware
+        start_val = event.start_time
+        end_val = event.end_time
+        
+        # If they're datetime objects without timezone, add UTC
+        if isinstance(start_val, datetime) and start_val.tzinfo is None:
+            start_val = start_val.replace(tzinfo=timezone.utc)
+        if isinstance(end_val, datetime) and end_val.tzinfo is None:
+            end_val = end_val.replace(tzinfo=timezone.utc)
+        
+        status = Events.compute_status(start_val, end_val)
+        
+        # DEBUG (remove after testing)
+        print(f"[DEBUG] Event {event_id} status: {status}")
+    
+    except Exception as e:
+        print(f"[ERROR] Status computation failed: {e}")
         status = 'Unknown'
 
     can_title, can_desc, can_start, can_end = _can_edit_fields_by_status(status)
