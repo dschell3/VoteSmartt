@@ -30,14 +30,22 @@ def createEventRoute():
         return redirect(redirect_url)
     
     user = get_current_user()
+
+    # remove unused variable and print user ID for debugging
     print("THIS IS THE ID", user.user_id)
     first_name = user.first_name
     
-    # Server-side validation
+    # Server-side validation - Now receiving LOCAL times directly
     title = request.form.get('title', '').strip()
     description = request.form.get('description', '').strip()
-    start_time = request.form.get('start_time', '').strip()
-    end_time = request.form.get('end_time', '').strip()
+    start_time_local = request.form.get('start_time', '').strip()  # LOCAL time from datetime-local
+    end_time_local = request.form.get('end_time', '').strip()      # LOCAL time from datetime-local
+    candidate = request.form.getlist('candidates[]')
+
+    print(f"[DEBUG] Received LOCAL times: start={start_time_local}, end={end_time_local}")
+
+
+    print(f"[DEBUG] Received times (local): start={start_time_local}, end={end_time_local}")
 
     # === ADD THIS DEBUG BLOCK ===
     start_time_local = request.form.get('start_time_local', '').strip()
@@ -48,7 +56,6 @@ def createEventRoute():
     print(f"[TIMEZONE DEBUG] end_time_local (local from input): '{end_time_local}'")
     # === END DEBUG BLOCK ===
 
-    candidate = request.form.getlist('candidates[]')
     candidate_descs = request.form.getlist('candidate_descs[]')
     # Build candidate list early so it's always available (avoid elif-chain scoping issues)
     valid_candidates = [c.strip() for c in candidate if (c or '').strip()]
@@ -63,57 +70,62 @@ def createEventRoute():
         error_message = 'Event name is too long (maximum 255 characters)'
     
     # Priority 2: Start date (if name is OK)
-    elif not start_time:
+    elif not start_time_local:
         error_message = 'Please select a start date'
     
     # Priority 3: End date (if name and start date are OK)
-    elif not end_time:
+    elif not end_time_local:
         error_message = 'Please select an end date'
     
     # Priority 4: Date validation (if all dates are provided)
-    elif start_time and end_time:
+    elif start_time_local and end_time_local:
         try:
             # Accept full datetime (preferred) and date-only as fallback
             def _parse_dt(val: str):
                 v = (val or '').strip()
-                fmts = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%dT%H:%M', '%Y-%m-%d']
+                # Replace 'T' with space for normalization
+                v = v.replace('T', ' ')
+                fmts = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d']
                 for f in fmts:
                     try:
                         dt = datetime.strptime(v, f)
-                        # Make timezone-aware (treat as UTC since frontend converts to UTC)
-                        return dt.replace(tzinfo=timezone.utc)
+                        # DON'T make timezone-aware here - keep as naive local time
+                        return dt
                     except Exception:
                         continue
                 return None
 
-            start_dt = _parse_dt(start_time)
-            end_dt = _parse_dt(end_time)
+            start_dt = _parse_dt(start_time_local)
+            end_dt = _parse_dt(end_time_local)
             if not start_dt or not end_dt:
                 raise ValueError('Invalid datetime format')
 
-            now = datetime.now(timezone.utc)
+            # Convert local times to UTC for comparison with server time
+            from datetime import timedelta
+            pacific_offset = timedelta(hours=-8)
+            
+            # Treat as Pacific time and convert to UTC
+            start_dt_aware = start_dt.replace(tzinfo=timezone(pacific_offset))
+            start_dt_utc = start_dt_aware.astimezone(timezone.utc)
+            
+            now_utc = datetime.now(timezone.utc)
 
-            # If user provided only dates (00:00 produced), treat as dates for past check
-            if start_dt.hour == 0 and start_dt.minute == 0 and 'T' not in start_time and ' ' not in start_time.strip()[10:]:
-                # date-only submitted; compare by date
-                if start_dt.date() < now.date():
-                    error_message = 'Start date cannot be in the past'
-            else:
-                if start_dt < now:
-                    error_message = 'Start time cannot be in the past'
+            # Check if start time is in the past
+            if start_dt_utc < now_utc:
+                error_message = 'Start time cannot be in the past'
 
             if not error_message:
-                if end_dt < start_dt:
-                    error_message = 'End time cannot be before start time'
+                if end_dt <= start_dt:
+                    error_message = 'End time cannot be before or equal to start time'
 
             # 10-year sanity window
             if not error_message:
-                if start_dt.year > now.year + 10 or end_dt.year > now.year + 10:
+                if start_dt.year > now_utc.year + 10 or end_dt.year > now_utc.year + 10:
                     error_message = 'Event dates cannot be more than 10 years in the future'
 
         except ValueError:
             error_message = 'Invalid date format'
-    
+        
     # Priority 5: Description length (optional field, only check if provided)
     if not error_message and description and len(description) > 1000:
         error_message = 'Event description is too long (maximum 1000 characters)'
@@ -167,28 +179,21 @@ def createEventRoute():
         return redirect('/admin2')
     
     # Build normalized full datetime strings (YYYY-MM-DD HH:MM:SS)
-    def _normalize_full(val_date_only: str, val_local: str):
-        """Normalize posted datetime values to 'YYYY-MM-DD HH:MM:SS'. 
-        
-        Prefers val_date_only (UTC from hidden field) to ensure proper timezone handling.
-        The hidden field contains UTC time converted by JavaScript, while val_local 
-        contains the user's local timezone which we DON'T want to use directly.
-        """
-        # CRITICAL: Prefer UTC value (val_date_only) over local timezone (val_local)
-        raw = (val_date_only or '').strip() or (val_local or '').strip()
-        if not raw:
+    # Normalize datetime format (from datetime-local) - Keep in LOCAL timezone
+    def normalize_datetime_local(val: str):
+        """Normalize datetime-local format to 'YYYY-MM-DD HH:MM:SS' without timezone conversion"""
+        if not val:
             return ''
-        raw = raw.replace('T', ' ')
-        if len(raw) == 16:  # YYYY-MM-DD HH:MM
-            raw = raw + ':00'
-        if len(raw) == 10:  # YYYY-MM-DD
-            raw = raw + ' 00:00:00'
-        return raw
+        # datetime-local format: YYYY-MM-DDTHH:MM
+        val = val.strip().replace('T', ' ')
+        if len(val) == 16:  # YYYY-MM-DD HH:MM
+            val = val + ':00'
+        return val
 
-    start_time_local = request.form.get('start_time_local', '').strip()
-    end_time_local = request.form.get('end_time_local', '').strip()
-    normalized_start = _normalize_full(start_time, start_time_local)
-    normalized_end = _normalize_full(end_time, end_time_local)
+    normalized_start = normalize_datetime_local(start_time_local)
+    normalized_end = normalize_datetime_local(end_time_local)
+
+    print(f"[DEBUG] Normalized LOCAL times: start={normalized_start}, end={normalized_end}")
 
     # All validation passed, create the event using normalized times
     data = {
