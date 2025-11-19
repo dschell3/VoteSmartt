@@ -1,5 +1,5 @@
 from flask_app.config.mysqlconnection import connectToMySQL
-from datetime import datetime
+from datetime import datetime, timezone
 
 db = "mydb"
 
@@ -190,9 +190,15 @@ class Events:
     # was at top of eventsController.py, moved here for reuse
     @staticmethod
     def compute_status(start_raw, end_raw):
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         start = Events.parse_datetime(start_raw)
         end = Events.parse_datetime(end_raw)
+
+        # ensure timezone-aware for comparison
+        if start and start.tzinfo is None:
+            start = start.replace(tzinfo=timezone.utc)
+        if end and end.tzinfo is None:
+            end = end.replace(tzinfo=timezone.utc)
 
         if not start and not end:
             return 'Unknown'
