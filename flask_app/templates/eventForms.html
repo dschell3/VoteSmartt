@@ -986,25 +986,29 @@ document.addEventListener('DOMContentLoaded', function() {
             function toUTCDateTime(localDateTimeString) {
                 if (!localDateTimeString) return '';
                 
-                // Parse the datetime-local value (which is in user's local timezone)
-                const localDate = new Date(localDateTimeString);
+                // Parse components explicitly to force local timezone interpretation
+                const parts = localDateTimeString.split(/[-T:]/);
+                const year = parseInt(parts[0]);
+                const month = parseInt(parts[1]) - 1; // JS months are 0-indexed
+                const day = parseInt(parts[2]);
+                const hours = parseInt(parts[3]);
+                const minutes = parseInt(parts[4]);
                 
-                // Check if valid
-                if (isNaN(localDate.getTime())) {
-                    console.error('Invalid date:', localDateTimeString);
-                    return '';
-                }
+                // Create Date in LOCAL timezone explicitly (this is the fix!)
+                const localDate = new Date(year, month, day, hours, minutes, 0);
                 
-                // Convert to UTC and format as "YYYY-MM-DD HH:MM:SS"
-                const year = localDate.getUTCFullYear();
-                const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
-                const day = String(localDate.getUTCDate()).padStart(2, '0');
-                const hours = String(localDate.getUTCHours()).padStart(2, '0');
-                const minutes = String(localDate.getUTCMinutes()).padStart(2, '0');
+                console.log(`📍 Created local date: ${localDate.toString()}`);
+                
+                // Now convert to UTC
+                const utcYear = localDate.getUTCFullYear();
+                const utcMonth = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+                const utcDay = String(localDate.getUTCDate()).padStart(2, '0');
+                const utcHours = String(localDate.getUTCHours()).padStart(2, '0');
+                const utcMinutes = String(localDate.getUTCMinutes()).padStart(2, '0');
                 const seconds = '00';
                 
-                const utcString = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-                console.log(`🌍 Converting ${localDateTimeString} to UTC: ${utcString}`);
+                const utcString = `${utcYear}-${utcMonth}-${utcDay} ${utcHours}:${utcMinutes}:${seconds}`;
+                console.log(`🌍 Converting ${localDateTimeString} (Pacific) to UTC: ${utcString}`);
                 return utcString;
             }
             
