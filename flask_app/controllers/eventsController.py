@@ -487,6 +487,12 @@ def editEventGet(event_id):
     # Compute current status to drive editability
     try:
         status = Events.compute_status(event.start_time, event.end_time)
+        # DEBUG BLOCK:
+        print(f"[DEBUG] Event {event_id} Status: {status}")
+        print(f"[DEBUG] Start: {event.start_time}, End: {event.end_time}")
+        from datetime import datetime, timezone as tz
+        print(f"[DEBUG] Current UTC: {datetime.now(tz.utc)}")
+
     except Exception:
         status = 'Unknown'
 
