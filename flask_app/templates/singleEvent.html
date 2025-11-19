@@ -53,7 +53,9 @@
             <div class="mt-6 lg:mt-0">
                 <div class="event-card text-right">
                     <div class="text-sm text-slate-500">Organized by</div>
-                    <div class="mt-1 font-semibold">User #{{ event.created_by }}</div>
+                    <div class="mt-1 font-semibold text-slate-900">
+                        {{ event.creator_full_name if event.creator_full_name else 'Unknown User' }}
+                    </div>
                     <div class="mt-4">
                         <div id="timerLarge" class="text-indigo-600 font-medium">&mdash;</div>
                     </div>

@@ -111,11 +111,35 @@ class Events:
 
     @classmethod
     def getOne(cls, data):
-        query = "SELECT * FROM event WHERE event_id = %(event_id)s;"
+        """
+        Get a single event by ID with creator information.
+        
+        Args:
+            data: Dictionary with 'event_id' key
+            
+        Returns:
+            Events object with additional creator attributes:
+            - creator_first_name
+            - creator_last_name  
+            - creator_full_name
+        """
+        query = """
+        SELECT e.*, u.first_name, u.last_name
+        FROM event e
+        LEFT JOIN user u ON e.created_byFK = u.user_id
+        WHERE e.event_id = %(event_id)s;
+        """
         result = connectToMySQL(db).query_db(query, data)
         if not result:
             return None
-        return cls(result[0])
+        
+        # Create event object with additional creator info
+        event = cls(result[0])
+        event.creator_first_name = result[0].get('first_name', '')
+        event.creator_last_name = result[0].get('last_name', '')
+        event.creator_full_name = f"{result[0].get('first_name', '')} {result[0].get('last_name', '')}".strip()
+        
+        return event
 
     @classmethod
     def getRecommendations(cls, data):
