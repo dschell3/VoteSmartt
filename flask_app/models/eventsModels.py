@@ -190,28 +190,52 @@ class Events:
     # was at top of eventsController.py, moved here for reuse
     @staticmethod
     def compute_status(start_raw, end_raw):
-        now = datetime.now(timezone.utc)
-        start = Events.parse_datetime(start_raw)
-        end = Events.parse_datetime(end_raw)
-
-        # ensure timezone-aware for comparison
-        if start and start.tzinfo is None:
-            start = start.replace(tzinfo=timezone.utc)
-        if end and end.tzinfo is None:
-            end = end.replace(tzinfo=timezone.utc)
-
-        if not start and not end:
+        """Compute event status by converting stored Pacific times to UTC for comparison.
+        
+        Times are stored in the database in Pacific timezone (PST, UTC-8).
+        This method converts them to UTC before comparing with current UTC time.
+        """
+        from datetime import timedelta
+        
+        now_utc = datetime.now(timezone.utc)
+        
+        # Parse stored times (which are in Pacific timezone)
+        start_local = Events.parse_datetime(start_raw)
+        end_local = Events.parse_datetime(end_raw)
+        
+        if not start_local and not end_local:
             return 'Unknown'
-        if start and end:
-            if now < start:
+        
+        # Pacific timezone is UTC-8 (PST)
+        pacific_offset = timedelta(hours=-8)
+        
+        # Convert Pacific times to UTC for comparison
+        if start_local:
+            # Treat stored time as Pacific (naive datetime), convert to UTC
+            start_local_aware = start_local.replace(tzinfo=timezone(pacific_offset))
+            start_utc = start_local_aware.astimezone(timezone.utc)
+        else:
+            start_utc = None
+        
+        if end_local:
+            # Treat stored time as Pacific (naive datetime), convert to UTC
+            end_local_aware = end_local.replace(tzinfo=timezone(pacific_offset))
+            end_utc = end_local_aware.astimezone(timezone.utc)
+        else:
+            end_utc = None
+        
+        # Now compare with current UTC time
+        if start_utc and end_utc:
+            if now_utc < start_utc:
                 return 'Waiting'
-            if now > end:
+            if now_utc > end_utc:
                 return 'Closed'
             return 'Open'
-        if start and not end:
-            return 'Waiting' if now < start else 'Open'
-        if end and not start:
-            return 'Closed' if now > end else 'Open'
+        if start_utc and not end_utc:
+            return 'Waiting' if now_utc < start_utc else 'Open'
+        if end_utc and not start_utc:
+            return 'Closed' if now_utc > end_utc else 'Open'
+        
         return 'Unknown'
 
     # was at top of eventsController.py, moved here for reuse
