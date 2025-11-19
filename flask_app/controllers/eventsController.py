@@ -596,6 +596,12 @@ def editEventPost(event_id):
     end_dt = Events.parse_datetime(normalized_end)
     now = datetime.now(timezone.utc)
 
+    # CRITICAL FIX: Make parsed datetimes timezone-aware for comparison
+    if start_dt and start_dt.tzinfo is None:
+        start_dt = start_dt.replace(tzinfo=timezone.utc)
+    if end_dt and end_dt.tzinfo is None:
+        end_dt = end_dt.replace(tzinfo=timezone.utc)
+
     # Enforce temporal rules based on status
     if not error_message:
         if can_start and not start_dt:
@@ -614,6 +620,10 @@ def editEventPost(event_id):
         if status == 'Open':
             # Only end time is editable; ensure it's in the future and after original start
             orig_start = Events.parse_datetime(event.start_time)
+            # Make orig_start timezone-aware too
+            if orig_start and orig_start.tzinfo is None:
+                orig_start = orig_start.replace(tzinfo=timezone.utc)
+            
             if can_end and end_dt:
                 if orig_start and end_dt <= orig_start:
                     error_message = 'End time must be after start time'
