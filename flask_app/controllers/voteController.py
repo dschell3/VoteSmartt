@@ -60,6 +60,11 @@ def cast_vote():
         flash("Event not found.", "error")
         return redirect('/eventList')
     
+    # Event creators are treated as admins for their events and cannot vote
+    if event.created_byFK == user.user_id:
+        flash("Event creators cannot vote on their own events.", "error")
+        return redirect(f"/event/{event_id}")
+    
     # Ensure event is open for voting
     if Events.compute_status(event.start_time, event.end_time) != "Open":
         flash("Voting is closed for this event.", "error")
@@ -134,6 +139,11 @@ def delete_vote():
     if not event:
         flash("Event not found.", "error")
         return redirect('/eventList')
+    
+    # This check is mostly defensive since creators shouldn't have votes to delete
+    if event.created_byFK == user.user_id:
+        flash("Event creators cannot vote on their own events.", "error")
+        return redirect(f"/event/{event_id}")
 
     # Ensure event is still open for voting
     if Events.compute_status(event.start_time, event.end_time) != "Open":

@@ -391,11 +391,22 @@ def singleEvent(event_id):
         status = 'Unknown'
     is_open = (status == 'Open')
 
-    # existing vote for this user (to preselect / allow update)
-    selected_option_id = None
+    # Get current user and check if they're the event creator
+    cur_user = None
+    is_event_creator = False
     try:
         cur_user = get_current_user()
         if cur_user:
+            # Check if current user is the creator of this event
+            is_event_creator = (event.created_byFK == cur_user.user_id)
+    except Exception:
+        pass
+
+    # existing vote for this user (to preselect / allow update)
+    # Event creators should not have votes, but we check anyway
+    selected_option_id = None
+    try:
+        if cur_user and not is_event_creator:  # Only check votes for non-creators
             existing = Vote.getByUserAndEvent({'user_id': cur_user.user_id, 'event_id': event_id})
             if existing:
                 selected_option_id = existing.vote_option_id
@@ -410,7 +421,7 @@ def singleEvent(event_id):
         except Exception:
             tallies = []
 
-    return render_template('singleEvent.html', event=event, recommendations=recs, options=options, is_open=is_open, event_status=status, selected_option_id=selected_option_id, tallies=tallies, **user_data)
+    return render_template('singleEvent.html', event=event, recommendations=recs, options=options, is_open=is_open, event_status=status, selected_option_id=selected_option_id, tallies=tallies, is_event_creator=is_event_creator, **user_data)
 
 
 # ==========================
