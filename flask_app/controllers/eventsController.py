@@ -38,6 +38,16 @@ def createEventRoute():
     description = request.form.get('description', '').strip()
     start_time = request.form.get('start_time', '').strip()
     end_time = request.form.get('end_time', '').strip()
+
+    # === ADD THIS DEBUG BLOCK ===
+    start_time_local = request.form.get('start_time_local', '').strip()
+    end_time_local = request.form.get('end_time_local', '').strip()
+    print(f"[TIMEZONE DEBUG] start_time (UTC from hidden): '{start_time}'")
+    print(f"[TIMEZONE DEBUG] start_time_local (local from input): '{start_time_local}'")
+    print(f"[TIMEZONE DEBUG] end_time (UTC from hidden): '{end_time}'")
+    print(f"[TIMEZONE DEBUG] end_time_local (local from input): '{end_time_local}'")
+    # === END DEBUG BLOCK ===
+
     candidate = request.form.getlist('candidates[]')
     candidate_descs = request.form.getlist('candidate_descs[]')
     # Build candidate list early so it's always available (avoid elif-chain scoping issues)
@@ -158,16 +168,19 @@ def createEventRoute():
     
     # Build normalized full datetime strings (YYYY-MM-DD HH:MM:SS)
     def _normalize_full(val_date_only: str, val_local: str):
-        # Prefer datetime-local value if present
-        raw = (val_local or '').strip() or (val_date_only or '').strip()
+        """Normalize posted datetime values to 'YYYY-MM-DD HH:MM:SS'. 
+        
+        Prefers val_date_only (UTC from hidden field) to ensure proper timezone handling.
+        The hidden field contains UTC time converted by JavaScript, while val_local 
+        contains the user's local timezone which we DON'T want to use directly.
+        """
+        # CRITICAL: Prefer UTC value (val_date_only) over local timezone (val_local)
+        raw = (val_date_only or '').strip() or (val_local or '').strip()
         if not raw:
             return ''
-        # Replace 'T' with space
         raw = raw.replace('T', ' ')
-        # Add seconds if missing
         if len(raw) == 16:  # YYYY-MM-DD HH:MM
             raw = raw + ':00'
-        # If still date-only
         if len(raw) == 10:  # YYYY-MM-DD
             raw = raw + ' 00:00:00'
         return raw
@@ -413,8 +426,14 @@ def _fmt_local_dt(raw_val):
 
 
 def _normalize_full(val_date_only: str, val_local: str):
-    """Normalize posted datetime values to 'YYYY-MM-DD HH:MM:SS'. Prefer local (datetime-local) value."""
-    raw = (val_local or '').strip() or (val_date_only or '').strip()
+    """Normalize posted datetime values to 'YYYY-MM-DD HH:MM:SS'. 
+    
+    Prefers val_date_only (UTC from hidden field) to ensure proper timezone handling.
+    The hidden field contains UTC time converted by JavaScript, while val_local 
+    contains the user's local timezone which we DON'T want to use directly.
+    """
+    # CRITICAL: Prefer UTC value (val_date_only) over local timezone (val_local)
+    raw = (val_date_only or '').strip() or (val_local or '').strip()
     if not raw:
         return ''
     raw = raw.replace('T', ' ')
