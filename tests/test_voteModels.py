@@ -546,3 +546,56 @@ def test_get_recent_votes_integration(mock_db_connection, sample_recent_votes_da
         assert result[0]['status'] == 'open'
         assert result[1]['status'] == 'closed'
         assert all(key in result[0] for key in ['vote_id', 'event_name', 'date', 'status', 'vote_type', 'event_id'])
+
+
+def test_getStatsForUser_returns_complete_statistics(mock_db_connection):
+    """Test that getStatsForUser returns all required statistics"""
+    from flask_app.models.voteModels import Vote
+    from datetime import datetime
+    
+    # Mock the three database queries
+    mock_query = Mock()
+    mock_db_connection.return_value.query_db = mock_query
+    
+    # Setup return values for the three queries
+    mock_query.side_effect = [
+        # Query 1: total votes and last vote date
+        [{'total_votes': 5, 'last_vote_date': datetime(2025, 11, 15, 10, 30, 0)}],
+        # Query 2: events participated
+        [{'events_participated': 3}],
+        # Query 3: total available events
+        [{'total_available': 10}]
+    ]
+    
+    result = Vote.getStatsForUser({'user_id': 5})
+    
+    # Verify structure
+    assert 'total_votes' in result
+    assert 'participation_rate' in result
+    assert 'events_participated' in result
+    assert 'last_vote_date' in result
+    
+    # Verify values
+    assert result['total_votes'] == 5
+    assert result['events_participated'] == 3
+    assert result['participation_rate'] == 30.0  # 3/10 * 100
+    assert 'Nov' in result['last_vote_date']
+    
+    # Verify query_db was called 3 times
+    assert mock_query.call_count == 3
+
+
+def test_getStatsForUser_handles_no_votes(mock_db_connection):
+    """Test that getStatsForUser handles users with no votes"""
+    from flask_app.models.voteModels import Vote
+    
+    mock_query = Mock()
+    mock_db_connection.return_value.query_db = mock_query
+    
+    # User has never voted
+    mock_query.return_value = [{'total_votes': 0, 'last_vote_date': None}]
+    
+    result = Vote.getStatsForUser({'user_id': 5})
+    
+    assert result['total_votes'] == 0
+    assert result['last_vote_date'] == 'Never'

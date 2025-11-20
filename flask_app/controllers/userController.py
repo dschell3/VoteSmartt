@@ -19,20 +19,19 @@ bcrypt = Bcrypt(app)
 
 
 def get_user_voting_stats(user_id):
-    """Get voting statistics for dashboard (placeholder data)"""
-    # TODO: Replace with actual database queries when voting system is implemented
-    # Create a User model method to get these stats?
-    return {
-        'total_votes': 'N/A',  # Will be replaced with actual count
-        'participation_rate': 'N/A',  # Will be calculated from events participated / total events
-        'events_participated': 'N/A',  # Count of events user voted in
-        'last_vote_date': 'N/A'  # Date of most recent vote
-    }
+    """Get voting statistics for dashboard display."""
+    try:
+        return Vote.getStatsForUser({'user_id': user_id})
+    except Exception as e:
+        print(f"Error getting user voting stats: {e}")
+        # Return safe defaults on error
+        return {
+            'total_votes': 0,
+            'participation_rate': 0.0,
+            'events_participated': 0,
+            'last_vote_date': 'N/A'
+        }
 
-# TODO - ASK JANG
-# this just reimplements Vote.getRecentForUser w/ session data...should the session data remain
-# in controllers like this? Basically yes, since models shouldn't depend on session state
-# So have the controller extract session data and pass to model methods
 def get_recent_votes(user_id, limit=3):
     """Get recent voting activity (placeholder data)"""
     return Vote.getRecentForUser({'user_id': user_id, 'limit': limit})
