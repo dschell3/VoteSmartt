@@ -20,6 +20,11 @@
 
 {% block content %}
 <main class="max-w-6xl mx-auto px-6 py-12">
+    {# Silently consume flash messages without displaying them #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {# Messages consumed but not displayed - prevents carryover to other pages #}
+    {% endwith %}
+    
     {% if not event %}
     <div class="event-card text-center">
         <h2 class="text-2xl font-semibold">Event not found</h2>
