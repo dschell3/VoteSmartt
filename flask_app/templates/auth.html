@@ -214,12 +214,12 @@
                             <form class="reg-form" action="/registerRoute" method="post" novalidate id="registerForm">
                                 <div class="two-col">
                                     <div class="form-field">
-                                        <input id="first" name="first_name" required minlength="2" />
+                                        <input id="first" name="first_name" required minlength="2" maxlength="45" />
                                         <label for="first">First Name</label>
                                         <div class="field-error" id="first-error">First name is required</div>
                                     </div>
                                     <div class="form-field">
-                                        <input id="last" name="last_name" required minlength="2" />
+                                        <input id="last" name="last_name" required minlength="2" maxlength="45" />
                                         <label for="last">Last Name</label>
                                         <div class="field-error" id="last-error">Last name is required</div>
                                     </div>
@@ -232,7 +232,7 @@
                                 </div>
 
                                 <div class="form-field">
-                                    <input id="email" name="email" class="input--tall" type="email" required />
+                                    <input id="email" name="email" class="input--tall" type="email" required maxlength="45" />
                                     <label for="email">Email</label>
                                     <div class="field-error" id="email-error">Please enter a valid email address</div>
                                 </div>

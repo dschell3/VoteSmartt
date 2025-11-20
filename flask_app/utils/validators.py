@@ -30,21 +30,24 @@ def validate_name(name, field_name="Name"):
     if len(name) < 2:
         return f"{field_name} must be at least 2 characters"
     
-    if len(name) > 50:
-        return f"{field_name} must be less than 50 characters"
+    if len(name) > 45:
+        return f"{field_name} must be less than 45 characters"
     
     return None
 
 
 def validate_email(email):
     """
-    Validate email format.
+    Validate email format + length.
     Returns error message or None if valid.
     """
     if not email or not isinstance(email, str):
         return "Email is required"
     
     email = email.strip()
+    
+    if len(email) > 45:
+        return "Email is too long (maximum 45 characters)"
     if not EMAIL_REGEX.match(email):
         return "Please enter a valid email address"
     
