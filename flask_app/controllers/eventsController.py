@@ -5,7 +5,7 @@ from flask_app.models.optionModels import Option
 from flask_app.models.voteModels import Vote
 from datetime import datetime, timezone
 from flask_app.utils.helpers import require_login, get_current_user, get_user_session_data, is_logged_in
-
+from flask_app.utils.validators import validate_event_title, validate_event_description
 
 # moved compute_status and _parse_datetime to Events model for reuse
 # so other controllers can call it too
@@ -54,12 +54,13 @@ def createEventRoute():
     # Validation - check in priority order and show only the most important error
     error_message = None
     
-    # Priority 1: Event name (most important)
-    if not title:
-        error_message = 'Please enter an event name'
-    elif len(title) > 255:
-        error_message = 'Event name is too long (maximum 255 characters)'
-    
+    # Priority 1: Event name - Use centralized validator
+    error_message = validate_event_title(title)
+
+    # Priority 1.5: Event description validation
+    if not error_message and description:
+        error_message = validate_event_description(description)
+
     # Priority 2: Start date (if name is OK)
     elif not start_time_local:
         error_message = 'Please select a start date'
@@ -614,18 +615,16 @@ def editEventPost(event_id):
     # Basic validation similar to create, but skip candidates and adjust by status
     error_message = None
 
-    # Title/desc validation
+    # Title/desc validation using centralized validators
     if can_title:
-        if not title:
-            error_message = 'Please enter an event name'
-        elif len(title) > 255:
-            error_message = 'Event name is too long (maximum 255 characters)'
+        error_message = validate_event_title(title)
     else:
-        # Keep original title when not editable
         title = event.title
 
-    if not error_message and description and len(description) > 1000:
-        error_message = 'Event description is too long (maximum 1000 characters)'
+    if not error_message and can_desc and description:
+        error_message = validate_event_description(description)
+    elif not can_desc:
+        description = event.description
 
     # Normalize datetimes; if not editable, keep original DB values
     normalized_start = _normalize_full(start_time, start_time_local) if can_start else (event.start_time or '')

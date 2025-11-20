@@ -14,6 +14,10 @@ import re
 # Email validation regex
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$')
 
+# ================================
+# User Registration methods
+# ================================
+
 def validate_name(name, field_name="Name"):
     """
     Validate first or last name.
@@ -142,3 +146,36 @@ def validate_all_registration_fields(first_name, last_name, email, password, pho
         errors.append(error)
     
     return errors
+
+# ================================
+# Event methods
+# ================================
+
+def validate_event_title(title):
+    """Validate event title - max 45 chars (database limit)"""
+    if not title or not isinstance(title, str):
+        return "Please enter an event name"
+    
+    title = title.strip()
+    if len(title) == 0:
+        return "Please enter an event name"
+    
+    if len(title) > 45:
+        return "Event name is too long (maximum 45 characters)"
+    
+    return None
+
+
+def validate_event_description(description):
+    """Validate event description - max 255 chars (database limit)"""
+    if not description:
+        return None  # Optional field
+    
+    if not isinstance(description, str):
+        return "Invalid description format"
+    
+    description = description.strip()
+    if len(description) > 255:
+        return "Event description is too long (maximum 255 characters)"
+    
+    return None
