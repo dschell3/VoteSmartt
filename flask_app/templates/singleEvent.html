@@ -190,9 +190,9 @@
                             <div class="flex items-center justify-between p-3 rounded-lg border border-slate-200">
                                 <div>
                                     <div class="font-medium text-slate-800">{{ t.option_text }}</div>
-                                    <div class="text-xs text-slate-500 mt-1">{{ t.vote_count }} vote{{ 's' if t.vote_count != 1 }}</div>
+                                    <div class="text-xs text-slate-500 mt-1">{{ t.votes }} vote{{ 's' if t.votes != 1 }}</div>
                                 </div>
-                                <div class="text-2xl font-bold text-indigo-600">{{ t.vote_count }}</div>
+                                <div class="text-2xl font-bold text-indigo-600">{{ t.votes }}</div>
                             </div>
                             {% endfor %}
                         </div>
