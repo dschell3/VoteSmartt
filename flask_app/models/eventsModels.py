@@ -177,7 +177,7 @@ class Events:
         SELECT e.*
         FROM event e
         WHERE e.start_time > NOW()
-        ORDER BY e.start_time ASC;
+        ORDER BY e.start_time ASC
         """
         if limit:
             query += f" LIMIT {limit}"
@@ -185,6 +185,7 @@ class Events:
 
         result = connectToMySQL(cls.db).query_db(query)
         return [cls(row) for row in result] if result else []
+
 
     @classmethod
     def getAllClosed(cls):
