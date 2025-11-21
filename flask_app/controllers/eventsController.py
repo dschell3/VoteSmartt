@@ -380,13 +380,12 @@ def singleEvent(event_id):
         except Exception:
             r.status = 'Unknown'
     # options for this event
-    options = []
     try:
-        options = Option.getByEventId({'event_id': event_id})
+        options = Option.getByEventId({'event_id': event_id}) or []
     except Exception:
         options = []
 
-    # is event open for voting?
+    # is event open for voting? (single status compute)
     try:
         status = Events.compute_status(event.start_time, event.end_time)
     except Exception:
