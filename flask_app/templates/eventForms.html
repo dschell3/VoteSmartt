@@ -204,10 +204,7 @@
                             <p class="text-gray-600">Welcome, <span class="font-semibold text-purple-600">{{ first_name }}</span>! Create a new voting event.</p>
                         </div>
                     {% endif %}
-                    
-                    <!-- Flash Messages Container -->
-                    <div id="flash-messages-container" class="mb-6"></div>
-                    
+              
                     <!-- Store flash messages for inline display -->
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
@@ -391,58 +388,6 @@ var IS_EDIT_MODE = (function(){
 console.log('🎯 Event Form Validation & Management Loading...');
 
 document.addEventListener('DOMContentLoaded', function() {
-    // ======= Flash Message Display Module =======
-    // Check if flash messages were set by the server
-    if (window.flashMessage && window.flashCategory) {
-        const container = document.getElementById('flash-messages-container');
-        if (container) {
-            const messageDiv = document.createElement('div');
-            
-            // Set styling based on category
-            let bgColor = 'bg-red-50';
-            let borderColor = 'border-red-200';
-            let textColor = 'text-red-800';
-            let icon = '❌';
-            
-            if (window.flashCategory === 'success') {
-                bgColor = 'bg-green-50';
-                borderColor = 'border-green-200';
-                textColor = 'text-green-800';
-                icon = '✅';
-            } else if (window.flashCategory === 'warning') {
-                bgColor = 'bg-orange-50';
-                borderColor = 'border-orange-200';
-                textColor = 'text-orange-800';
-                icon = '⚠️';
-            }
-            
-            // Create the message element
-            messageDiv.className = `${bgColor} ${borderColor} ${textColor} border rounded-lg p-4 mb-4 flex items-center gap-3`;
-            messageDiv.innerHTML = `
-                <span class="text-xl">${icon}</span>
-                <span class="flex-1">${window.flashMessage}</span>
-                <button onclick="this.parentElement.remove()" class="text-gray-500 hover:text-gray-700 font-bold text-xl">&times;</button>
-            `;
-            
-            container.appendChild(messageDiv);
-            
-            // Auto-hide after 8 seconds
-            setTimeout(() => {
-                messageDiv.style.transition = 'opacity 0.5s';
-                messageDiv.style.opacity = '0';
-                setTimeout(() => {
-                    if (messageDiv.parentElement) {
-                        messageDiv.remove();
-                    }
-                }, 500);
-            }, 8000);
-            
-            // Clear the flash variables
-            delete window.flashMessage;
-            delete window.flashCategory;
-        }
-    }
-    
     console.log('🎯 DOM Ready - Initializing Event Form');
     
     // Initialize Day.js with custom parse format (reusing project's existing setup)
