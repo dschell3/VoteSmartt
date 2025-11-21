@@ -295,10 +295,8 @@
                                             <!-- Hidden inputs to track candidate ID and text -->
                                             <input type="hidden" name="candidate_ids[]" value="{{ option.option_id }}" />
                                             <input type="hidden" name="candidates[]" value="{{ option.option_text }}" />
-                                            <input type="hidden" name="candidate_descs[]" value="" />
                                             <h4 class="font-semibold text-gray-900 text-base mb-2">Candidate</h4>
-                                            <p class="text-sm text-gray-600 mb-3">{{ option.option_text }}</p>
-                                            <p class="text-sm text-gray-600">No description provided</p>
+                                            <p class="text-sm text-gray-600">{{ option.option_text }}</p>
                                         </div>
                                         <div class="flex space-x-2 ml-4">
                                             <button type="button" class="edit-candidate px-3 py-1 text-blue-500 hover:text-blue-700 text-sm font-medium border border-blue-300 rounded hover:bg-blue-50 hover:border-blue-500 transition duration-200 shadow-sm hover:shadow-md">Edit</button>
@@ -348,7 +346,7 @@
             <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
                 <div class="mt-3">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-medium text-gray-900">Candidate Details</h3>
+                        <h3 class="text-lg font-medium text-gray-900">Add Candidate</h3>
                         <button id="close-modal" class="text-gray-400 hover:text-gray-600">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -361,17 +359,11 @@
                             <label for="modal-candidate-name" class="block text-sm font-medium text-gray-700 mb-1">Candidate</label>
                             <input id="modal-candidate-name" type="text" placeholder="Enter candidate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
                         </div>
-                        
-                        <div>
-                            <label for="modal-candidate-desc" class="block text-sm font-medium text-gray-700 mb-1">Candidate Details</label>
-                            <textarea id="modal-candidate-desc" rows="3" placeholder="Enter candidate details..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"></textarea>
-                        </div>
                     </div>
                     
                     <div class="flex justify-end space-x-3 mt-6">
                         <button id="cancel-candidate" type="button" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition duration-200">Cancel</button>
-                        <button id="save-candidate" type="button" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition duration-200">Add Candidate</button>
-                    </div>
+                        <button id="save-candidate" type="button" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition duration-200">Save Candidate</button>                    </div>
                 </div>
             </div>
         </div>
@@ -814,7 +806,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const CandidateManager = {
         modal: document.getElementById('candidate-modal'),
         nameInput: document.getElementById('modal-candidate-name'),
-        descInput: document.getElementById('modal-candidate-desc'),
         candidatesList: document.getElementById('candidates-list'),
         
         init() {
@@ -852,14 +843,12 @@ document.addEventListener('DOMContentLoaded', function() {
         closeModal() {
             this.modal.classList.add('hidden');
             this.nameInput.value = '';
-            this.descInput.value = '';
             this.nameInput.classList.remove('border-red-500');
             delete this.modal.dataset.editingIndex;
         },
         
         saveCandidate() {
             const name = this.nameInput.value.trim();
-            const desc = this.descInput.value.trim();
             
             // Validate candidate name using our validation system
             const nameValidation = FormValidator.validateInput(name);
@@ -874,48 +863,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Validate candidate description (if provided) for inappropriate content
-            if (desc) {
-                const descValidation = FormValidator.validateInput(desc);
-                if (descValidation === 100) {
-                    alert('Candidate description contains inappropriate language');
-                    this.descInput.focus();
-                    this.descInput.classList.add('border-red-500');
-                    return;
-                }
-            }
-            
             // Remove error styling after successful validation
             this.nameInput.classList.remove('border-red-500');
-            this.descInput.classList.remove('border-red-500');
             
             // Update existing candidate or add new one based on modal state
             if (this.modal.dataset.editingIndex) {
-                this.updateCandidate(this.modal.dataset.editingIndex, name, desc);
+                this.updateCandidate(this.modal.dataset.editingIndex, name);
                 delete this.modal.dataset.editingIndex;
             } else {
-                this.addCandidate(name, desc);
+                this.addCandidate(name);
             }
             
             this.closeModal();
         },
         
-        addCandidate(name, desc, existingId = null) {
+        addCandidate(name, existingId = null) {
             const candidateCard = document.createElement('div');
             candidateCard.className = "bg-white border border-gray-200 rounded-lg p-5 mb-4 shadow-lg hover:shadow-xl transition-shadow duration-200";
-    
+
             // In edit mode, include the existing option_id as a hidden field
-            const idField = existingId ? `<input type="hidden" name="candidate_ids[]" value="${existingId}" />` : '<input type="hidden" name="candidate_ids[]" value="" />';
-    
+            const idField = existingId ?
+                `<input type="hidden" name="candidate_ids[]" value="${existingId}" />` : 
+                '<input type="hidden" name="candidate_ids[]" value="" />';
+
             candidateCard.innerHTML = `
                 <div class="flex justify-between items-start">
                     <div class="flex-1">
                         ${idField}
                         <input type="hidden" name="candidates[]" value="${name}" />
-                        <input type="hidden" name="candidate_descs[]" value="${desc}" />
                         <h4 class="font-semibold text-gray-900 text-base mb-2">Candidate</h4>
-                        <p class="text-sm text-gray-600 mb-3">${name}</p>
-                        <p class="text-sm text-gray-600">${desc || 'No description provided'}</p>
+                        <p class="text-sm text-gray-600">${name}</p>
                     </div>
                     <div class="flex space-x-2 ml-4">
                         <button type="button" class="edit-candidate px-3 py-1 text-blue-500 hover:text-blue-700 text-sm font-medium border border-blue-300 rounded hover:bg-blue-50 hover:border-blue-500 transition duration-200 shadow-sm hover:shadow-md">Edit</button>
@@ -930,23 +907,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const card = button.closest('.bg-white');
             const index = Array.from(this.candidatesList.children).indexOf(card);
             const name = card.querySelector('input[name="candidates[]"]').value;
-            const desc = card.querySelector('input[name="candidate_descs[]"]').value;
             
             this.nameInput.value = name;
-            this.descInput.value = desc;
             this.modal.dataset.editingIndex = index;
             this.openModal();
         },
         
-        updateCandidate(index, name, desc) {
+        updateCandidate(index, name) {
             const cards = this.candidatesList.children;
             if (cards[index]) {
                 const card = cards[index];
                 card.querySelector('input[name="candidates[]"]').value = name;
-                card.querySelector('input[name="candidate_descs[]"]').value = desc;
-                const paragraphs = card.querySelectorAll('p');
-                paragraphs[0].textContent = name;
-                paragraphs[1].textContent = desc || 'No description provided';
+                const paragraph = card.querySelector('p');
+                paragraph.textContent = name;
             }
         }
     };
