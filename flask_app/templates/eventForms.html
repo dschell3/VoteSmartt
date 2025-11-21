@@ -786,8 +786,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('🟢 State 4: Date and time logic validated successfully ✓');
             
             // State 5: Validate candidates (minimum requirement for voting)
-            // In edit mode, we skip enforcing candidate count
-            if (!IS_EDIT_MODE && candidateCards.length < 2) {
+            if (candidateCards.length < 2) {
                 console.log('🔴 State 5: Not enough candidates for voting');
                 this.showError('candidates-error', 'Please add at least 2 candidates');
                 return false;
