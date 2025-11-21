@@ -209,19 +209,25 @@ document.addEventListener('DOMContentLoaded',()=>{
                         <div class="text-lg font-semibold text-corporate-slate-800">Upcoming Elections</div>
                     </div>
                     <div class="mb-4">
-                        {% if upcoming_elections and upcoming_elections|length > 0 %}
-                            {% for election in upcoming_elections[:2] %}
-                            <div class="py-3 border-b border-corporate-slate-100 last:border-b-0">
-                                <div class="font-medium text-corporate-slate-800 mb-1 text-sm">{{ election.title }}</div>
-                                <div class="text-xs text-corporate-slate-500">{{ election.date.strftime('%B %d, %Y') if election.date else 'Date TBD' }}</div>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="py-3">
-                                <div class="font-medium text-corporate-slate-800 mb-1 text-sm">No upcoming elections</div>
-                                <div class="text-xs text-corporate-slate-500">Check back later for updates</div>
-                            </div>
-                        {% endif %}
+                  {% if upcoming_elections and upcoming_elections|length > 0 %}
+                    {% for election in upcoming_elections[:2] %}
+                    <div class="py-3 border-b border-corporate-slate-100 last:border-b-0">
+                        <div class="font-medium text-corporate-slate-800 mb-1 text-sm">{{ election.title }}</div>
+                        <div class="text-xs text-corporate-slate-500">
+                            {% if election.start_time %}
+                                {{ election.start_time.strftime('%B %d, %Y at %I:%M %p') }}
+                            {% else %}
+                                Date TBD
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="py-3">
+                        <div class="font-medium text-corporate-slate-800 mb-1 text-sm">No upcoming elections</div>
+                        <div class="text-xs text-corporate-slate-500">Check back later for updates</div>
+                    </div>
+                {% endif %}
                     </div>
                     <a href="{{ url_for('eventList') }}" class="inline-flex items-center text-blue-600 font-medium text-sm transition-colors duration-200 hover:text-blue-700">View All Events →</a>
                 </div>
