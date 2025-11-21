@@ -1,10 +1,19 @@
 from flask_app.config.mysqlconnection import connectToMySQL
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 db = "mydb"
 
 # columns in event table are: event_id, title, description, start_time, end_time,
 #                             created_at, created_byFK, status
+
+# Timezone configuration - can be changed later without modifying queries
+# For now, Pacific timezone (UTC-8). Later this could come from:
+# - Flask app config
+# - Environment variable
+# - User preferences
+# - Event-specific settings
+STORAGE_TIMEZONE_OFFSET = timedelta(hours=-8)  # Pacific Standard Time
+
 
 class Events:
     db = db
@@ -162,55 +171,102 @@ class Events:
 
     @classmethod
     def getOpenEvents(cls):
+        """Get currently open events using timezone-adjusted comparison."""
+        now_in_storage_tz = cls._get_utc_now_as_storage_timezone()
+        
         query = """
         SELECT e.*
         FROM event e
-        WHERE e.start_time <= NOW() AND e.end_time > NOW()
+        WHERE e.start_time <= %(now)s AND e.end_time > %(now)s
         ORDER BY e.start_time ASC;
         """
-        return connectToMySQL(cls.db).query_db(query)
+        data = {'now': now_in_storage_tz}
+        result = connectToMySQL(cls.db).query_db(query, data)
+        return [cls(row) for row in result] if result else []
     
     # TODO - Needs to be tested, Update UML class diagram to show otional limit param
     @classmethod
     def getUpcoming(cls, limit=None):
+        """Get future events by comparing against timezone-adjusted current time.
+        
+        Instead of converting all database times in SQL, we convert the
+        current time to match the storage timezone. This is more efficient
+        and keeps the query simple.
+        
+        Args:
+            limit: Optional maximum number of events to return
+            
+        Returns:
+            List of Event objects scheduled to start in the future
+        """
+        # Get current time in storage timezone for accurate comparison
+        now_in_storage_tz = cls._get_utc_now_as_storage_timezone()
+        
         query = """
         SELECT e.*
         FROM event e
-        WHERE e.start_time > NOW()
+        WHERE e.start_time > %(now)s
         ORDER BY e.start_time ASC
         """
         if limit:
             query += f" LIMIT {limit}"
         query += ";"
-
-        result = connectToMySQL(cls.db).query_db(query)
+        
+        data = {'now': now_in_storage_tz}
+        result = connectToMySQL(cls.db).query_db(query, data)
         return [cls(row) for row in result] if result else []
 
 
     @classmethod
     def getAllClosed(cls):
+        """Get closed events using timezone-adjusted comparison."""
+        now_in_storage_tz = cls._get_utc_now_as_storage_timezone()
+        
         query = """
         SELECT e.*
         FROM event e
-        WHERE e.end_time <= NOW()
+        WHERE e.end_time <= %(now)s
         ORDER BY e.end_time DESC;
         """
-        return connectToMySQL(cls.db).query_db(query)
+        data = {'now': now_in_storage_tz}
+        result = connectToMySQL(cls.db).query_db(query, data)
+        return [cls(row) for row in result] if result else []
     
     @classmethod
     def getAllWithStatus(cls):
+        """Get all events with computed status using timezone-adjusted comparison."""
+        now_in_storage_tz = cls._get_utc_now_as_storage_timezone()
+        
         query = """
         SELECT
-          e.*,
-          CASE
-            WHEN NOW() < e.start_time THEN 'upcoming'
-            WHEN NOW() >= e.end_time THEN 'closed'
+        e.*,
+        CASE
+            WHEN %(now)s < e.start_time THEN 'upcoming'
+            WHEN %(now)s >= e.end_time THEN 'closed'
             ELSE 'open'
-          END AS status
+        END AS status
         FROM event e
         ORDER BY e.start_time ASC;
         """
-        return connectToMySQL(cls.db).query_db(query)
+        data = {'now': now_in_storage_tz}
+        result = connectToMySQL(cls.db).query_db(query, data)
+        return [cls(row) for row in result] if result else []
+    
+    @classmethod
+    def _get_utc_now_as_storage_timezone(cls):
+        """
+        Get current UTC time expressed in storage timezone format.
+        
+        This allows us to compare storage times (Pacific) with current time
+        by converting current time TO storage timezone instead of converting
+        all stored times TO UTC in the query.
+        
+        Returns:
+            datetime: Current time in storage timezone (naive datetime)
+        """
+        now_utc = datetime.now(timezone.utc)
+        now_storage = now_utc + STORAGE_TIMEZONE_OFFSET
+        return now_storage.replace(tzinfo=None)  # Return as naive datetime
     
     # was at top of eventsController.py, moved here for reuse
     @staticmethod
