@@ -735,6 +735,13 @@ def editEventPost(event_id):
                     flash(error, 'error')
                 return redirect(url_for('editEventGet', event_id=event_id))
 
+            # Validate minimum candidate count (must have at least 2 candidates for voting)
+            if len(valid_candidates) < 2:
+                flash('Events must have at least 2 candidates. Please add more candidates before saving.', 'error')
+                print(f"[VALIDATION ERROR] Event {event_id}: Insufficient candidates ({len(valid_candidates)}/2 required)")
+                return redirect(url_for('editEventGet', event_id=event_id))
+            
+
             # Get existing options from database
             existing_options = Option.getByEventId({'event_id': event_id})
             existing_option_ids = {str(opt.option_id) for opt in existing_options}
