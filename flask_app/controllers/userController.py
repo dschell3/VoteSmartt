@@ -17,7 +17,6 @@ bcrypt = Bcrypt(app)
 # HELPER FUNCTIONS
 # ================================
 
-
 def get_user_voting_stats(user_id):
     """Get voting statistics for dashboard display."""
     try:

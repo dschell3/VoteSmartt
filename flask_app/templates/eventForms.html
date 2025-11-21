@@ -863,6 +863,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // Check candidate name length (database limit: 45 characters)
+            if (name.length > 45) {
+                alert(`Candidate name is too long (${name.length}/45 characters)`);
+                this.nameInput.focus();
+                this.nameInput.classList.add('border-red-500');
+                return;
+            }
+            
             // Remove error styling after successful validation
             this.nameInput.classList.remove('border-red-500');
             

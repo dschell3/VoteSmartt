@@ -182,3 +182,7 @@ def validate_event_description(description):
         return "Event description is too long (maximum 255 characters)"
     
     return None
+
+def validate_candidate_name(candidate_name):
+    """Validate candidate name - max 45 chars (database limit)"""
+    return validate_name(candidate_name, "Candidate name")

@@ -5,7 +5,7 @@ from flask_app.models.optionModels import Option
 from flask_app.models.voteModels import Vote
 from datetime import datetime, timezone
 from flask_app.utils.helpers import require_login, get_current_user, get_user_session_data, is_logged_in
-from flask_app.utils.validators import validate_event_title, validate_event_description
+from flask_app.utils.validators import validate_event_title, validate_event_description, validate_candidate_name
 
 # moved compute_status and _parse_datetime to Events model for reuse
 # so other controllers can call it too
@@ -127,10 +127,11 @@ def createEventRoute():
         if len(valid_candidates) < 2:
             error_message = 'Please add at least 2 candidates'
         else:
-            # Check candidate length
+            # Validate each candidate name using centralized validator
             for cand in valid_candidates:
-                if len(cand) > 100:
-                    error_message = f'Candidate name "{cand}" is too long (maximum 100 characters)'
+                cand_error = validate_candidate_name(cand)
+                if cand_error:
+                    error_message = cand_error
                     break
     
     # === DEBUGGING: Print the exact validation error ===
@@ -722,6 +723,18 @@ def editEventPost(event_id):
                     valid_candidates.append(cleaned_text)
                     valid_ids.append(cleaned_id if cleaned_id else None)
             
+            # Validate each candidate name before processing updates
+            validation_errors = []
+            for cand_name in valid_candidates:
+                cand_error = validate_candidate_name(cand_name)
+                if cand_error:
+                    validation_errors.append(cand_error)
+            
+            if validation_errors:
+                for error in validation_errors:
+                    flash(error, 'error')
+                return redirect(url_for('editEventGet', event_id=event_id))
+
             # Get existing options from database
             existing_options = Option.getByEventId({'event_id': event_id})
             existing_option_ids = {str(opt.option_id) for opt in existing_options}
