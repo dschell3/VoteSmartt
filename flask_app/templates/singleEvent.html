@@ -181,13 +181,14 @@
                     {% endif %}
                 {% else %}
                     {# Event is not open - show results #}
-                    <h3 class="text-lg font-semibold mb-4">Results</h3>
+                    <h3 id="resultsHeading" class="text-lg font-semibold mb-4">Results</h3>
+                    <div role="region" aria-labelledby="resultsHeading">
                     {% if not tallies %}
                         <div class="text-sm text-slate-500">No votes yet.</div>
                     {% else %}
-                        <div class="space-y-3">
+                        <div class="space-y-3" role="list">
                             {% for t in tallies %}
-                            <div class="flex items-center justify-between p-3 rounded-lg border border-slate-200">
+                            <div class="flex items-center justify-between p-3 rounded-lg border border-slate-200" role="listitem">
                                 <div>
                                     <div class="font-medium text-slate-800">{{ t.option_text }}</div>
                                     <div class="text-xs text-slate-500 mt-1">{{ t.votes }} vote{{ 's' if t.votes != 1 }}</div>
@@ -196,7 +197,12 @@
                             </div>
                             {% endfor %}
                         </div>
+                        <!-- pie chart -->
+                        <div class="mt-6">
+                            <canvas id="resultsPie" width="320" height="320"></canvas>
+                        </div>
                     {% endif %}
+                    </div>
                 {% endif %}
             </div>
         </section>
@@ -303,4 +309,31 @@
             });
         });
     </script>
+    {% if not is_open and tallies %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function(){
+        var data = JSON.parse('{{ tallies|tojson|safe }}');
+        var total = data.reduce(function(acc, item){ return acc + (item.votes || 0); }, 0);
+        if (total > 0) {
+            var ctx = document.getElementById('resultsPie');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: data.map(function(x){ return x.option_text; }),
+                        datasets: [{
+                            data: data.map(function(x){ return x.votes; }),
+                            backgroundColor: ['#155ac2','#0b3b7a','#6366f1','#22c55e','#f59e0b','#ef4444','#14b8a6','#8b5cf6','#dc2626','#6b7280']
+                        }]
+                    },
+                    options: {
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+        }
+    });
+    </script>
+    {% endif %}
 {% endblock %}
