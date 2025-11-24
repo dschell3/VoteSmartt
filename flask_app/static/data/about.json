@@ -1,42 +1,114 @@
 {
   "title": "About Us",
-  "intro": "We are a multi‑disciplinary team focused on building a secure, scalable, and user‑friendly online voting system. Below are core members (sample data; edit this JSON directly).",
+  "intro": "Meet the VoteSmartt team — students and contributors from CSUS and the community building accessible electronic voting tools.",
   "members": [
     {
-      "id": "manager",
       "name": "Jang Singh",
-      "role": "Project Manager",
-  "bio": "Leads planning, requirement clarification, and documentation quality.",
-      "avatar_url": null,
-      "github": null,
-      "linkedin": null
+      "role": "Project Manager / Full Stack Developer",
+      "avatar_url": "/static/media/jang.jpeg",
+      "bio": "Third-year CS major and project lead. Set up the web server, coordinated the team, and implemented core backend and frontend features.",
+      "education": [
+        "Third-year Computer Science major, CSUS",
+        "A.S. in Natural Sciences",
+        "A.S. in Computer Science"
+      ],
+      "professionalSkills": ["Communication","Problem-solving","Project leadership"],
+      "technicalSkills": ["Flask","MERN","Spring","AWS", "HTML/CSS"],
+      "awards": ["100/100 on all three full-stack tracks (bootcamp)"],
+      "workExperience": ["Two software development internships"],
+      "github": "",
+      "linkedin": ""
     },
     {
-      "id": "backend",
+      "name": "Darren Schell",
+      "role": "Designer / Backend Developer",
+      "avatar_url": "/static/media/Darren.png",
+      "bio": "Backend-focused engineer who helped design UML diagrams and implemented models, controllers, and authentication routes.",
+      "education": ["A.S. Computer Science – CRC (2025)","Harvard CS50p"],
+      "professionalSkills": ["Public speaking","Technical communication","Planning and coordination"],
+      "technicalSkills": ["Python","C++","MySQL","Flask","Git","UML"],
+      "awards": ["CRC Dean’s List (2023–2024)"],
+      "workExperience": ["IT experience – State of California","Small business owner","Volunteer tutor and food bank volunteer"],
+      "github": "",
+      "linkedin": ""
+    },
+    {
+      "name": "Yucheng Yu",
+      "role": "Frontend Developer",
+      "avatar_url": "/static/media/Yuchang.png",
+      "bio": "Focused on UI/UX logic and state-based editing; implemented the About/Credits pages and password reset flows.",
+      "education": ["Third-year Computer Science major, CSUS"],
+      "professionalSkills": ["UI/UX logic design","Requirements analysis","Team communication"],
+      "technicalSkills": ["State-based activity editing","Email authentication systems"],
+      "awards": [],
+      "workExperience": [],
+      "github": "",
+      "linkedin": ""
+    },
+    {
+      "name": "Derek",
+      "role": "Database Administrator",
+      "avatar_url": "/static/media/derek.png",
+      "bio": "Maintains the shared MySQL development database and handles hosting/availability.",
+      "education": ["B.S. Computer Science (in progress), CSUS","Coursework: Database Programming, Systems Programming, Data Structures & Algorithms"],
+      "professionalSkills": ["Analytical thinking","Time management","Team collaboration"],
+      "technicalSkills": ["MySQL","Python","Database hosting via Aiven"],
+      "awards": [],
+      "workExperience": ["Retail Shift Lead","Manufacturing Associate"],
+      "github": "",
+      "linkedin": ""
+    },
+    {
+      "name": "Arav Parmar",
+      "role": "Designer",
+      "avatar_url": "/static/media/arav.png",
+      "bio": "Design and architecture lead, focused on diagrams, pseudocode, and system refinement.",
+      "education": ["B.S. Computer Science (in progress), CSUS"],
+      "professionalSkills": ["AI/ML integration","Data visualization"],
+      "technicalSkills": ["Python","Java","JavaScript", "OpenAI API","LangChain"],
+      "awards": ["Dean’s Honor List (2023–2027)"],
+      "workExperience": ["Brand Ambassador – Polo Ralph Lauren","Founder – ASAP Washes"],
+      "github": "",
+      "linkedin": ""
+    },
+    {
+      "name": "Jarrett Sprenger",
+      "role": "QA Tester",
+      "avatar_url": "/static/media/Jarret.png",
+      "bio": "Quality assurance and testing lead who validated features and reported bugs.",
+      "education": ["Honors student – Virginia transfer program","High school diploma with AP Computer Science","Three years at Los Rios Colleges","Computer Science major at CSUS"],
+      "professionalSkills": ["Communication","Documentation","Collaboration"],
+      "technicalSkills": ["C++", "QA Testing", "Unit Testing"],
+      "awards": ["Honors student recognition"],
+      "workExperience": ["Whole Foods – Part-time employee","Volunteer – Boys Team Charity","Volunteer – Sacramento State Marching Band"],
+      "github": "",
+      "linkedin": ""
+    },
+    {
       "name": "Alex",
       "role": "Backend Developer",
-  "bio": "Implements core business logic, database access, and security hardening.",
-      "avatar_url": null,
-      "github": null,
-      "linkedin": null
+      "avatar_url": "",
+      "bio": "Supports backend form handling, email flows, and forgot-password logic.",
+      "education": ["Computer Science major, CSUS"],
+      "professionalSkills": ["Backend development support","Problem-solving","Technical troubleshooting"],
+      "technicalSkills": ["Python", "Java", "Github"],
+      "awards": [],
+      "workExperience": [],
+      "github": "",
+      "linkedin": ""
     },
     {
-      "id": "frontend",
-      "name": "Darren",
-      "role": "UI/UX Designer",
-  "bio": "Drives interaction consistency and visual experience to improve usability.",
-      "avatar_url": null,
-      "github": null,
-      "linkedin": null
-    },
-    {
-      "id": "qa",
-      "name": "Jarret",
-      "role": "QA / Test Engineer",
-  "bio": "Designs test cases and ensures stability and regression quality.",
-      "avatar_url": null,
-      "github": null,
-      "linkedin": null
+      "name": "Cesar Perez",
+      "role": "Analyst",
+      "avatar_url": "",
+      "bio": "Requirements analyst who gathered and validated project needs and constraints.",
+      "education": ["B.S. Computer Science (in progress), CSUS"],
+      "professionalSkills": ["Team collaboration","Documentation","Agile/Scrum methodology"],
+      "technicalSkills": ["Java", "Game development"],
+      "awards": ["Dean’s List – Spring 2025"],
+      "workExperience": ["Volunteer IT Assistant – Community Center","Sales Associate – Under Armour"],
+      "github": "",
+      "linkedin": ""
     }
   ]
 }

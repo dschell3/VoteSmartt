@@ -55,46 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		console.warn('HowItWorks observer failed', e);
 	}
 
-	// Hide nav while scrolling down, show on scroll up
-	(function () {
-		const nav = document.querySelector('nav');
-		if (!nav) return;
-	let lastScroll = window.scrollY;
-	let ticking = false;
-	// Minimal threshold to avoid tiny micro-scroll jitter; effectively hides immediately
-	const threshold = 1;
-
-		function onTick() {
-			const current = window.scrollY;
-			if (Math.abs(current - lastScroll) < threshold) {
-				ticking = false;
-				return;
-			}
-			if (current > lastScroll) {
-				// scrolling down: hide nav and remove visible background immediately
-				nav.classList.add('nav-hidden');
-				nav.classList.remove('nav-visible');
-			} else {
-				// scrolling up: show nav and add visible background
-				nav.classList.remove('nav-hidden');
-				// Only add background if we've scrolled away from the top
-				if (current > 10) {
-					nav.classList.add('nav-visible');
-				} else {
-					nav.classList.remove('nav-visible');
-				}
-			}
-			lastScroll = current;
-			ticking = false;
-		}
-
-		window.addEventListener('scroll', function () {
-			if (!ticking) {
-				window.requestAnimationFrame(onTick);
-				ticking = true;
-			}
-		}, { passive: true });
-	})();
+	// Navbar scroll behavior on this page has been disabled — header remains fixed by base template
 
 	// Mobile menu is now handled by base.html template
 	// Removed duplicate mobile menu JavaScript to prevent conflicts

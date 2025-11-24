@@ -392,28 +392,14 @@
             background: linear-gradient(90deg, #b91c1c, #dc2626);
         }
 
-        /* Sticky navbar */
+        /* Navbar behaves like a normal block at the top of the page (not fixed) */
         nav {
-            position: sticky;
-            top: 0;
+            position: static;
             background: transparent;
-            z-index: 50;
+            z-index: auto;
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
             border-bottom: none;
-            transition: transform 280ms ease, background-color 220ms ease, backdrop-filter 220ms ease;
-        }
-
-        .nav-hidden {
-            transform: translateY(-120%);
-            transition: transform 260ms ease;
-        }
-
-        nav.nav-visible {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(6px) saturate(1.05);
-            -webkit-backdrop-filter: blur(6px) saturate(1.05);
-            box-shadow: 0 1px 12px rgba(11, 18, 32, 0.06);
         }
 
         /* Mobile responsive */
@@ -803,75 +789,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             // ====== Navbar Functionality ======
-            
-            // Hide nav while scrolling down, show on scroll up
-            // Require sustained downward scrolling (cumulative distance) and a small delay before hiding
-            (function () {
-                const nav = document.querySelector("nav");
-                if (!nav) return;
-                let lastScroll = window.scrollY;
-                let ticking = false;
-                const MIN_SCROLL_DELTA = 120; // px - require this much cumulative downward scroll before hiding
-                const HIDE_DELAY = 450; // ms - wait before hiding to avoid flicker
-                let hideTimeout = null;
-                let cumulativeDown = 0; // accumulate downward distance
-                let isScrollingDown = false;
-
-                function scheduleHide() {
-                    if (hideTimeout) clearTimeout(hideTimeout);
-                    hideTimeout = setTimeout(() => {
-                        nav.classList.add("nav-hidden");
-                        nav.classList.remove("nav-visible");
-                        hideTimeout = null;
-                    }, HIDE_DELAY);
-                }
-
-                function cancelHideAndShow() {
-                    if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
-                    nav.classList.remove("nav-hidden");
-                    if (window.scrollY > 10) nav.classList.add("nav-visible");
-                    else nav.classList.remove("nav-visible");
-                }
-
-                function onTick() {
-                    const current = window.scrollY;
-                    const delta = current - lastScroll;
-
-                    if (delta > 0) {
-                        // scrolling down
-                        if (!isScrollingDown) {
-                            isScrollingDown = true;
-                            cumulativeDown = delta;
-                        } else {
-                            cumulativeDown += delta;
-                        }
-
-                        // Only schedule hide if we've scrolled down enough in total
-                        if (cumulativeDown >= MIN_SCROLL_DELTA) {
-                            scheduleHide();
-                        }
-                    } else if (delta < 0) {
-                        // scrolling up — cancel hide and show immediately
-                        isScrollingDown = false;
-                        cumulativeDown = 0;
-                        cancelHideAndShow();
-                    }
-
-                    lastScroll = current;
-                    ticking = false;
-                }
-
-                window.addEventListener(
-                    "scroll",
-                    function () {
-                        if (!ticking) {
-                            window.requestAnimationFrame(onTick);
-                            ticking = true;
-                        }
-                    },
-                    { passive: true }
-                );
-            })();
+            // Navbar is a normal page section at the top and will scroll with the page.
 
             // ====== Mobile Menu (Hamburger) ======
             const hamburger = document.querySelector(".hamburger");

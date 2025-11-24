@@ -1,40 +1,78 @@
 {
-  "title": "CREDITS",
-  "people": [
+  "credits": [
     {
       "name": "Jang Singh",
-      "role": "Project Manager & Documentation",
-  "desc": "Coordinates schedule, requirements, and phase documentation.",
-      "avatar_url": null,
-      "github": null
+      "role": "Project Manager / Full Stack Developer",
+      "tasks": [
+        "Managed scheduling and team communication",
+        "Set up web server and project framework",
+        "Completed backend and frontend tasks",
+        "Coordinated development across all members"
+      ]
+    },
+    {
+      "name": "Darren Schell",
+      "role": "Designer / Backend Developer",
+      "tasks": [
+        "Created UML class diagrams",
+        "Built models and controllers",
+        "Implemented login and registration routes",
+        "Developed voting and event logic"
+      ]
+    },
+    {
+      "name": "Yucheng Yu",
+      "role": "Frontend Developer",
+      "tasks": [
+        "Built state-based activity editing",
+        "Implemented email password reset logic",
+        "Developed About/Credits page",
+        "Enhanced activity creation interface",
+        "Created database settings and diagnostics"
+      ]
+    },
+    {
+      "name": "Derek",
+      "role": "Database Administrator",
+      "tasks": [
+        "Set up MySQL server using Aiven",
+        "Maintained shared development database",
+        "Managed DB availability for the team"
+      ]
+    },
+    {
+      "name": "Arav Parmar",
+      "role": "Designer",
+      "tasks": [
+        "Designed class diagrams and use-case diagrams",
+        "Wrote pseudocode and flowcharts",
+        "Refined system architecture"
+      ]
+    },
+    {
+      "name": "Jarrett Sprenger",
+      "role": "QA Tester",
+      "tasks": [
+        "Tested program features",
+        "Identified bugs",
+        "Verified correct system behavior"
+      ]
     },
     {
       "name": "Alex",
       "role": "Backend Developer",
-  "desc": "Implements routes, validation, models, and voting business rules.",
-      "avatar_url": null,
-      "github": null
+      "tasks": [
+        "Developed backend logic for Contact page",
+        "Added email server functionality"
+      ]
     },
     {
-      "name": "Darren",
-      "role": "Designer / Frontend",
-  "desc": "Iterates UI/UX and unifies visual guidelines.",
-      "avatar_url": null,
-      "github": null
-    },
-    {
-      "name": "Ceaser",
-      "role": "Analyst / Frontend",
-  "desc": "Contributes to requirement analysis and parts of frontend implementation.",
-      "avatar_url": null,
-      "github": null
-    },
-    {
-      "name": "Jarret",
-      "role": "QA Engineer",
-  "desc": "Test cases and regression verification to improve stability.",
-      "avatar_url": null,
-      "github": null
+      "name": "Cesar Perez",
+      "role": "Analyst",
+      "tasks": [
+        "Gathered and analyzed project requirements",
+        "Validated requirements with the team"
+      ]
     }
   ]
 }

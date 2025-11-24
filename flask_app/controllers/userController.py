@@ -93,7 +93,20 @@ def about_page():
 def credits_page():
     user_data = get_user_session_data()
     data = _load_json('credits.json', { 'title': 'CREDITS', 'people': [] })
-    return render_template('credits.html', data=data, **user_data)
+    # Also load about.json so we can show avatars next to credit entries when available
+    about_data = _load_json('about.json', { 'title': 'About Us', 'intro': '', 'members': [] })
+    # Build a simple name -> avatar_url map for quick lookup in the template
+    about_map = {}
+    try:
+        for m in about_data.get('members', []):
+            name = m.get('name')
+            avatar = m.get('avatar_url')
+            if name and avatar:
+                about_map[name] = avatar
+    except Exception:
+        about_map = {}
+
+    return render_template('credits.html', data=data, about_map=about_map, **user_data)
 
 @app.route('/register') # Registration page route
 def register_page():

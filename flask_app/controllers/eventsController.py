@@ -379,6 +379,23 @@ def singleEvent(event_id):
             r.status = Events.compute_status(r.start_time, r.end_time)
         except Exception:
             r.status = 'Unknown'
+    # Only recommend events that are currently open or upcoming
+    try:
+        recs = [r for r in recs if getattr(r, 'status', None) in ('Open', 'Waiting')]
+    except Exception:
+        # If anything goes wrong during filtering, keep original list (safe fallback)
+        pass
+
+    # If there are no recommendations after filtering, fall back to latest 3 events
+    # (preserve creator info and computed status). Exclude the current event.
+    if not recs:
+        try:
+            all_events = Events.getAllWithCreators() or []
+            # Exclude current event and take up to 3
+            fallback = [e for e in all_events if getattr(e, 'event_id', None) != event_id][:3]
+            recs = fallback
+        except Exception:
+            recs = recs or []
     # options for this event
     try:
         options = Option.getByEventId({'event_id': event_id}) or []

@@ -4,31 +4,61 @@ from flask_app.controllers import userController, eventsController, voteControll
 # Previously voteController was not imported, causing POST /vote/cast to 404.
 
 import os
-from flask import Flask
 import socket
+import logging
+from typing import Optional
+
+try:
+    from dotenv import load_dotenv
+    _HAS_DOTENV = True
+except Exception:
+    _HAS_DOTENV = False
 
 
 def get_port_from_env(default: int = 5000) -> int:
-    """Return port from environment variables or default.
-
-    Looks for PORT, FLASK_RUN_PORT, or falls back to `default`.
-    """
     port_env = os.environ.get('PORT') or os.environ.get('FLASK_RUN_PORT')
-    try:
-        return int(port_env) if port_env else default
-    except ValueError:
+    if port_env:
+        try:
+            return int(port_env)
+        except ValueError:
+            logging.warning("Invalid port in environment (%s), falling back to default %s", port_env, default)
+            return default
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('127.0.0.1', 0))
+        return s.getsockname()[1]
+
+
+def _public_host_for_url(host: str) -> str:
+    if not host or host in ('0.0.0.0', '::'):
+        return 'localhost'
+    return host
+
+
+def _get_bool_env(name: str, default: bool) -> bool:
+    val = os.environ.get(name)
+    if val is None:
         return default
+    return val.lower() not in ('0', 'false', 'no')
 
 
 if __name__ == '__main__':
+    if _HAS_DOTENV:
+        load_dotenv()
+    logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+
     host = os.environ.get('HOST', '127.0.0.1')
     port = get_port_from_env(5000)
-
-    # Ensure BASE_URL is set consistently so emails include the correct host/port
     if not app.config.get('BASE_URL'):
-        # Use host:port for local development. If running behind a proxy set BASE_URL env.
         scheme = os.environ.get('BASE_URL_SCHEME', 'http')
-        app.config['BASE_URL'] = f"{scheme}://{host}:{port}"
+        public_host = _public_host_for_url(host)
+        app.config['BASE_URL'] = f"{scheme}://{public_host}:{port}"
+    debug = _get_bool_env('FLASK_DEBUG', True)
+    use_reloader = _get_bool_env('USE_RELOADER', True)
 
-    print(f"Starting server on {host}:{port}")
-    app.run(debug=True, host=host, port=port, use_reloader=True)
+    logging.info("Starting server — host=%s port=%s debug=%s reloader=%s", host, port, debug, use_reloader)
+
+    try:
+        app.run(debug=debug, host=host, port=port, use_reloader=use_reloader)
+    except KeyboardInterrupt:
+        logging.info("Server interrupted, shutting down")

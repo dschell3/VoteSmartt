@@ -3,9 +3,11 @@
 {% block title %}{{ 'Edit Event' if edit_mode else 'Create Event' }} - VoteSmart{% endblock %}
 
 {% block extra_head %}
+<!-- Include Flatpickr CSS for improved date/time picker UI -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
-    /* Enhanced datetime-local styling for better user experience */
-    input[type="datetime-local"] {
+    /* Enhanced datetime-local / flatpickr input styling for better user experience */
+    input[type="datetime-local"], input.flatpickr-input, input#start_time, input#end_time {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
         font-size: 16px;
         line-height: 1.5;
@@ -26,6 +28,8 @@
     }
     
     /* Style for datetime-local components */
+    /* Keep original native selectors for browsers that still render datetime-local
+       and provide similar styling for flatpickr inputs via the top-level selector */
     input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
         padding: 4px 8px;
         border-radius: 4px;
@@ -118,12 +122,12 @@
     }
     
     /* Error styling for datetime inputs */
-    input[type="datetime-local"].border-red-500 {
+    input[type="datetime-local"].border-red-500, input#end_time.border-red-500, input#start_time.border-red-500 {
         border-color: #ef4444 !important;
         box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
     }
     
-    input[type="datetime-local"].bg-red-50 {
+    input[type="datetime-local"].bg-red-50, input#end_time.bg-red-50, input#start_time.bg-red-50 {
         background-color: rgba(254, 242, 242, 0.8) !important;
     }
     
@@ -236,16 +240,16 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label for="start_time" class="block font-medium mb-2 text-gray-700 text-base">Start Date & Time <span class="text-red-500">*</span></label>
-                                <!-- Keep datetime-local for UX but post normalized yyyy-mm-dd via hidden input -->
-                                <input id="start_time" name="start_time" type="datetime-local" value="{{ prefill_start_local if edit_mode else '' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white" {% if edit_mode and not can_edit_start %}disabled{% endif %} />
+                                <!-- Replaced native datetime-local with text input used by flatpickr -->
+                                <input id="start_time" name="start_time" type="text" value="{{ prefill_start_local if edit_mode else '' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white" {% if edit_mode and not can_edit_start %}disabled{% endif %} />
                                 <!-- Selected time display -->
                                 <div id="start-time-display" class="text-xs text-gray-500 mt-1 min-h-4"></div>
                                 <div id="start-time-error" class="text-red-500 text-xs mt-1 hidden"></div>
                             </div>
                             <div>
                                 <label for="end_time" class="block font-medium mb-2 text-gray-700 text-base">End Date & Time <span class="text-red-500">*</span></label>
-                                <!-- Keep datetime-local for UX but post normalized yyyy-mm-dd via hidden input -->
-                                <input id="end_time" name="end_time" type="datetime-local" value="{{ prefill_end_local if edit_mode else '' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white" {% if edit_mode and not can_edit_end %}disabled{% endif %} />
+                                <!-- Replaced native datetime-local with text input used by flatpickr -->
+                                <input id="end_time" name="end_time" type="text" value="{{ prefill_end_local if edit_mode else '' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white" {% if edit_mode and not can_edit_end %}disabled{% endif %} />
                                 <!-- Selected time display -->
                                 <div id="end-time-display" class="text-xs text-gray-500 mt-1 min-h-4"></div>
                                 <div id="end-time-error" class="text-red-500 text-xs mt-1 hidden"></div>
@@ -259,7 +263,7 @@
                         <!-- CREATE MODE: Full candidate management with modal -->
                         <div class="mt-8">
                             <h3 class="text-xl font-bold mb-4 text-gray-800">Candidates</h3>
-                            <button type="button" id="add-candidate-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-base mb-4 flex items-center justify-center">
+                                <button type="button" id="add-candidate-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold text-base mb-4 flex items-center justify-center">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                 </svg>
@@ -279,7 +283,7 @@
                             <h3 class="text-xl font-bold mb-4 text-gray-800">Candidates/Options</h3>
                             <p class="text-sm text-gray-600 mb-4">You can add, edit, or remove candidates while the event is in "Waiting" status.</p>
                             
-                            <button type="button" id="add-candidate-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-base mb-4 flex items-center justify-center">
+                                <button type="button" id="add-candidate-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold text-base mb-4 flex items-center justify-center">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                 </svg>
@@ -335,7 +339,7 @@
                         {% endif %}
                         {% endif %}
                         
-                        <button type="submit" id="create-event-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold text-lg">{{ 'Save Changes' if edit_mode else 'Create Event' }}</button>
+                        <button type="submit" id="create-event-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold text-lg">{{ 'Save Changes' if edit_mode else 'Create Event' }}</button>
                     </form>
                 </div>
             </div>
@@ -363,7 +367,7 @@
                     
                     <div class="flex justify-end space-x-3 mt-6">
                         <button id="cancel-candidate" type="button" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition duration-200">Cancel</button>
-                        <button id="save-candidate" type="button" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition duration-200">Save Candidate</button>                    </div>
+                        <button id="save-candidate" type="button" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-200">Save Candidate</button>                    </div>
                 </div>
             </div>
         </div>
@@ -375,6 +379,8 @@
 <!-- Reuse existing Day.js library from the project for date/time handling -->
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/dayjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/customParseFormat.min.js"></script>
+<!-- Flatpickr for improved date/time selection -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <!-- Import our custom profanity detection library for content filtering -->
 <script src="/static/js/badWordsCheck.js"></script>
 <script>
@@ -392,6 +398,34 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize Day.js with custom parse format (reusing project's existing setup)
     dayjs.extend(dayjs_plugin_customParseFormat);
+
+    // Initialize Flatpickr on the start/end inputs (if available)
+    var fpStart = null, fpEnd = null;
+    try {
+        var _startInput = document.getElementById('start_time');
+        var _endInput = document.getElementById('end_time');
+        if (typeof flatpickr !== 'undefined' && _startInput && _endInput) {
+            fpStart = flatpickr(_startInput, {
+                enableTime: true,
+                dateFormat: "Y-m-d\TH:i",
+                altInput: true,
+                altFormat: "F j, Y h:i K",
+                minuteIncrement: 1,
+                onChange: function(selectedDates, dateStr, instance) { _startInput.dispatchEvent(new Event('change')); }
+            });
+            fpEnd = flatpickr(_endInput, {
+                enableTime: true,
+                dateFormat: "Y-m-d\TH:i",
+                altInput: true,
+                altFormat: "F j, Y h:i K",
+                minuteIncrement: 1,
+                onChange: function(selectedDates, dateStr, instance) { _endInput.dispatchEvent(new Event('change')); }
+            });
+            console.log('✅ flatpickr initialized for start_time and end_time');
+        }
+    } catch (err) {
+        console.warn('⚠️ flatpickr init failed or not available', err);
+    }
     
     const form = document.getElementById('event-form');
     if (!form) {
@@ -518,15 +552,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const minStartTime = now.format('YYYY-MM-DDTHH:mm');
             
             // Set minimum time for start time field to current system time
-            this.startTime.setAttribute('min', minStartTime);
+            // If flatpickr is active, set its minDate; otherwise set the input min attribute
+            if (typeof fpStart !== 'undefined' && fpStart && fpStart.set) {
+                try { fpStart.set('minDate', now.toDate()); } catch (e) { this.startTime.setAttribute('min', minStartTime); }
+            } else {
+                this.startTime.setAttribute('min', minStartTime);
+            }
             
             // Check if current start time is before system time and clear if necessary
             const currentStartValue = this.startTime.value;
             if (currentStartValue) {
                 const currentStartDateTime = dayjs(currentStartValue);
                 if (currentStartDateTime.isBefore(now)) {
-                    this.startTime.value = '';
-                    this.endTime.value = ''; // Also clear end time since start time changed
+                    // Clear both inputs (respecting flatpickr instances if present)
+                    if (typeof fpStart !== 'undefined' && fpStart && fpStart.clear) fpStart.clear(); else this.startTime.value = '';
+                    if (typeof fpEnd !== 'undefined' && fpEnd && fpEnd.clear) fpEnd.clear(); else this.endTime.value = '';
                     console.log('🔄 Cleared start time as it was before current system time');
                     
                     // Show notification to user
@@ -537,7 +577,8 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('🕐 Start time restricted to after system time:', minStartTime);
             
             // Also update end time restrictions if start time exists
-            if (this.startTime.value) {
+            var startHasValue = (typeof fpStart !== 'undefined' && fpStart && fpStart.selectedDates && fpStart.selectedDates.length) ? fpStart.selectedDates.length > 0 : Boolean(this.startTime.value);
+            if (startHasValue) {
                 this.updateEndTimeRestrictions();
             }
         },
@@ -557,14 +598,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 const minEndValue = minEndDateTime.format('YYYY-MM-DDTHH:mm');
                 
                 // Set the min attribute to restrict earlier selections
-                this.endTime.setAttribute('min', minEndValue);
+                // Prefer flatpickr API when available
+                if (typeof fpEnd !== 'undefined' && fpEnd && fpEnd.set) {
+                    try { fpEnd.set('minDate', minEndDateTime.toDate()); } catch (e) { this.endTime.setAttribute('min', minEndValue); }
+                } else {
+                    this.endTime.setAttribute('min', minEndValue);
+                }
                 
                 // If current end time is before the new minimum, clear it
                 const currentEndValue = this.endTime.value;
                 if (currentEndValue) {
                     const currentEndDateTime = dayjs(currentEndValue);
                     if (currentEndDateTime.isBefore(minEndDateTime)) {
-                        this.endTime.value = '';
+                        // Clear end time respecting flatpickr instance
+                        if (typeof fpEnd !== 'undefined' && fpEnd && fpEnd.clear) fpEnd.clear(); else this.endTime.value = '';
                         console.log('🔄 Cleared end time as it was before new start time');
                         
                         // Show a subtle notification to user
@@ -575,7 +622,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('⚠️ End time restricted to after:', minEndValue);
             } else {
                 // Remove restriction if no start time is selected
-                this.endTime.removeAttribute('min');
+                if (typeof fpEnd !== 'undefined' && fpEnd && fpEnd.set) {
+                    try { fpEnd.set('minDate', null); } catch (e) { this.endTime.removeAttribute('min'); }
+                } else {
+                    this.endTime.removeAttribute('min');
+                }
                 console.log('✅ End time restriction removed');
             }
         },

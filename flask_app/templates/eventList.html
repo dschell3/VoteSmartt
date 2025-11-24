@@ -37,10 +37,6 @@
         </div>
 
         <div class="flex items-center gap-3">
-            <form action="/logout" method="post" class="hidden md:block">
-                <button type="submit"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium">Logout</button>
-            </form>
             <a href="/admin2"
                 class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-medium">Create
                 Event</a>
@@ -82,7 +78,7 @@
             </div>
         </div>
         <!-- Subtle metadata row -->
-        <div class="mt-3 text-sm text-slate-500">Showing <strong>{{ allEvents|length if allEvents else 0 }}</strong>
+        <div class="mt-3 text-sm text-slate-500">Showing <strong id="events-count">{{ allEvents|length if allEvents else 0 }}</strong>
             events · Sorted by start date</div>
     </div>
 
@@ -110,10 +106,6 @@
                     <p class="mt-2 text-sm text-slate-600 line-clamp-3">{{ events.description }}</p>
                 </div>
                 <div class="shrink-0 text-right">
-                    <div class="text-sm text-slate-500"><span class="event-start"
-                            data-start="{{ events.start_time or '' }}">&mdash;</span></div>
-                    <div class="text-xs text-slate-400">to <span class="event-end"
-                            data-end="{{ events.end_time or '' }}">&mdash;</span></div>
                     <div class="mt-2 text-right">
                         <span class="inline-flex items-center gap-2 text-xs font-medium text-indigo-600">
                             <span class="timer-dot w-2 h-2 rounded-full bg-indigo-500/90"></span>
@@ -236,6 +228,22 @@
         box-shadow: 0 8px 20px rgba(2, 6, 23, 0.08);
     }
 
+    /* Ensure the filter dropdown (Choices.js) appears above other page elements
+       so it is clickable and doesn't get blocked by cards/overlays. */
+    .choices {
+        position: relative;
+        z-index: 20000;
+    }
+
+    .choices__inner {
+        position: relative;
+        z-index: 20000;
+    }
+
+    .choices__list--dropdown {
+        z-index: 20010 !important;
+    }
+
     /* Event card action polish */
     .event-actions a,
     .event-actions button {
@@ -299,9 +307,49 @@
         startEventTimers();
         // Also update statuses on initial render
         updateEventStatuses();
+        // Remove events that have been closed for more than 24 hours
+        removeOldClosedEvents();
         // Wire up search + filter behavior
         setupFilters();
     });
+
+    // Hide event cards that ended more than 24 hours ago and mark them so filters won't resurrect them
+    function removeOldClosedEvents() {
+        try {
+            const cards = Array.from(document.querySelectorAll('#eventsGrid > article'));
+            const now = dayjs();
+            const cutoffMs = 24 * 60 * 60 * 1000; // 24 hours in ms
+            let hiddenCount = 0;
+
+            cards.forEach(card => {
+                // Prefer data-end on event-status then event-end-timer
+                const statusEl = card.querySelector('.event-status');
+                const endRaw = (statusEl && statusEl.getAttribute('data-end')) || (card.querySelector('.event-end-timer') && card.querySelector('.event-end-timer').getAttribute('data-end')) || '';
+                if (!endRaw) return;
+
+                const parsed = tryParse(endRaw) || (dayjs(endRaw).isValid() ? dayjs(endRaw) : null);
+                if (!parsed) return;
+
+                const diff = now.diff(parsed);
+                if (diff > cutoffMs) {
+                    // hide the card and mark it so filters won't bring it back
+                    card.style.display = 'none';
+                    card.dataset.hiddenOld = '1';
+                    hiddenCount++;
+                }
+            });
+
+            // Update visible count shown in header
+            const countEl = document.getElementById('events-count');
+            if (countEl) {
+                const total = parseInt(countEl.textContent || '0', 10);
+                const visible = Math.max(0, total - hiddenCount);
+                countEl.textContent = visible;
+            }
+        } catch (e) {
+            console.warn('Failed to remove old closed events', e);
+        }
+    }
 
     function humanDuration(ms) {
         return (window.TimeUtils && TimeUtils.humanDuration) ? TimeUtils.humanDuration(ms) : `${Math.floor(ms/1000)}s`;
@@ -389,6 +437,11 @@
             const status = filterSelect ? (filterSelect.value || 'all') : 'all';
 
             Array.from(grid.children).forEach(card => {
+                // If the card was marked hiddenOld, allow it to be shown when the 'past' filter is active.
+                if (card.dataset && card.dataset.hiddenOld === '1' && status !== 'past') {
+                    card.style.display = 'none';
+                    return;
+                }
                 const title = (card.querySelector('h3') || { textContent: '' }).textContent.toLowerCase();
                 const desc = (card.querySelector('p') || { textContent: '' }).textContent.toLowerCase();
                 const cardStatus = card.getAttribute('data-status') || 'unknown';
@@ -402,6 +455,17 @@
                     card.style.display = 'none';
                 }
             });
+
+            // Update visible count shown in header after filtering
+            try {
+                const countEl = document.getElementById('events-count');
+                if (countEl) {
+                    const visible = Array.from(grid.children).filter(c => c.style.display !== 'none').length;
+                    countEl.textContent = visible;
+                }
+            } catch (e) {
+                console.warn('Failed to update events count after filtering', e);
+            }
         }
 
         let debounceTimer;
