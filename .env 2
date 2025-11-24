@@ -1,9 +1,0 @@
-# Copy this file to `.env` and fill in the values. Do NOT commit the real .env to git.
-SMTP_SERVER=smtp.gmail.com
-SMTP_PORT=587
-MAIL_USE_TLS=True
-MAIL_USE_SSL=False
-EMAIL_USER=vtsmrtspprt@gmail.com
-EMAIL_PASSWORD=fieaochpncragvcb
-# Optional: override default sender (defaults to EMAIL_USER)
-MAIL_DEFAULT_SENDER=vtsmrtspprt@gmail.com
