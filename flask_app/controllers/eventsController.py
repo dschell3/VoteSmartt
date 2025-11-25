@@ -431,15 +431,36 @@ def singleEvent(event_id):
     except Exception:
         selected_option_id = None
 
-    # tallies if not open (show results)
+    # tallies if not open (show results) and compute winner ids (support ties)
     tallies = []
+    winner_option_ids = []
     if not is_open:
         try:
             tallies = Vote.tallyVotesForEvent({'event_id': event_id}) or []
+            if tallies:
+                try:
+                    max_votes = max([t.get('votes', 0) for t in tallies])
+                    # Collect all option_ids with max votes (tie-safe)
+                    winner_option_ids = [t.get('option_id') for t in tallies if t.get('votes', 0) == max_votes and max_votes > 0]
+                except Exception:
+                    winner_option_ids = []
         except Exception:
             tallies = []
+            winner_option_ids = []
 
-    return render_template('singleEvent.html', event=event, recommendations=recs, options=options, is_open=is_open, event_status=status, selected_option_id=selected_option_id, tallies=tallies, is_event_creator=is_event_creator, **user_data)
+    return render_template(
+        'singleEvent.html',
+        event=event,
+        recommendations=recs,
+        options=options,
+        is_open=is_open,
+        event_status=status,
+        selected_option_id=selected_option_id,
+        tallies=tallies,
+        winner_option_ids=winner_option_ids,
+        is_event_creator=is_event_creator,
+        **user_data
+    )
 
 
 # ==========================
