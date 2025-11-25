@@ -135,11 +135,22 @@ class BadWordsCheck {
 
         const normalizedText = text.toLowerCase().trim();
         
-        // Method 1: Direct keyword matching - checks for exact word matches in our dictionary
+        // Method 1: Direct keyword matching with word boundary logic for Latin words
         for (let word of this.badWords) {
-            if (normalizedText.includes(word.toLowerCase())) {
-                console.log('🔴 Keyword match found:', word);
-                return true;
+            const lower = word.toLowerCase();
+            // If the word contains only a-z letters (and optionally * replacement), use word boundary to avoid substrings like 'hell' in 'hello'
+            if (/^[a-z\*]+( [a-z\*]+)*$/.test(lower)) {
+                const pattern = new RegExp("\\b" + lower.replace(/\*/g, "\\w*") + "\\b", "i");
+                if (pattern.test(normalizedText)) {
+                    console.log('🔴 Keyword match (bounded) found:', word);
+                    return true;
+                }
+            } else {
+                // Non‑Latin (e.g., Chinese) or mixed forms: retain substring check
+                if (normalizedText.includes(lower)) {
+                    console.log('🔴 Keyword match (substring) found:', word);
+                    return true;
+                }
             }
         }
 
@@ -168,10 +179,18 @@ class BadWordsCheck {
         const matches = [];
         const normalizedText = text.toLowerCase().trim();
 
-        // Check for direct keyword matches in our dictionary
+        // Check for direct keyword matches (use word boundaries for Latin-only words)
         for (let word of this.badWords) {
-            if (normalizedText.includes(word.toLowerCase())) {
-                matches.push({ type: 'keyword', word: word });
+            const lower = word.toLowerCase();
+            if (/^[a-z\*]+( [a-z\*]+)*$/.test(lower)) {
+                const pattern = new RegExp("\\b" + lower.replace(/\*/g, "\\w*") + "\\b", "i");
+                if (pattern.test(normalizedText)) {
+                    matches.push({ type: 'keyword', word: word, bounded: true });
+                }
+            } else {
+                if (normalizedText.includes(lower)) {
+                    matches.push({ type: 'keyword', word: word, bounded: false });
+                }
             }
         }
 
