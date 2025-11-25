@@ -19,6 +19,15 @@ class Option:
         return [cls(row) for row in results]
     
     @classmethod
+    def getAll(cls):
+        query = "SELECT * FROM `option`;"
+        result = connectToMySQL(db).query_db(query)
+        events = []
+        for i in result:
+            events.append(cls(i))
+        return events
+    
+    @classmethod
     def create(cls, data):
         query = '''
         INSERT INTO `option` (option_text, option_event_id)
@@ -31,14 +40,38 @@ class Option:
         query = "DELETE FROM `option` WHERE option_event_id = %(event_id)s;"
         return connectToMySQL(db).query_db(query, data)
     
+    @classmethod
+    def update(cls, data):
+        """Update an existing option's text.
+        
+        Args:
+            data (dict): Must contain 'option_id' and 'option_text'
+        
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        query = """
+        UPDATE `option` 
+        SET option_text = %(option_text)s
+        WHERE option_id = %(option_id)s;
+        """
+        return connectToMySQL(db).query_db(query, data)
+    
+    @classmethod
+    def deleteById(cls, data):
+        """Delete a specific option by its ID.
+        
+        Args:
+            data (dict): Must contain 'option_id'
+        
+        Returns:
+            bool: True if successful, False otherwise
+        
+        Note:
+            This will cascade delete any votes associated with this option
+            due to the ON DELETE CASCADE foreign key constraint.
+        """
+        query = "DELETE FROM `option` WHERE option_id = %(option_id)s;"
+        return connectToMySQL(db).query_db(query, data)    
     # Additional methods for updating or retrieving options can be added here as needed.
-
-    # Is a method to get all options needed? If so, implement similarly to Events.getAll()
-
-    # Is a method to update an option needed? If so, implement similarly to Events.editEvent()
-
-    # Is a method to delete an option by its own ID needed? If so, implement similarly to Events.deleteEvent()
-
-    # Is a method to get vote counts for options needed? If so, implement as required.
-
     

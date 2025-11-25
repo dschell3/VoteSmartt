@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}About Us - VoteSmartt{% endblock %}
+
+{% block extra_css %}
+.about-grid { display: grid; gap: 2.5rem; grid-template-columns: repeat(1, 1fr); }
+/* two columns on medium screens, three on large */
+@media (min-width: 640px) { .about-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .about-grid { grid-template-columns: repeat(2, 1fr); } }
+.member-card{background:#fff;border-radius:16px;box-shadow:0 8px 28px rgba(2,6,23,0.06);padding:24px;display:flex;flex-direction:column;gap:18px;}
+.avatar-box{width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;}
+.avatar-box img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  transform: scale(0.90); /* zoom-out so images show more of the subject */
+  transform-origin: center center;
+  transition: transform 260ms ease;
+}
+
+.avatar-box img.fit-back {
+  transform: scale(1); /* helper class if you want to opt-out for a specific image */
+}
+.info-panel{background:linear-gradient(90deg,#0b3b7a,#155ac2);color:#fff;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:6px;}
+.role-pill{display:inline-block;background:rgba(255,255,255,0.18);padding:4px 10px;border-radius:999px;font-size:12px;letter-spacing:.5px;}
+.social-row a{color:#fff;opacity:.85;transition:.2s;} .social-row a:hover{opacity:1;}
+
+/* Info area layout inside each card: two columns on wider screens */
+.info-grid{display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
+@media (min-width:640px){ .info-grid{grid-template-columns:1fr 1fr;} }
+
+.meta-label{display:block;font-size:12px;opacity:.9;margin-bottom:6px}
+.skill-pills{display:flex;flex-wrap:wrap;gap:8px}
+.skill-pill{background:rgba(255,255,255,0.14);color:#fff;padding:6px 10px;border-radius:999px;font-size:12px}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-12">
+  <h1 class="text-3xl font-extrabold tracking-tight">{{ data.title }}</h1>
+  {% if data.intro %}
+  <p class="mt-4 text-slate-600 max-w-3xl leading-relaxed">{{ data.intro }}</p>
+  {% endif %}
+
+  <div class="about-grid mt-10">
+    {% for m in data.members %}
+    <div class="member-card">
+      <div class="avatar-box">
+        <img src="{{ m.avatar_url or url_for('static', filename='media/default-avatar.svg') }}" alt="{{ m.name }} avatar" loading="lazy" />
+      </div>
+      <div class="info-panel">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <h2 class="text-lg font-semibold">{{ m.name }}</h2>
+        </div>
+
+        <div class="info-grid">
+          <div class="meta-col">
+            {% if m.education %}
+              {% if m.education[0] is defined %}
+                <div class="meta-label" style="font-weight:bold ;">Education</div>
+                <div class="text-sm leading-relaxed opacity-90">{{ m.education[0] }}</div>
+              {% else %}
+                <div class="meta-label" style="font-weight:bold ;">Education</div>
+                <div class="text-sm leading-relaxed opacity-90">{{ m.education }}</div>
+              {% endif %}
+            {% endif %}
+
+            {% if m.workExperience and m.workExperience|length > 0 %}
+              <div class="mt-3 meta-label">Experience</div>
+              <div class="text-sm leading-relaxed opacity-90">{{ m.workExperience[0] }}</div>
+            {% endif %}
+          </div>
+
+          <div class="skills-col">
+            {% if m.professionalSkills and m.professionalSkills|length > 0 %}
+              <div class="meta-label">Professional Skills</div>
+              <div class="skill-pills">
+                {% for s in m.professionalSkills %}
+                  <span class="skill-pill">{{ s }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            {% if m.technicalSkills and m.technicalSkills|length > 0 %}
+              <div class="mt-3 meta-label">Technical Skills</div>
+              <div class="skill-pills">
+                {% for s in m.technicalSkills %}
+                  <span class="skill-pill">{{ s }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="social-row flex gap-4 mt-2 text-sm">
+          {% if m.github %}<a href="{{ m.github }}" target="_blank" rel="noopener" class="underline">GitHub</a>{% endif %}
+          {% if m.linkedin %}<a href="{{ m.linkedin }}" target="_blank" rel="noopener" class="underline">LinkedIn</a>{% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% if not data.members %}
+      <div class="col-span-full text-slate-500 text-sm">No members defined yet. Edit static/data/about.json.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

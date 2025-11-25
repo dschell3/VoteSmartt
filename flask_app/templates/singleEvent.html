@@ -3,23 +3,31 @@
 {% block title %}{{ event.title if event else 'Event' }} - VoteSmart{% endblock %}
 
 {% block extra_css %}
-/* Small scoped styles to make single event look professional */
+/* Single event page scoped styles */
 .event-hero { background: linear-gradient(90deg,#0b3b7a 0%,#155ac2 100%); color: white; border-radius: 12px; padding: 28px; }
 .event-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 8px 30px rgba(2,6,23,0.06); }
-.meta-pill { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:9999px; background:#f1f5f9; font-weight:600; color:#0b1220 }
 .cta-primary { background: linear-gradient(90deg,#0b3b7a,#155ac2); color:white; padding:10px 16px; border-radius:8px; font-weight:600 }
-.cta-ghost { border:1px solid rgba(11,18,32,0.06); padding:10px 14px; border-radius:8px }
+.cta-ghost { border:1px solid rgba(11,18,32,0.12); padding:10px 14px; border-radius:8px }
 .recommendation-item { transition:transform .15s ease, box-shadow .15s ease }
 .recommendation-item:hover { transform:translateY(-4px); box-shadow:0 10px 30px rgba(2,6,23,0.06) }
-
-@media (min-width: 1024px) {
-    .event-grid { display:grid; grid-template-columns: 1fr 360px; gap:28px }
-}
-
+.vote-stack { display:flex; flex-direction:column; gap:10px; }
+.vote-option { display:flex; align-items:flex-start; gap:10px; padding:14px 16px; border:1px solid #e2e8f0; border-radius:10px; cursor:pointer; background:#fff; transition:border-color .15s ease, background-color .15s ease; }
+.vote-option:hover { border-color:#cbd5e1; }
+.vote-option--selected { background:#eef5ff; border-color:#b9d0ff; }
+.winner-outline { outline:2px solid #22c55e; outline-offset:2px; border-color:#22c55e; }
+.welcome-banner { margin:4px 0 22px; padding:2px 0; }
+.welcome-banner h2 { font-size:1.55rem; font-weight:700; letter-spacing:.5px; color:#0b3b7a; }
+@media (min-width: 640px){ .welcome-banner h2 { font-size:1.65rem; } }
+@media (min-width: 1024px) { .event-grid { display:grid; grid-template-columns: 1fr 360px; gap:28px } }
 {% endblock %}
 
 {% block content %}
 <main class="max-w-6xl mx-auto px-6 py-12">
+    {# Silently consume flash messages without displaying them #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {# Messages consumed but not displayed - prevents carryover to other pages #}
+    {% endwith %}
+    
     {% if not event %}
     <div class="event-card text-center">
         <h2 class="text-2xl font-semibold">Event not found</h2>
@@ -28,40 +36,26 @@
     </div>
     {% else %}
 
-    <!-- Hero -->
+    <!-- Welcome banner OUTSIDE hero, left above blue card -->
+    <div class="welcome-banner">
+        <h2>Welcome {{ first_name if first_name else 'User' }}</h2>
+    </div>
+
+    <!-- Hero simplified: title / description / status left; organizer & timer right -->
     <section class="event-hero mb-8">
         <div class="flex items-start justify-between gap-6 flex-col lg:flex-row">
             <div class="flex-1">
                 <h1 class="text-3xl lg:text-4xl font-extrabold">{{ event.title }}</h1>
                 <p class="mt-3 text-slate-100 max-w-2xl">{{ event.description }}</p>
-
-                <div class="mt-4 flex flex-wrap items-center gap-3">
-                    <span class="meta-pill">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"></path></svg>
-                        <span id="startDisplay">&mdash;</span>
-                    </span>
-
-                    <span class="meta-pill">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h18"></path></svg>
-                        <span id="endDisplay">&mdash;</span>
-                    </span>
-
-                    <span id="liveStatus" class="meta-pill" style="background:rgba(255,255,255,0.12); color:#fff">&mdash;</span>
+                <div class="mt-4 text-sm font-semibold tracking-wide">
+                    <span>Status: <span id="liveStatus" class="font-normal">&mdash;</span></span>
                 </div>
             </div>
 
-            <div class="mt-6 lg:mt-0">
-                <div class="event-card text-right">
-                    <div class="text-sm text-slate-500">Organized by</div>
-                    <div class="mt-1 font-semibold">User #{{ event.created_by }}</div>
-                    <div class="mt-4">
-                        <div id="timerLarge" class="text-indigo-600 font-medium">&mdash;</div>
-                    </div>
-                    <div class="mt-6 flex gap-3 justify-end">
-                        <a href="/eventList" class="cta-ghost">Back</a>
-                        <a href="#" class="cta-primary">Register</a>
-                    </div>
-                </div>
+            <div class="flex flex-col items-end gap-2 lg:mt-0">
+                <div class="text-sm">Organized by</div>
+                <div class="text-white font-semibold">{{ event.creator_full_name if event.creator_full_name else 'Unknown User' }}</div>
+                <div id="timerLarge" class="text-indigo-200 font-medium mt-2">&mdash;</div>
             </div>
         </div>
     </section>
@@ -71,10 +65,6 @@
         <section>
             <div class="event-card">
                 <h2 class="text-xl font-semibold">About this event</h2>
-                <div class="mt-4 text-slate-700 leading-relaxed">
-                    {{ event.description }}
-                </div>
-
                 <div class="mt-6">
                     <h3 class="text-sm text-slate-500 font-semibold">Details</h3>
                     <ul class="mt-3 space-y-3 text-sm text-slate-600">
@@ -87,27 +77,118 @@
 
             </div>
 
-            <!-- Description / long copy area could include attachments, media etc. -->
-            <div class="mt-6 event-card">
-                <h3 class="text-lg font-semibold">Full description</h3>
-                <div class="mt-3 text-slate-700 leading-relaxed">
-                    {{ event.description }}
-                </div>
+            {# Removed separate Full description block per new layout #}
+
+            <!-- Ballot / Results -->
+            <div class="mt-6 event-card" id="ballot">
+                {% if is_open %}
+                    <h3 class="text-lg font-semibold mb-4">Have a Pick</h3>
+                    
+                    {# NEW: Check if user is the event creator #}
+                    {% if is_event_creator %}
+                        {# Show disabled voting interface with explanation for event creators #}
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <div>
+                                    <p class="font-medium text-yellow-800">Event creators cannot vote</p>
+                                    <p class="text-sm text-yellow-700 mt-1">As the creator of this event, you cannot participate in voting to maintain integrity and impartiality.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if not options %}
+                            <div class="text-sm text-slate-500">No options available for voting.</div>
+                        {% else %}
+                            {# Show voting options in disabled state #}
+                            <div class="space-y-2 opacity-60 pointer-events-none">
+                                {% for o in options %}
+                                <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-200 bg-slate-50 cursor-not-allowed">
+                                    <input type="radio" class="mt-1" name="option_id_disabled" value="{{ o.option_id }}" disabled />
+                                    <div>
+                                        <div class="font-medium text-slate-600">{{ o.option_text }}</div>
+                                    </div>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" class="cta-primary opacity-50 cursor-not-allowed" disabled>
+                                    Submit Vote (Disabled)
+                                </button>
+                            </div>
+                        {% endif %}
+                    
+                    {% else %}
+                        {# Normal voting interface for non-creators #}
+                        {% if not options %}
+                            <div class="text-sm text-slate-500">No options available for voting.</div>
+                        {% else %}
+                            <form action="/vote/cast" method="post" class="space-y-3">
+                                <input type="hidden" name="event_id" value="{{ event.event_id }}" />
+                                <div class="vote-stack">
+                                    {% for o in options %}
+                                    <label class="vote-option {{ 'vote-option--selected' if selected_option_id==o.option_id else '' }}">
+                                        <input type="radio" class="mt-1" name="option_id" value="{{ o.option_id }}" {{ 'checked' if selected_option_id==o.option_id }} />
+                                        <div class="font-medium text-slate-800">{{ o.option_text }}</div>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                                <div class="flex items-center gap-3 pt-2">
+                                    <button type="submit" class="cta-primary">{{ 'Update Vote' if selected_option_id else 'Submit Vote' }}</button>
+                                    {% if selected_option_id %}
+                                    <!-- Avoid nested forms: use HTML5 formaction to post to delete endpoint -->
+                                    <button type="submit"
+                                            class="cta-ghost"
+                                            formmethod="post"
+                                            formaction="/vote/delete"
+                                            onclick="return confirm('Retract your vote?');">
+                                        Retract Vote
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                {% if selected_option_id %}
+                                <div class="text-xs text-slate-500">You have voted already. You can update or retract while the event remains open.</div>
+                                {% endif %}
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <h3 id="resultsHeading" class="text-lg font-semibold mb-4">Results</h3>
+                    <div role="region" aria-labelledby="resultsHeading">
+                        {% if not tallies %}
+                            <div class="text-sm text-slate-500">No votes yet.</div>
+                        {% else %}
+                            <div class="vote-stack" role="list">
+                                {% for t in tallies %}
+                                <div class="vote-option {{ 'winner-outline' if winner_option_ids and t.option_id in winner_option_ids }}" role="listitem">
+                                    <div class="flex justify-between w-full">
+                                        <div>
+                                            <div class="font-medium text-slate-800">{{ t.option_text }}</div>
+                                            <div class="text-xs text-slate-500 mt-1">{{ t.votes }} vote{{ 's' if t.votes != 1 }}</div>
+                                        </div>
+                                        <div class="text-xl font-bold text-indigo-600">{{ t.votes }}</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
             </div>
         </section>
 
-        <!-- Sidebar: recommendations & quick actions -->
+        <!-- Sidebar: info/support + recommendations -->
         <aside>
-            <div class="event-card">
-                <h3 class="text-lg font-semibold">Quick actions</h3>
-                <div class="mt-3 flex flex-col gap-3">
-                    <a href="#" class="cta-primary text-center">Vote now</a>
-                    <a href="#" class="cta-ghost text-center">Share</a>
-                    <a href="#" class="cta-ghost text-center">Report</a>
+            <div class="event-card mb-6">
+                <h3 class="text-lg font-semibold mb-3">Info & Support</h3>
+                <div class="flex flex-col gap-3">
+                    <a href="/contact" class="cta-ghost text-center">Contact Us</a>
+                    <a href="#ballot" class="cta-ghost text-center">Voting Information</a>
                 </div>
             </div>
-
-            <div class="mt-6 event-card">
+            <div class="event-card">
                 <h4 class="text-lg font-semibold">You might also like</h4>
                 <div class="mt-3 space-y-3">
                     {% if recommendations %}
@@ -139,51 +220,25 @@
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/customParseFormat.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.9/plugin/relativeTime.min.js"></script>
+    <script src="{{ url_for('static', filename='js/time-utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/vote-interactions.js') }}"></script>
     <script>
         dayjs.extend(dayjs_plugin_customParseFormat);
         dayjs.extend(dayjs_plugin_relativeTime);
 
-        function tryParse(raw) {
-            if (!raw) return null;
-            let d = dayjs(raw);
-            if (d.isValid()) return d;
-            const formats = ['YYYY-MM-DD HH:mm:ss','YYYY-MM-DDTHH:mm:ss','YYYY-MM-DD'];
-            for (const f of formats) {
-                d = dayjs(raw, f);
-                if (d.isValid()) return d;
-            }
-            return null;
-        }
+        function tryParse(raw) { return (window.TimeUtils && TimeUtils.tryParse) ? TimeUtils.tryParse(raw) : null; }
 
         function formatDisplay(elId, raw) {
             const el = document.getElementById(elId);
             if (!el) return;
-            const d = tryParse(raw);
-            if (!d) { el.textContent = '—'; return; }
-            const hasTime = /\d{1,2}:\d{2}/.test(raw);
-            el.textContent = d.format(hasTime ? 'MMM D, YYYY · h:mm A' : 'MMM D, YYYY') + ' — ' + d.fromNow();
+            el.textContent = (window.TimeUtils && TimeUtils.formatSingle) ? TimeUtils.formatSingle(raw) : '—';
         }
 
-        function computeStatus(startRaw,endRaw) {
-            const now = dayjs();
-            const start = tryParse(startRaw);
-            const end = tryParse(endRaw);
-            if (!start && !end) return 'Unknown';
-            if (start && end) {
-                if (now.isBefore(start)) return 'Waiting';
-                if (now.isAfter(end)) return 'Closed';
-                return 'Open';
-            }
-            if (start && !end) return now.isBefore(start) ? 'Waiting' : 'Open';
-            if (!start && end) return now.isAfter(end) ? 'Closed' : 'Open';
-            return 'Unknown';
-        }
+        function computeStatus(startRaw,endRaw) { return (window.TimeUtils && TimeUtils.computeStatus) ? TimeUtils.computeStatus(startRaw,endRaw) : 'Unknown'; }
 
         document.addEventListener('DOMContentLoaded', function(){
             const startRaw = '{{ event.start_time or "" }}';
             const endRaw = '{{ event.end_time or "" }}';
-            formatDisplay('startDisplay', startRaw);
-            formatDisplay('endDisplay', endRaw);
             formatDisplay('detailStart', startRaw);
             formatDisplay('detailEnd', endRaw);
 
@@ -207,20 +262,14 @@
                 }
             }
 
-            function humanDuration(ms) {
-                if (ms <= 0) return 'Started';
-                const sec = Math.floor(ms/1000) % 60;
-                const min = Math.floor(ms/60000) % 60;
-                const hrs = Math.floor(ms/3600000) % 24;
-                const days = Math.floor(ms/86400000);
-                if (days>0) return days + 'd ' + hrs + 'h';
-                if (hrs>0) return hrs + 'h ' + min + 'm';
-                if (min>0) return min + 'm ' + sec + 's';
-                return sec + 's';
-            }
+            function humanDuration(ms) { return (window.TimeUtils && TimeUtils.humanDuration) ? TimeUtils.humanDuration(ms) : `${Math.floor(ms/1000)}s`; }
 
             tick();
             setInterval(tick,1000);
+
+            // Set results bar widths when present
+            // Removed pie-chart + bar width logic per simplified spec
         });
     </script>
+    {# Chart removed #}
 {% endblock %}
