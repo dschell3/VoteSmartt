@@ -285,7 +285,6 @@ def singleEvent(event_id):
         cur_user = get_current_user()
         if cur_user:
             is_event_creator = event.isCreatedBy(cur_user)
-            print(f"[singleEvent] user_id={getattr(cur_user, 'user_id', None)}, event.created_byFK={event.created_byFK}, is_event_creator={is_event_creator}")
     except Exception:
         pass
 
@@ -397,7 +396,6 @@ def editEventGet(event_id):
     try:
         existing_options = Option.getByEventId({'event_id': event_id})
     except Exception as e:
-        print(f"[ERROR] Failed to load options for event {event_id}: {e}")
         existing_options = []
 
     return render_template(

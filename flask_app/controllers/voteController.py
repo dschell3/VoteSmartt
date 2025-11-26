@@ -34,12 +34,6 @@ def cast_vote():
     event_id = request.form.get('event_id')
     option_id = request.form.get('option_id')
 
-    # Basic logging for troubleshooting
-    try:
-        print(f"[cast_vote] Incoming: event_id={event_id}, option_id={option_id}, user_id={getattr(user,'user_id',None)}")
-    except Exception:
-        pass
-
     # Validate form data
     if not event_id or not option_id:
         flash("Missing event or option.", "error")
@@ -61,7 +55,6 @@ def cast_vote():
     
     # Event creators are treated as admins for their events and cannot vote
     if event.isCreatedBy(user):
-        print(f"[BLOCKED] Creator vote blocked for user {user.user_id} on event {event_id}")
         flash("Event creators cannot vote on their own events.", "error")
         return redirect(f"/event/{event_id}")
     
@@ -164,4 +157,3 @@ def delete_vote():
     # Always redirect back to the event page to refresh state
     return redirect(f"/event/{event_id}")
 
-# Additional vote-related routes can be added here
