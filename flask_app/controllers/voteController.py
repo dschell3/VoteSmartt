@@ -61,7 +61,7 @@ def cast_vote():
         return redirect('/eventList')
     
     # Event creators are treated as admins for their events and cannot vote
-    if event.created_byFK == user.user_id:
+    if event.is_created_by(user):
         flash("Event creators cannot vote on their own events.", "error")
         return redirect(f"/event/{event_id}")
     
@@ -141,7 +141,7 @@ def delete_vote():
         return redirect('/eventList')
     
     # This check is mostly defensive since creators shouldn't have votes to delete
-    if event.created_byFK == user.user_id:
+    if event.is_created_by(user):
         flash("Event creators cannot vote on their own events.", "error")
         return redirect(f"/event/{event_id}")
 

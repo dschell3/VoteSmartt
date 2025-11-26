@@ -340,3 +340,60 @@ class Events:
             return datetime.fromisoformat(value)
         except Exception:
             return None
+        
+    def get_editable_fields(self) -> dict:
+        """
+        Returns which fields can be edited based on current event status.
+        
+        Policy:
+            - Waiting: Can edit all fields (title, description, start_time, end_time)
+            - Open: Can edit title, description, end_time (not start_time)
+            - Closed: Can only edit description
+            - Unknown: Safe default - title and description only
+        
+        Returns:
+            dict with keys: 'title', 'description', 'start_time', 'end_time', 'status'
+            Boolean values indicate if field is editable, 'status' is the computed status string
+        """
+        # Default: title and description editable, times not
+        editable = {
+            'title': True,
+            'description': True,
+            'start_time': False,
+            'end_time': False,
+            'status': 'Unknown'
+        }
+        
+        try:
+            # Ensure start_time and end_time are timezone-aware for comparison
+            start_val = self.start_time
+            end_val = self.end_time
+            
+            # If they're datetime objects without timezone, add UTC
+            if isinstance(start_val, datetime) and start_val.tzinfo is None:
+                start_val = start_val.replace(tzinfo=timezone.utc)
+            if isinstance(end_val, datetime) and end_val.tzinfo is None:
+                end_val = end_val.replace(tzinfo=timezone.utc)
+            
+            status = Events.compute_status(start_val, end_val)
+            editable['status'] = status
+            
+            if status == 'Waiting':
+                editable['start_time'] = True
+                editable['end_time'] = True
+            elif status == 'Open':
+                editable['end_time'] = True
+            elif status == 'Closed':
+                editable['title'] = False
+            # else: Unknown - keep defaults
+            
+        except Exception as e:
+            print(f"[ERROR] get_editable_fields status computation failed: {e}")
+        
+        return editable
+    
+    def isCreatedBy(self, user) -> bool:
+        """Check if this event was created by the given user."""
+        if not user:
+            return False
+        return self.created_byFK == user.user_id

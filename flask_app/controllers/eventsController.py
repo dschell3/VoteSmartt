@@ -334,15 +334,8 @@ def deleteEvent(event_id):
         flash("Event not found.", "error")
         return redirect(url_for('eventList'))
 
-    # Permission check (tolerate missing method can_manage_events)
-    can_manage = False
-    if user:
-        try:
-            can_manage = getattr(user, 'can_manage_events', lambda: False)()
-        except Exception:
-            can_manage = False
-
-    if not user or (event.created_byFK != getattr(user, 'user_id', None) and not can_manage):
+    # Permission check
+    if not user or not user.can_manage_event(event):
         flash("You can only delete events that you created.", "error")
         return redirect(url_for('eventList'))
 
@@ -416,8 +409,7 @@ def singleEvent(event_id):
     try:
         cur_user = get_current_user()
         if cur_user:
-            # Check if current user is the creator of this event
-            is_event_creator = (event.created_byFK == cur_user.user_id)
+            is_event_creator = event.is_created_by(cur_user)
     except Exception:
         pass
 
@@ -491,7 +483,9 @@ def _normalize_full(val_date_only: str, val_local: str):
         raw = raw + ' 00:00:00'
     return raw
 
-
+# TODO - Trying to improve MVC separation by moving logic to models where possible
+# If system testing passes, remove comments and finalize refactoring
+'''
 def _can_edit_fields_by_status(status):
     """Return booleans controlling which fields are editable under a given status.
     Policy: Waiting -> can edit start/end/title/desc; Open -> can edit end/title/desc; Closed -> only desc.
@@ -519,7 +513,7 @@ def _can_edit_fields_by_status(status):
         can_start = False
         can_end = False
     return can_title, can_desc, can_start, can_end
-
+'''
 
 @app.route('/events/<int:event_id>/edit')
 def editEventGet(event_id):
@@ -540,41 +534,15 @@ def editEventGet(event_id):
         return redirect(url_for('eventList'))
 
     # Permission: creator or admin
-    can_manage = False
-    if user:
-        try:
-            is_admin = 1 if session.get('isAdminByID', 0) == 1 else 0
-            can_manage = getattr(user, 'can_manage_events', lambda: False)() or (event.created_byFK == getattr(user, 'user_id', None)) or bool(is_admin)
-        except Exception:
-            can_manage = (event.created_byFK == getattr(user, 'user_id', None))
-    if not user or not can_manage:
+    if not user or not user.can_manage_event(event):
         flash("You can only edit events that you created.", "error")
         return redirect(url_for('eventList'))
 
-    # Compute current status to drive editability
-    try:
-        # Ensure start_time and end_time are timezone-aware
-        start_val = event.start_time
-        end_val = event.end_time
-        
-        # If they're datetime objects without timezone, add UTC
-        if isinstance(start_val, datetime) and start_val.tzinfo is None:
-            start_val = start_val.replace(tzinfo=timezone.utc)
-        if isinstance(end_val, datetime) and end_val.tzinfo is None:
-            end_val = end_val.replace(tzinfo=timezone.utc)
-        
-        status = Events.compute_status(start_val, end_val)
-        
-        # DEBUG (remove after testing)
-        print(f"[DEBUG] Event {event_id} status: {status}")
-    
-    except Exception as e:
-        print(f"[ERROR] Status computation failed: {e}")
-        status = 'Unknown'
-
-    can_title, can_desc, can_start, can_end = _can_edit_fields_by_status(status)
+    # Get editable fields based on event status
+    editable = event.get_editable_fields()
 
     user_data = get_user_session_data()
+    
     # Prefill strings for datetime-local inputs
     prefill_start_local = _fmt_local_dt(event.start_time)
     prefill_end_local = _fmt_local_dt(event.end_time)
@@ -593,10 +561,10 @@ def editEventGet(event_id):
         event=event,
         prefill_start_local=prefill_start_local,
         prefill_end_local=prefill_end_local,
-        can_edit_title=can_title,
-        can_edit_desc=can_desc,
-        can_edit_start=can_start,
-        can_edit_end=can_end,
+        can_edit_title=editable['title'],
+        can_edit_desc=editable['description'],
+        can_edit_start=editable['start_time'],
+        can_edit_end=editable['end_time'],
         existing_options=existing_options,
         **user_data
     )
@@ -621,23 +589,17 @@ def editEventPost(event_id):
         return redirect(url_for('eventList'))
 
     # Permission check
-    can_manage = False
-    if user:
-        try:
-            is_admin = 1 if session.get('isAdminByID', 0) == 1 else 0
-            can_manage = getattr(user, 'can_manage_events', lambda: False)() or (event.created_byFK == getattr(user, 'user_id', None)) or bool(is_admin)
-        except Exception:
-            can_manage = (event.created_byFK == getattr(user, 'user_id', None))
-    if not user or not can_manage:
+    if not user or not user.can_manage_event(event):
         flash("You can only edit events that you created.", "error")
         return redirect(url_for('eventList'))
 
-    # Current status
-    try:
-        status = Events.compute_status(event.start_time, event.end_time)
-    except Exception:
-        status = 'Unknown'
-    can_title, can_desc, can_start, can_end = _can_edit_fields_by_status(status)
+    # Get editable fields and status
+    editable = event.get_editable_fields()
+    status = editable['status']
+    can_title = editable['title']
+    can_desc = editable['description']
+    can_start = editable['start_time']
+    can_end = editable['end_time']
 
     # Read fields
     title = request.form.get('title', '').strip()

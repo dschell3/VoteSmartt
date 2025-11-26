@@ -57,7 +57,7 @@ def require_admin():
         False if user IS admin (allowed to proceed)
     """
     user = get_current_user()
-    if not user or not user.can_manage_events():
+    if not user or not user.is_admin():
         flash("Access denied. Administrators only.", "error")
         return True
     return False

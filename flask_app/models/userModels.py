@@ -36,9 +36,9 @@ class User:
         Admins are prohibited from voting to maintain integrity"""
         return not self.is_admin
 
-    def can_manage_events(self) -> bool:
-        """Only admins can create/edit/delete voting events"""
-        return self.is_admin
+    def can_manage_event(self, event) -> bool:
+        """Can user manage this specific event? (admin or creator)"""
+        return self.is_admin or (event.created_byFK == self.user_id)
     
     def can_manage_users(self) -> bool:
         """Only admins can manage user accounts"""
@@ -113,6 +113,7 @@ class User:
     
 
     # ===== PASSWORD RESET TOKEN FLOW =====
+
     @classmethod
     def createPasswordResetToken(cls, email: str, ttl_minutes: int = 30):
         """Create a one-time password reset token for the given email.

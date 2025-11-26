@@ -183,7 +183,9 @@ def register():
     password = request.form.get('password', '')
     phone = request.form.get('phone', '').strip()
     
-    '''
+    ''' TODO - If system testing passes, remove individual validations 
+               below in favor of single all-in-one validator
+               
     # Validate using centralized validators
     errors = []
     
@@ -214,7 +216,7 @@ def register():
     '''
     # Validate all registration fields at once
     errors = validate_all_registration_fields(first_name, last_name, email, password, phone)
-    
+
     # Check if email already exists (custom validation)
     existing_user = User.getUserByEmail({'email': email})
     if existing_user:
