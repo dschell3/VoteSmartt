@@ -25,9 +25,7 @@ def createEventRoute():
     redirect_url = require_login()
     if redirect_url:
         return redirect(redirect_url)
-    
-    # TODO - remove me  if create path works still; user = get_current_user()
-    
+        
     # Server-side validation - Now receiving LOCAL times directly
     title = request.form.get('title', '').strip()
     description = request.form.get('description', '').strip()
@@ -35,12 +33,6 @@ def createEventRoute():
     end_time_local = request.form.get('end_time', '').strip()      # LOCAL time from datetime-local
     candidate = request.form.getlist('candidates[]')
 
-    print(f"[DEBUG] Received LOCAL times: start={start_time_local}, end={end_time_local}")
-
-
-    print(f"[DEBUG] Received times (local): start={start_time_local}, end={end_time_local}")
-
-    # TODO - remove me  if create path works still; candidate_descs = request.form.getlist('candidate_descs[]')
     # Build candidate list early so it's always available (avoid elif-chain scoping issues)
     valid_candidates = [c.strip() for c in candidate if (c or '').strip()]
     
@@ -105,22 +97,6 @@ def createEventRoute():
                 if cand_error:
                     error_message = cand_error
                     break
-    
-    # === DEBUGGING: Print the exact validation error ===
-    if error_message:
-        print(f"[VALIDATION ERROR] {error_message}")
-        print(f"[VALIDATION ERROR] start_time_local: {start_time_local}")
-        print(f"[VALIDATION ERROR] end_time_local: {end_time_local}")
-        start_dt = parse_datetime(start_time_local)
-        now = get_now_pacific()
-        print(f"[VALIDATION ERROR] Parsed start_dt: {start_dt}")
-        print(f"[VALIDATION ERROR] Server now (Pacific): {now}")
-        if start_dt:
-            print(f"[VALIDATION ERROR] start_dt < now? {start_dt < now}")
-        
-        flash(error_message, 'error')
-        return redirect('/admin2')
-    
 
     # If there's a validation error, show only one message
     if error_message:
@@ -142,8 +118,6 @@ def createEventRoute():
     normalized_start = normalize_datetime_local(start_time_local)
     normalized_end = normalize_datetime_local(end_time_local)
 
-    print(f"[DEBUG] Normalized LOCAL times: start={normalized_start}, end={normalized_end}")
-
     # All validation passed, create the event using normalized times
     data = {
         'title': title,
@@ -163,33 +137,14 @@ def createEventRoute():
     # Create the event and capture its new ID so we can persist candidates
     new_event_id = None
     try:
-        print(f"[DEBUG] About to create event with data: {data}")
-        print(f"[DEBUG] Normalized start_time: {normalized_start}")
-        print(f"[DEBUG] Normalized end_time: {normalized_end}")
-        print(f"[DEBUG] Computed status: {data.get('status')}")
-        
-        new_event_id = Events.createEvent(data)
-        
-        print(f"[DEBUG] Event created successfully! new_event_id = {new_event_id}")
+        new_event_id = Events.createEvent(data)        
         flash('Event created successfully!', 'success')
-    except Exception as e:
-        # THIS IS THE CRITICAL PART - LOG THE ACTUAL ERROR
-        print(f"[ERROR] Failed to create event!")
-        print(f"[ERROR] Exception type: {type(e).__name__}")
-        print(f"[ERROR] Exception message: {str(e)}")
-        import traceback
-        print(f"[ERROR] Full traceback:")
-        traceback.print_exc()
-        
+    except Exception as e:        
         flash('Error creating event. Please try again.', 'error')
         return redirect('/admin2')
-
-    print(f"[DEBUG] After event creation, new_event_id = {new_event_id}")
     
-    # Persist candidate names (descriptions deferred per choice C)
-    # NOTE: valid_candidates was built during validation; we ignore candidate_descs for now.
+    # Persist candidate names 
     if new_event_id:
-        print(f"[DEBUG] Persisting {len(valid_candidates)} candidates...")
         # Deduplicate while preserving order
         seen = set()
         ordered_unique = []
@@ -199,18 +154,10 @@ def createEventRoute():
                 ordered_unique.append(c)
         try:
             for cand in ordered_unique:
-                print(f"[DEBUG] Creating candidate: {cand}")
                 Option.create({'option_text': cand, 'option_event_id': new_event_id})
-            print(f"[DEBUG] All candidates created successfully!")
         except Exception as e:
-            # Non‑fatal: event exists even if candidate insertion partially fails
-            print(f"[ERROR] Candidate insertion error for event {new_event_id}")
-            print(f"[ERROR] Exception: {str(e)}")
-            import traceback
-            traceback.print_exc()
             flash('Event created but some candidates failed to save.', 'error')
     else:
-        print("[ERROR] No new_event_id; skipping candidate persistence.")
         flash('Event was not created - please check the logs.', 'error')
 
     # Only redirect to event list if we successfully created the event
@@ -373,12 +320,12 @@ def singleEvent(event_id):
         is_open=is_open,
         event_status=status,
         selected_option_id=selected_option_id,
-        tallies=result.rows if not is_open else [], # updated to use result
-        winner_option_ids=result.getWinnerOptionIds() if not is_open else [], # updated to use result
-        total_votes=result.getTotalVotes() if not is_open else 0, # added total votes using result
+        tallies=result.rows if not is_open else [], 
+        winner_option_ids=result.getWinnerOptionIds() if not is_open else [], 
+        total_votes=result.getTotalVotes() if not is_open else 0, 
         is_event_creator=is_event_creator,
         **user_data
-    ) # FIXME - IF you don't like UI/UX revert back to previous version
+    ) 
 
 
 # ==========================
@@ -622,7 +569,6 @@ def editEventPost(event_id):
             # Validate minimum candidate count (must have at least 2 candidates for voting)
             if len(valid_candidates) < 2:
                 flash('Events must have at least 2 candidates. Please add more candidates before saving.', 'error')
-                print(f"[VALIDATION ERROR] Event {event_id}: Insufficient candidates ({len(valid_candidates)}/2 required)")
                 return redirect(url_for('editEventGet', event_id=event_id))
             
 
@@ -648,25 +594,20 @@ def editEventPost(event_id):
                             'option_id': int(cand_id),
                             'option_text': cand_text
                         })
-                        print(f"[DEBUG] Updated option {cand_id}: '{cand_text}'")
                 else:
                     # CREATE new option (no ID or ID not in existing set)
                     new_id = Option.create({
                         'option_text': cand_text,
                         'option_event_id': event_id
                     })
-                    print(f"[DEBUG] Created new option: '{cand_text}' with ID {new_id}")
             
             # DELETE options that were removed (exist in DB but not in submission)
             for opt in existing_options:
                 if str(opt.option_id) not in submitted_option_ids:
                     Option.deleteById({'option_id': opt.option_id})
-                    print(f"[DEBUG] Deleted option {opt.option_id}: '{opt.option_text}'")
             
-            print(f"[DEBUG] Candidate update complete for event {event_id}")
             
         except Exception as e:
-            print(f"[ERROR] Candidate update failed for event {event_id}: {e}")
             flash('Event updated but there was an error updating candidates.', 'warning')
             return redirect(url_for('editEventGet', event_id=event_id))
 

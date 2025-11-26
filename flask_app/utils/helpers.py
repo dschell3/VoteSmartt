@@ -91,13 +91,3 @@ def get_user_session_data():
         'user_id': user.user_id,
         'created_at': user.created_at
     }
-
-
-def is_logged_in():
-    """
-    Simple check if anyone is logged in.
-    
-    Returns:
-        True if user_id exists in session, False otherwise
-    """
-    return 'user_id' in session
