@@ -1,19 +1,106 @@
+"""
+Events Model - Database operations for voting events
+
+Timezone Strategy (KISS):
+- Database stores naive datetimes in Pacific time
+- PACIFIC_OFFSET defined once, used everywhere
+- compute_status() is the single source of truth for status calculation
+"""
+
 from flask_app.config.mysqlconnection import connectToMySQL
 from datetime import datetime, timezone, timedelta
 
 db = "mydb"
 
-# columns in event table are: event_id, title, description, start_time, end_time,
-#                             created_at, created_byFK, status
+# =============================================================================
+# TIMEZONE CONFIGURATION - Single source of truth
+# =============================================================================
+# Pacific Standard Time offset from UTC (UTC-8)
+# This doesn't handle DST, but keeps things simple. 
+# More complex handling can be added if needed.
+PACIFIC_OFFSET = timedelta(hours=-8)
 
-# Timezone configuration - can be changed later without modifying queries
-# For now, Pacific timezone (UTC-8). Later this could come from:
-# - Flask app config
-# - Environment variable
-# - User preferences
-# - Event-specific settings
-STORAGE_TIMEZONE_OFFSET = timedelta(hours=-8)  # Pacific Standard Time
 
+# =============================================================================
+# TIMEZONE HELPER FUNCTIONS - Used by model and can be imported by controllers
+# =============================================================================
+
+def get_now_pacific():
+    """Get current time in Pacific timezone as naive datetime.
+    
+    Use this for database comparisons since DB stores naive Pacific times.
+    """
+    now_utc = datetime.now(timezone.utc)
+    now_pacific = now_utc + PACIFIC_OFFSET
+    return now_pacific.replace(tzinfo=None)
+
+
+def parse_datetime(value):
+    """Parse a database datetime value into a naive datetime.
+    
+    Args:
+        value: String, datetime, or None
+        
+    Returns:
+        Naive datetime or None
+    """
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        # Strip timezone if present, return as-is
+        return value.replace(tzinfo=None) if value.tzinfo else value
+    
+    # Try common string formats
+    value = str(value).strip()
+    for fmt in ['%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', '%Y-%m-%d']:
+        try:
+            return datetime.strptime(value, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def compute_status(start_raw, end_raw):
+    """Compute event status: Waiting, Open, Closed, or Unknown.
+    
+    This is THE source of truth for status calculation.
+    All status checks should use this function.
+    
+    Args:
+        start_raw: Event start time (string or datetime, in Pacific)
+        end_raw: Event end time (string or datetime, in Pacific)
+        
+    Returns:
+        str: 'Waiting', 'Open', 'Closed', or 'Unknown'
+    """
+    start_dt = parse_datetime(start_raw)
+    end_dt = parse_datetime(end_raw)
+    
+    if not start_dt and not end_dt:
+        return 'Unknown'
+    
+    # Get current time in Pacific (naive) for comparison with DB values
+    now = get_now_pacific()
+    
+    # Simple comparisons - all times are naive Pacific
+    if start_dt and end_dt:
+        if now < start_dt:
+            return 'Waiting'
+        elif now >= end_dt:
+            return 'Closed'
+        else:
+            return 'Open'
+    elif start_dt and not end_dt:
+        return 'Waiting' if now < start_dt else 'Open'
+    elif end_dt and not start_dt:
+        return 'Closed' if now >= end_dt else 'Open'
+    
+    return 'Unknown'
+
+
+# =============================================================================
+# EVENTS MODEL CLASS
+# =============================================================================
 
 class Events:
     db = db
@@ -22,12 +109,15 @@ class Events:
         self.event_id = data['event_id']
         self.title = data['title']
         self.description = data['description']
-        self.start_time = data ['start_time']
-        self.end_time = data ['end_time']
+        self.start_time = data['start_time']
+        self.end_time = data['end_time']
         self.created_byFK = data['created_byFK']
-        self.created_at = data ['created_at']
-        self.status = data ['status']
-        
+        self.created_at = data['created_at']
+        self.status = data['status']
+
+    # =========================================================================
+    # CRUD OPERATIONS
+    # =========================================================================
 
     @classmethod
     def createEvent(cls, data):
@@ -52,86 +142,66 @@ class Events:
     @classmethod
     def deleteEvent(cls, data):
         query = '''
-                DELETE FROM event
-                WHERE event_id = %(event_id)s;
-                '''
+        DELETE FROM event
+        WHERE event_id = %(event_id)s;
+        '''
         return connectToMySQL(db).query_db(query, data)
+
+    # =========================================================================
+    # READ OPERATIONS
+    # =========================================================================
 
     @classmethod
     def getAllWithCreators(cls):
-        """
-        Get all events with creator information.
+        """Get all events with creator info, sorted by status then start_time."""
+        now = get_now_pacific()
         
-        Returns:
-            List[Event]: Events sorted by status (Open, Waiting, Closed)
-                        then by start_time within each status group.
-                        Each event includes computed status and creator info.
-        """
-        # Get events with creator info
         query = """
-        SELECT e.*, u.first_name, u.last_name
+        SELECT
+            e.*,
+            u.first_name AS creator_first_name,
+            u.last_name AS creator_last_name,
+            CASE
+                WHEN %(now)s < e.start_time THEN 'Waiting'
+                WHEN %(now)s >= e.end_time THEN 'Closed'
+                ELSE 'Open'
+            END AS computed_status
         FROM event e
         LEFT JOIN user u ON e.created_byFK = u.user_id
-        ORDER BY e.start_time ASC;
+        ORDER BY
+            FIELD(
+                CASE
+                    WHEN %(now)s < e.start_time THEN 'Waiting'
+                    WHEN %(now)s >= e.end_time THEN 'Closed'
+                    ELSE 'Open'
+                END,
+                'Open', 'Waiting', 'Closed'
+            ),
+            e.start_time ASC;
         """
-        result = connectToMySQL(db).query_db(query)
+        result = connectToMySQL(db).query_db(query, {'now': now})
+        
         events = []
-        for row in result:
-            # Create event object with additional creator info
-            event = cls(row)
-            event.creator_first_name = row.get('first_name', '')
-            event.creator_last_name = row.get('last_name', '')
-            event.creator_full_name = f"{row.get('first_name', '')} {row.get('last_name', '')}".strip()
-            events.append(event)
-        
-        # Compute status for each event
-        for event in events:
-            try:
-                event.status = cls.compute_status(event.start_time, event.end_time)
-            except Exception:
-                event.status = 'Unknown'
-        
-        # Sort by status priority, then by start time
-        status_priority = {
-            'Open': 0,
-            'Waiting': 1,
-            'Closed': 2,
-            'Unknown': 3
-        }
-        
-        def get_sort_key(event):
-            """Generate sort key: (status_priority, start_datetime)"""
-            priority = status_priority.get(event.status, 3)
-            
-            # Parse start time for sorting
-            start_dt = cls.parse_datetime(event.start_time)
-            if start_dt is None:
-                start_dt = datetime.max  # Push invalid dates to end
-            
-            return (priority, start_dt)
-        
-        # Sort events
-        try:
-            events.sort(key=get_sort_key)
-        except Exception:
-            pass  # If sorting fails, return in database order
+        if result:
+            for row in result:
+                event = cls(row)
+                event.creator_first_name = row.get('creator_first_name', '')
+                event.creator_last_name = row.get('creator_last_name', '')
+                event.creator_full_name = f"{row.get('creator_first_name', '')} {row.get('creator_last_name', '')}".strip()
+                event.computed_status = row.get('computed_status', 'Unknown')
+                events.append(event)
         
         return events
 
     @classmethod
+    def getAll(cls):
+        query = "SELECT * FROM event;"
+        result = connectToMySQL(db).query_db(query)
+        return [cls(row) for row in result] if result else []
+
+    @classmethod
     def getOne(cls, data):
-        """
-        Get a single event by ID with creator information.
-        
-        Args:
-            data: Dictionary with 'event_id' key
-            
-        Returns:
-            Events object with additional creator attributes:
-            - creator_first_name
-            - creator_last_name  
-            - creator_full_name
-        """
+        """Get single event by ID with creator info."""
         query = """
         SELECT e.*, u.first_name, u.last_name
         FROM event e
@@ -142,220 +212,64 @@ class Events:
         if not result:
             return None
         
-        # Create event object with additional creator info
         event = cls(result[0])
         event.creator_first_name = result[0].get('first_name', '')
         event.creator_last_name = result[0].get('last_name', '')
         event.creator_full_name = f"{result[0].get('first_name', '')} {result[0].get('last_name', '')}".strip()
-        
         return event
 
     @classmethod
     def getRecommendations(cls, data):
-        """Return up to 3 upcoming event (by start_time) excluding the provided event_id."""
+        """Return up to 3 upcoming events excluding the provided event_id."""
         query = """
         SELECT * FROM event
         WHERE event_id != %(event_id)s
-          AND (start_time IS NOT NULL)
+          AND start_time IS NOT NULL
         ORDER BY start_time ASC
         LIMIT 3;
         """
-        params = { 'event_id': data.get('event_id') }
-        result = connectToMySQL(db).query_db(query, params)
-        events = []
-        if not result:
-            return events
-        for row in result:
-            events.append(cls(row))
-        return events
-
-    '''
-    @classmethod
-    def getOpenEvents(cls):
-        """Get currently open events using timezone-adjusted comparison."""
-        now_in_storage_tz = cls._get_utc_now_as_storage_timezone()
-        
-        query = """
-        SELECT e.*
-        FROM event e
-        WHERE e.start_time <= %(now)s AND e.end_time > %(now)s
-        ORDER BY e.start_time ASC;
-        """
-        data = {'now': now_in_storage_tz}
-        result = connectToMySQL(cls.db).query_db(query, data)
+        result = connectToMySQL(db).query_db(query, {'event_id': data.get('event_id')})
         return [cls(row) for row in result] if result else []
-    '''
 
     @classmethod
     def getUpcoming(cls, limit=None):
-        """Get future events by comparing against timezone-adjusted current time.
+        """Get future events."""
+        now = get_now_pacific()
         
-        Instead of converting all database times in SQL, we convert the
-        current time to match the storage timezone. This is more efficient
-        and keeps the query simple.
-        
-        Args:
-            limit: Optional maximum number of events to return
-            
-        Returns:
-            List of Event objects scheduled to start in the future
-        """
-        # Get current time in storage timezone for accurate comparison
-        now_in_storage_tz = cls._get_utc_now_as_storage_timezone()
-        
-        query = """
-        SELECT e.*
-        FROM event e
-        WHERE e.start_time > %(now)s
-        ORDER BY e.start_time ASC
-        """
+        query = "SELECT * FROM event WHERE start_time > %(now)s ORDER BY start_time ASC"
         if limit:
             query += f" LIMIT {limit}"
         query += ";"
         
-        data = {'now': now_in_storage_tz}
-        result = connectToMySQL(cls.db).query_db(query, data)
+        result = connectToMySQL(db).query_db(query, {'now': now})
         return [cls(row) for row in result] if result else []
 
-    '''
-    @classmethod
-    def getAllClosed(cls):
-        """Get closed events using timezone-adjusted comparison."""
-        now_in_storage_tz = cls._get_utc_now_as_storage_timezone()
-        
-        query = """
-        SELECT e.*
-        FROM event e
-        WHERE e.end_time <= %(now)s
-        ORDER BY e.end_time DESC;
-        """
-        data = {'now': now_in_storage_tz}
-        result = connectToMySQL(cls.db).query_db(query, data)
-        return [cls(row) for row in result] if result else []
-    '''
-    '''
-    @classmethod
-    def getAllWithStatus(cls):
-        """Get all events with computed status using timezone-adjusted comparison."""
-        now_in_storage_tz = cls._get_utc_now_as_storage_timezone()
-        
-        query = """
-        SELECT
-        e.*,
-        CASE
-            WHEN %(now)s < e.start_time THEN 'upcoming'
-            WHEN %(now)s >= e.end_time THEN 'closed'
-            ELSE 'open'
-        END AS status
-        FROM event e
-        ORDER BY e.start_time ASC;
-        """
-        data = {'now': now_in_storage_tz}
-        result = connectToMySQL(cls.db).query_db(query, data)
-        return [cls(row) for row in result] if result else []
-    '''
-    @classmethod
-    def _get_utc_now_as_storage_timezone(cls):
-        """
-        Get current UTC time expressed in storage timezone format.
-        
-        This allows us to compare storage times (Pacific) with current time
-        by converting current time TO storage timezone instead of converting
-        all stored times TO UTC in the query.
-        
-        Returns:
-            datetime: Current time in storage timezone (naive datetime)
-        """
-        now_utc = datetime.now(timezone.utc)
-        now_storage = now_utc + STORAGE_TIMEZONE_OFFSET
-        return now_storage.replace(tzinfo=None)  # Return as naive datetime
-    
+    # =========================================================================
+    # STATIC METHODS - Expose module functions for backwards compatibility
+    # =========================================================================
+
     @staticmethod
     def compute_status(start_raw, end_raw):
-        """Compute event status by converting stored Pacific times to UTC for comparison.
-        
-        Times are stored in the database in Pacific timezone (PST, UTC-8).
-        This method converts them to UTC before comparing with current UTC time.
-        """
-        from datetime import timedelta
-        
-        now_utc = datetime.now(timezone.utc)
-        
-        # Parse stored times (which are in Pacific timezone)
-        start_local = Events.parse_datetime(start_raw)
-        end_local = Events.parse_datetime(end_raw)
-        
-        if not start_local and not end_local:
-            return 'Unknown'
-        
-        # Pacific timezone is UTC-8 (PST)
-        pacific_offset = timedelta(hours=-8)
-        
-        # Convert Pacific times to UTC for comparison
-        if start_local:
-            # Treat stored time as Pacific (naive datetime), convert to UTC
-            start_local_aware = start_local.replace(tzinfo=timezone(pacific_offset))
-            start_utc = start_local_aware.astimezone(timezone.utc)
-        else:
-            start_utc = None
-        
-        if end_local:
-            # Treat stored time as Pacific (naive datetime), convert to UTC
-            end_local_aware = end_local.replace(tzinfo=timezone(pacific_offset))
-            end_utc = end_local_aware.astimezone(timezone.utc)
-        else:
-            end_utc = None
-        
-        # Now compare with current UTC time
-        if start_utc and end_utc:
-            if now_utc < start_utc:
-                return 'Waiting'
-            if now_utc > end_utc:
-                return 'Closed'
-            return 'Open'
-        if start_utc and not end_utc:
-            return 'Waiting' if now_utc < start_utc else 'Open'
-        if end_utc and not start_utc:
-            return 'Closed' if now_utc > end_utc else 'Open'
-        
-        return 'Unknown'
+        """Compute event status. Delegates to module-level function."""
+        return compute_status(start_raw, end_raw)
 
     @staticmethod
     def parse_datetime(value):
-        """Try to parse a DB value into a naive datetime. Return None if impossible."""
-        if not value:
-            return None
-        # If it's already a datetime object
-        if isinstance(value, datetime):
-            return value
-        # Try common string formats
-        fmts = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"]
-        for f in fmts:
-            try:
-                return datetime.strptime(value, f)
-            except Exception:
-                continue
-        # Fallback: try fromisoformat
-        try:
-            return datetime.fromisoformat(value)
-        except Exception:
-            return None
-        
+        """Parse datetime. Delegates to module-level function."""
+        return parse_datetime(value)
+
+    # =========================================================================
+    # INSTANCE METHODS
+    # =========================================================================
+
     def get_editable_fields(self) -> dict:
-        """
-        Returns which fields can be edited based on current event status.
+        """Determine which fields can be edited based on event status.
         
         Policy:
-            - Waiting: Can edit all fields (title, description, start_time, end_time)
+            - Waiting: All fields editable
             - Open: Can edit title, description, end_time (not start_time)
-            - Closed: Can only edit description
-            - Unknown: Safe default - title and description only
-        
-        Returns:
-            dict with keys: 'title', 'description', 'start_time', 'end_time', 'status'
-            Boolean values indicate if field is editable, 'status' is the computed status string
+            - Closed: Only description editable
         """
-        # Default: title and description editable, times not
         editable = {
             'title': True,
             'description': True,
@@ -365,17 +279,8 @@ class Events:
         }
         
         try:
-            # Ensure start_time and end_time are timezone-aware for comparison
-            start_val = self.start_time
-            end_val = self.end_time
-            
-            # If they're datetime objects without timezone, add UTC
-            if isinstance(start_val, datetime) and start_val.tzinfo is None:
-                start_val = start_val.replace(tzinfo=timezone.utc)
-            if isinstance(end_val, datetime) and end_val.tzinfo is None:
-                end_val = end_val.replace(tzinfo=timezone.utc)
-            
-            status = Events.compute_status(start_val, end_val)
+            # Use the centralized compute_status - pass raw values, let it handle parsing
+            status = compute_status(self.start_time, self.end_time)
             editable['status'] = status
             
             if status == 'Waiting':
@@ -385,15 +290,24 @@ class Events:
                 editable['end_time'] = True
             elif status == 'Closed':
                 editable['title'] = False
-            # else: Unknown - keep defaults
-            
+                
         except Exception as e:
-            print(f"[ERROR] get_editable_fields status computation failed: {e}")
+            print(f"[ERROR] get_editable_fields failed: {e}")
         
         return editable
-    
+
     def isCreatedBy(self, user) -> bool:
         """Check if this event was created by the given user."""
         if not user:
             return False
         return self.created_byFK == user.user_id
+
+    def can_manage_event(self, event) -> bool:
+        """Check if user can manage this event (creator or admin)."""
+        if not hasattr(self, 'isAdmin'):
+            return False
+        if self.isAdmin:
+            return True
+        return event.created_byFK == self.user_id
+
+

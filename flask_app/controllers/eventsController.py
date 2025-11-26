@@ -1,6 +1,6 @@
 from flask import flash, url_for, redirect, session, render_template, request
 from flask_app import app
-from flask_app.models.eventsModels import Events
+from flask_app.models.eventsModels import Events, compute_status, _parse_datetime
 from flask_app.models.optionModels import Option
 from flask_app.models.voteModels import Vote
 from flask_app.models.resultsModel import Result
@@ -206,7 +206,7 @@ def createEventRoute():
     
     # compute initial status from provided times
     try:
-        data['status'] = Events.compute_status(data.get('start_time'), data.get('end_time'))
+        data['status'] = compute_status(data.get('start_time'), data.get('end_time'))
     except Exception:
         data['status'] = 'Unknown'
 
@@ -370,7 +370,7 @@ def singleEvent(event_id):
     # compute statuses for recommendations
     for r in recs:
         try:
-            r.status = Events.compute_status(r.start_time, r.end_time)
+            r.status = compute_status(r.start_time, r.end_time)
         except Exception:
             r.status = 'Unknown'
     # Only recommend events that are currently open or upcoming
@@ -398,7 +398,7 @@ def singleEvent(event_id):
 
     # is event open for voting? (single status compute)
     try:
-        status = Events.compute_status(event.start_time, event.end_time)
+        status = compute_status(event.start_time, event.end_time)
     except Exception:
         status = 'Unknown'
     is_open = (status == 'Open')
