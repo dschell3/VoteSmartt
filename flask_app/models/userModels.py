@@ -2,7 +2,9 @@ from flask_app.config.mysqlconnection import connectToMySQL
 from flask_app.utils.validators import (
     validate_all_registration_fields, validate_email,
     validate_name, validate_password, validate_phone )
-
+import secrets
+import hashlib
+from datetime import datetime, timedelta
 db = "mydb"
 
 class User:

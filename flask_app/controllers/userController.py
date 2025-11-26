@@ -352,17 +352,17 @@ def reset_password_submit():
 
     if not token or not new_password or not confirm_password:
         flash("All fields are required", "error")
-        return redirect(request.referrer or '/login')
+        return redirect(request.referrer or '/')
 
     if new_password != confirm_password:
         flash("Passwords do not match", "error")
-        return redirect(request.referrer or '/login')
+        return redirect(request.referrer or '/')
 
     # Validate strength using centralized validator (detailed message)
     pw_error = validate_password(new_password)
     if pw_error:
         flash(pw_error, "error")
-        return redirect(request.referrer or '/login')
+        return redirect(request.referrer or '/')
 
     # Verify token again to prevent reuse and race conditions
     info = User.verifyPasswordResetToken(token)
@@ -374,7 +374,7 @@ def reset_password_submit():
     try:
         if bcrypt.check_password_hash(info['password'], new_password):
             flash("New password cannot be the same as your current password.", "error")
-            return redirect(request.referrer or '/login')
+            return redirect(request.referrer or '/')
     except Exception:
         pass
 
@@ -389,7 +389,7 @@ def reset_password_submit():
     User.consumePasswordResetToken(token)
 
     flash("Password successfully updated. Please log in.", "success")
-    return redirect('/login')
+    return redirect('/')
 
 
 # ================================
