@@ -238,13 +238,27 @@ class Events:
         return connectToMySQL(db).query_db(query, data)
 
     # =========================================================================
-    # READ OPERATIONS
+    # READ OPERATIONS - QUERY METHODS
     # =========================================================================
 
     @classmethod
     def getAllWithCreators(cls):
-        """Get all events with creator info, sorted by status then start_time."""
-        now = get_now_pacific()
+        """
+        Performs a LEFT JOIN with the user table to include creator's name.
+        Results are sorted by computed status (Open first, then Waiting, then
+        Closed) and then by start_time ascending within each status group.
+        
+        The status is computed in SQL using CASE expressions to ensure
+        consistency with the Python compute_status() function.
+        
+        Args:
+            None
+        
+        Returns:
+            list[Events]: List of Events objects with additional attributes:
+                          Returns empty list if no events exist.
+        """
+        now = get_now_pacific()             # Current time in Pacific (naive)
         
         query = """
         SELECT
@@ -271,6 +285,7 @@ class Events:
         """
         result = connectToMySQL(db).query_db(query, {'now': now})
         
+        # Transform DB rows into Events objects with extra attributes
         events = []
         if result:
             for row in result:
@@ -285,7 +300,20 @@ class Events:
 
     @classmethod
     def getOne(cls, data):
-        """Get single event by ID with creator info."""
+        """
+        Performs a LEFT JOIN with user table to include creator's name.
+        This is the primary method for fetching event details for display.
+        
+        Args:
+            data (dict): Dictionary containing:
+                         - 'event_id' (int): ID of event to retrieve (required)
+        
+        Returns:
+            Events: Events object with additional creator attributes if found:
+                    Returns None if event not found.
+        """
+        
+        # Join event with user to get creator info
         query = """
         SELECT e.*, u.first_name, u.last_name
         FROM event e
@@ -296,6 +324,7 @@ class Events:
         if not result:
             return None
         
+        # Create Events object with creator info
         event = cls(result[0])
         event.creator_first_name = result[0].get('first_name', '')
         event.creator_last_name = result[0].get('last_name', '')
@@ -304,7 +333,18 @@ class Events:
 
     @classmethod
     def getRecommendations(cls, data):
-        """Return up to 3 upcoming events excluding the provided event_id."""
+        """
+        Used to suggest other events to users after they view or vote on an
+        event. Excludes the currently viewed event and orders by start_time.
+        
+        Args:
+            data (dict): Dictionary containing:
+                         - 'event_id' (int): Current event ID to exclude
+        
+        Returns:
+            list[Events]: List of up to 3 Events objects, sorted by start_time.
+                          Returns empty list if no other events exist.
+        """
         query = """
         SELECT * FROM event
         WHERE event_id != %(event_id)s
@@ -317,30 +357,54 @@ class Events:
 
     @classmethod
     def getUpcoming(cls, limit=None):
-        """Get future events."""
+        """
+        Retrieves events whose start_time is after the current Pacific time.
+        Useful for displaying "upcoming events" sections on dashboards.
+        
+        Args:
+            limit (int, optional): Maximum number of events to return.
+                                   If None, returns all upcoming events.
+        
+        Returns:
+            list[Events]: List of Events objects with future start times,
+                          sorted by start_time ascending (soonest first).
+                          Returns empty list if no upcoming events.
+        """
         now = get_now_pacific()
         
         query = "SELECT * FROM event WHERE start_time > %(now)s ORDER BY start_time ASC"
         if limit:
             query += f" LIMIT {limit}"
         query += ";"
-        
         result = connectToMySQL(db).query_db(query, {'now': now})
-        return [cls(row) for row in result] if result else []
+        # return list of Events objects or empty list
+        return [cls(row) for row in result] if result else []       
 
 
     # =========================================================================
-    # INSTANCE METHODS
+    # INSTANCE METHODS - Operations on individual event objects
     # =========================================================================
 
     def get_editable_fields(self) -> dict:
-        """Determine which fields can be edited based on event status.
-        
-        Policy:
-            - Waiting: All fields editable
-            - Open: Can edit title, description, end_time (not start_time)
-            - Closed: Only description editable
         """
+        Implements business rules for field editability:
+            - Waiting (not started): All fields editable
+            - Open (voting in progress): Can edit title, description, end_time
+                                         Cannot edit start_time (already passed)
+            - Closed (voting ended): Only description editable
+        
+        Args:
+            None 
+        
+        Returns:
+            dict: Dictionary with field editability flags:
+                  - 'title' (bool): True if title can be edited
+                  - 'description' (bool): True if description can be edited
+                  - 'start_time' (bool): True if start_time can be edited
+                  - 'end_time' (bool): True if end_time can be edited
+                  - 'status' (str): Current computed status of the event
+        """
+        # Initialize with default values
         editable = {
             'title': True,
             'description': True,
@@ -350,44 +414,70 @@ class Events:
         }
         
         try:
-            # Use the centralized compute_status - pass raw values, let it handle parsing
+            # Use compute_status - pass raw values, let it handle parsing
             status = compute_status(self.start_time, self.end_time)
             editable['status'] = status
             
-            if status == 'Waiting':
+            # Apply business rules based on status
+            if status == 'Waiting':             
                 editable['start_time'] = True
                 editable['end_time'] = True
-            elif status == 'Open':
+            elif status == 'Open':              
                 editable['end_time'] = True
-            elif status == 'Closed':
+            elif status == 'Closed':            
                 editable['title'] = False
                 
         except Exception as e:
+            # Log error but return defaults
             print(f"[ERROR] get_editable_fields failed: {e}")
         
         return editable
 
     def isCreatedBy(self, user) -> bool:
-        """Check if this event was created by the given user."""
+        """
+        Compares the event's creator ID with the provided user's ID.
+        Used for permission checks (e.g., can user edit this event?).
+        
+        Args:
+            user: User object with a user_id attribute, or None.
+        
+        Returns:
+            bool: True if the user created this event, False otherwise.
+                  Returns False if user is None or comparison fails.
+        """
         if not user:
-            print(f"[isCreatedBy] No user provided, returning False")
             return False
         try:
+            # Convert both IDs to int for safe comparison
             self_id = int(self.created_byFK)
             user_id = int(user.user_id)
+            # Compare IDs
             result = self_id == user_id
-            print(f"[isCreatedBy] self.created_byFK={self_id}, user.user_id={user_id}, result={result}")
             return result
         except (ValueError, TypeError) as e:
-            print(f"[isCreatedBy] Exception: {e}, returning False")
-            return False
+            return False    # On error, treat as not created by user
 
     def can_manage_event(self, event) -> bool:
-        """Check if user can manage this event (creator or admin)."""
-        if not hasattr(self, 'isAdmin'):
+        """
+        Management permission is granted if the user is either:
+        1. An administrator (isAdmin = 1), OR
+        2. The creator of the event
+        
+        Note: This method is typically called on a User object, but is
+        included here for cases where an Events instance needs to check
+        permissions. See User.can_manage_event() for the primary implementation.
+        
+        Args:
+            event: Events object to check management permission for.
+        
+        Returns:
+            bool: True if this user can manage the event, False otherwise.
+        Check if user can manage this event (creator or admin).
+        """
+        if not hasattr(self, 'isAdmin'):            # Ensure isAdmin attribute exists
             return False
-        if self.isAdmin:
+        if self.isAdmin:                            # Admin users can always manage
             return True
-        return event.created_byFK == self.user_id
+        return event.created_byFK == self.user_id   # Creator can manage
 
 
