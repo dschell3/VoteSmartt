@@ -18,17 +18,6 @@ class Option:
         results = connectToMySQL(db).query_db(query, data)
         return [cls(row) for row in results]
     
-    '''
-    @classmethod
-    def getAll(cls):
-        query = "SELECT * FROM `option`;"
-        result = connectToMySQL(db).query_db(query)
-        events = []
-        for i in result:
-            events.append(cls(i))
-        return events
-    '''
-
     @classmethod
     def create(cls, data):
         query = '''

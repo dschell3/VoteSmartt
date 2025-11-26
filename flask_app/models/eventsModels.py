@@ -1,23 +1,45 @@
 """
+==============================================================================
 Events Model - Database operations for voting events
+==============================================================================
 
-Timezone Strategy (KISS):
-- Database stores naive datetimes in Pacific time
-- PACIFIC_OFFSET defined once, used everywhere
-- compute_status() is the single source of truth for status calculation
+This module handles all database operations related to voting events including
+creation, retrieval, modification, and deletion. It also provides timezone-aware
+status computation to determine if events are Waiting, Open, or Closed.
+
+Timezone Strategy (KISS Principle):
+    - Database stores naive datetimes in Pacific time
+    - PACIFIC_OFFSET defined once, used everywhere
+    - compute_status() is the single source of truth for status calculation
+
+Database Table: event
+    - event_id (INT, PK, AUTO_INCREMENT)
+    - title (VARCHAR(45))
+    - description (VARCHAR(255))
+    - start_time (DATETIME)
+    - end_time (DATETIME)
+    - created_at (VARCHAR(45))
+    - created_byFK (INT, FK -> user.user_id)
+    - status (VARCHAR(45))
+
+Related Tables:
+    - user (via created_byFK foreign key)
+    - option (options/candidates belong to events)
+==============================================================================
 """
 
 from flask_app.config.mysqlconnection import connectToMySQL
 from datetime import datetime, timezone, timedelta
 
+# =============================================================================
+# MODULE CONSTANTS
+# =============================================================================
+
 db = "mydb"
 
-# =============================================================================
-# TIMEZONE CONFIGURATION - Single source of truth
-# =============================================================================
 # Pacific Standard Time offset from UTC (UTC-8)
 # This doesn't handle DST, but keeps things simple. 
-# More complex handling can be added if needed.
+# For production, consider using pytz or zoneinfo for proper DST handling.
 PACIFIC_OFFSET = timedelta(hours=-8)
 
 
@@ -26,45 +48,61 @@ PACIFIC_OFFSET = timedelta(hours=-8)
 # =============================================================================
 
 def get_now_pacific():
-    """Get current time in Pacific timezone as naive datetime.
-    
-    Use this for database comparisons since DB stores naive Pacific times.
     """
-    now_utc = datetime.now(timezone.utc)
-    now_pacific = now_utc + PACIFIC_OFFSET
-    return now_pacific.replace(tzinfo=None)
+    This function converts the current UTC time to Pacific time and strips
+    the timezone info, making it suitable for comparison with database values
+    which are stored as naive Pacific datetimes.
+    
+    Args:
+        None
+    
+    Returns:
+        datetime: Current time in Pacific timezone as naive datetime object.
+                  Timezone info is stripped for database compatibility.
+    """
+    now_utc = datetime.now(timezone.utc)        # Current time in UTC
+    now_pacific = now_utc + PACIFIC_OFFSET      # Convert to Pacific time
+    return now_pacific.replace(tzinfo=None)     # Strip timezone info
 
 
 def parse_datetime(value):
-    """Parse a database datetime value into a naive datetime.
-    
+    """
+    Handles multiple input formats including datetime objects, strings in
+    various formats, and None values.
+
     Args:
         value: String, datetime, or None
         
     Returns:
         Naive datetime or None
     """
-    if not value:
+    if not value:                               # Handles None or empty
         return None
-    if isinstance(value, datetime):
+    if isinstance(value, datetime):             # Handle datetime objects
         # Strip timezone if present, return as-is
         return value.replace(tzinfo=None) if value.tzinfo else value
     
-    # Try common string formats
+    # Handle common string formats
     value = str(value).strip()
-    for fmt in ['%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', '%Y-%m-%d']:
+    for fmt in ['%Y-%m-%d %H:%M:%S', 
+                '%Y-%m-%dT%H:%M:%S', 
+                '%Y-%m-%dT%H:%M', 
+                '%Y-%m-%d %H:%M', 
+                '%Y-%m-%d']:
         try:
             return datetime.strptime(value, fmt)
         except ValueError:
-            continue
-    return None
+            continue                            # return None if all formats fail
+    return None                                 # No format matched, Unable to parse
 
 
 def compute_status(start_raw, end_raw):
-    """Compute event status: Waiting, Open, Closed, or Unknown.
-    
-    This is THE source of truth for status calculation.
-    All status checks should use this function.
+    """
+    Compute event status: Waiting, Open, Closed, or Unknown.
+        - 'Waiting': Current time is before start_time (event hasn't started)
+        - 'Open': Current time is between start_time and end_time (voting active)
+        - 'Closed': Current time is at or after end_time (voting ended)
+        - 'Unknown': Both start and end times are missing
     
     Args:
         start_raw: Event start time (string or datetime, in Pacific)
@@ -76,26 +114,28 @@ def compute_status(start_raw, end_raw):
     start_dt = parse_datetime(start_raw)
     end_dt = parse_datetime(end_raw)
     
-    if not start_dt and not end_dt:
+    if not start_dt and not end_dt:             # Both times missing
         return 'Unknown'
     
     # Get current time in Pacific (naive) for comparison with DB values
     now = get_now_pacific()
     
     # Simple comparisons - all times are naive Pacific
-    if start_dt and end_dt:
+    if start_dt and end_dt:                     # Both times present
         if now < start_dt:
             return 'Waiting'
         elif now >= end_dt:
             return 'Closed'
         else:
             return 'Open'
-    elif start_dt and not end_dt:
+    # Only start time present, waiting if before start, otherwise open indefinitely
+    elif start_dt and not end_dt:                 
         return 'Waiting' if now < start_dt else 'Open'
-    elif end_dt and not start_dt:
+    # Only end time present, closed if past end, otherwise open
+    elif end_dt and not start_dt:               
         return 'Closed' if now >= end_dt else 'Open'
     
-    return 'Unknown'
+    return 'Unknown'                            # Fallback, should not reach here  
 
 
 # =============================================================================
@@ -103,8 +143,20 @@ def compute_status(start_raw, end_raw):
 # =============================================================================
 
 class Events:
+    """
+    Represents a voting event (poll, survey, election, competition) in the
+    system. Provides CRUD operations and utility methods for event management.
+    Attributes correspond to the 'event' database table.
+    """
+    
+    # DB identifier for mySQL connection
     db = db
 
+    """
+    Creates an Events object by mapping database column values to
+    instance attributes. This constructor is typically called when
+    retrieving events from the database.
+    """
     def __init__(self, data):
         self.event_id = data['event_id']
         self.title = data['title']
@@ -121,6 +173,16 @@ class Events:
 
     @classmethod
     def createEvent(cls, data):
+        """
+        Inserts a new event record with the provided data. The created_at
+        timestamp is automatically set to the current time using MySQL's NOW().
+        
+        Args:
+            data (dict): Dictionary containing event data:
+                         
+        Returns:
+            int: event_id of the newly created event, or False if the insert failed.
+        """
         query = '''
         INSERT INTO event (title, description, start_time, end_time, created_byFK, created_at, status)
         VALUES (%(title)s, %(description)s, %(start_time)s, %(end_time)s, %(created_byFK)s, NOW(), %(status)s);
@@ -129,6 +191,21 @@ class Events:
 
     @classmethod
     def editEvent(cls, data):
+        """
+        Updates the title, description, start_time, and end_time of an event.
+        Note: created_byFK and created_at are intentionally NOT updated to
+        preserve the original creation metadata.
+        
+        Args:
+            data (dict): Dictionary containing update data:
+        
+        Returns:
+            bool: True if update was successful, False otherwise.
+        
+        Note:
+            The status field is not updated here because it should be
+            computed dynamically based on current time vs start/end times.
+        """
         query = '''
         UPDATE event
         SET title       = %(title)s,
@@ -141,6 +218,19 @@ class Events:
 
     @classmethod
     def deleteEvent(cls, data):
+        """
+        Delete an event from the database.
+        
+        Permanently removes an event record. Associated options (candidates)
+        should be deleted via cascade or explicitly before calling this.
+        
+        Args:
+            data (dict): Dictionary containing:
+                         - 'event_id' (int): ID of event to delete (required)
+        
+        Returns:
+            bool: True if deletion was successful, False otherwise.
+        """
         query = '''
         DELETE FROM event
         WHERE event_id = %(event_id)s;
@@ -192,12 +282,6 @@ class Events:
                 events.append(event)
         
         return events
-
-    @classmethod
-    def getAll(cls):
-        query = "SELECT * FROM event;"
-        result = connectToMySQL(db).query_db(query)
-        return [cls(row) for row in result] if result else []
 
     @classmethod
     def getOne(cls, data):

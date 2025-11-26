@@ -4,12 +4,8 @@ from flask_app.models.eventsModels import Events, compute_status, parse_datetime
 from flask_app.models.optionModels import Option
 from flask_app.models.voteModels import Vote
 from flask_app.models.resultsModel import Result
-from datetime import datetime, timezone
-from flask_app.utils.helpers import require_login, get_current_user, get_user_session_data, is_logged_in
+from flask_app.utils.helpers import require_login, get_current_user, get_user_session_data
 from flask_app.utils.validators import validate_event_title, validate_event_description, validate_candidate_name
-
-# moved compute_status and _parse_datetime to Events model for reuse
-# so other controllers can call it too
 
 @app.route('/admin2')
 def adminPage():
@@ -30,11 +26,7 @@ def createEventRoute():
     if redirect_url:
         return redirect(redirect_url)
     
-    user = get_current_user()
-
-    # remove unused variable and print user ID for debugging
-    print("THIS IS THE ID", user.user_id)
-    first_name = user.first_name
+    # TODO - remove me  if create path works still; user = get_current_user()
     
     # Server-side validation - Now receiving LOCAL times directly
     title = request.form.get('title', '').strip()
@@ -48,7 +40,7 @@ def createEventRoute():
 
     print(f"[DEBUG] Received times (local): start={start_time_local}, end={end_time_local}")
 
-    candidate_descs = request.form.getlist('candidate_descs[]')
+    # TODO - remove me  if create path works still; candidate_descs = request.form.getlist('candidate_descs[]')
     # Build candidate list early so it's always available (avoid elif-chain scoping issues)
     valid_candidates = [c.strip() for c in candidate if (c or '').strip()]
     
@@ -420,37 +412,6 @@ def _normalize_full(val_date_only: str, val_local: str):
         raw = raw + ' 00:00:00'
     return raw
 
-# TODO - Trying to improve MVC separation by moving logic to models where possible
-# If system testing passes, remove comments and finalize refactoring
-'''
-def _can_edit_fields_by_status(status):
-    """Return booleans controlling which fields are editable under a given status.
-    Policy: Waiting -> can edit start/end/title/desc; Open -> can edit end/title/desc; Closed -> only desc.
-    """
-    status = (status or '').strip()
-    can_title = True
-    can_desc = True
-    can_start = False
-    can_end = False
-    if status == 'Waiting':
-        can_start = True
-        can_end = True
-    elif status == 'Open':
-        can_start = False
-        can_end = True
-    elif status == 'Closed':
-        can_title = False
-        can_desc = True
-        can_start = False
-        can_end = False
-    else:
-        # Unknown -> safest: allow title/desc only
-        can_title = True
-        can_desc = True
-        can_start = False
-        can_end = False
-    return can_title, can_desc, can_start, can_end
-'''
 
 @app.route('/events/<int:event_id>/edit')
 def editEventGet(event_id):

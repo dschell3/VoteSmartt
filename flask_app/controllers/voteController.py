@@ -1,6 +1,5 @@
 from flask import request, redirect, flash
 from flask_app import app
-from flask_app.models.userModels import User
 from flask_app.models.optionModels import Option
 from flask_app.models.voteModels import Vote
 from flask_app.models.eventsModels import Events, compute_status
