@@ -3,6 +3,7 @@ from flask_app import app
 from flask_app.models.eventsModels import Events
 from flask_app.models.optionModels import Option
 from flask_app.models.voteModels import Vote
+from flask_app.models.resultsModel import Result
 from datetime import datetime, timezone
 from flask_app.utils.helpers import require_login, get_current_user, get_user_session_data, is_logged_in
 from flask_app.utils.validators import validate_event_title, validate_event_description, validate_candidate_name
@@ -436,14 +437,9 @@ def singleEvent(event_id):
     winner_option_ids = []
     if not is_open:
         try:
-            tallies = Vote.tallyVotesForEvent({'event_id': event_id}) or []
-            if tallies:
-                try:
-                    max_votes = max([t.get('votes', 0) for t in tallies])
-                    # Collect all option_ids with max votes (tie-safe)
-                    winner_option_ids = [t.get('option_id') for t in tallies if t.get('votes', 0) == max_votes and max_votes > 0]
-                except Exception:
-                    winner_option_ids = []
+            result = Result({'event_id': event_id})
+            tallies = result.rows  # Already includes percentages
+            winner_option_ids = result.getWinnerOptionIds()
         except Exception:
             tallies = []
             winner_option_ids = []
@@ -456,11 +452,12 @@ def singleEvent(event_id):
         is_open=is_open,
         event_status=status,
         selected_option_id=selected_option_id,
-        tallies=tallies,
-        winner_option_ids=winner_option_ids,
+        tallies=result.rows if not is_open else [], # updated to use result
+        winner_option_ids=result.getWinnerOptionIds() if not is_open else [], # updated to use result
+        total_votes=result.getTotalVotes() if not is_open else 0, # added total votes using result
         is_event_creator=is_event_creator,
         **user_data
-    )
+    ) # FIXME - IF you don't like UI/UX revert back to previous version
 
 
 # ==========================

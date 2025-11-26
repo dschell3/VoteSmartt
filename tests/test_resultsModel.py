@@ -115,13 +115,13 @@ def test_calculate_handles_zero_votes_gracefully(mock_db_connection, sample_resu
 # TEST: Result.getWinner() - Get winning option
 # ============================================================================
 
-def test_getWinner_returns_option_with_most_votes(mock_db_connection, sample_result_data, sample_vote_tally):
+def test_getWinners_returns_option_with_most_votes(mock_db_connection, sample_result_data, sample_vote_tally):
     """Test that getWinner returns the option with the highest vote count"""
     from flask_app.models.resultsModel import Result
     
     with patch('flask_app.models.resultsModel.Vote.tallyVotesForEvent', return_value=sample_vote_tally):
         result = Result(sample_result_data)
-        winner = result.getWinner()
+        winner = result.getWinners()
         
         # Winner should be Option A with 10 votes
         assert winner is not None
@@ -130,13 +130,13 @@ def test_getWinner_returns_option_with_most_votes(mock_db_connection, sample_res
         assert winner['votes'] == 10
 
 
-def test_getWinner_returns_first_in_case_of_tie(mock_db_connection, sample_result_data, sample_vote_tally_with_tie):
+def test_getWinners_returns_first_in_case_of_tie(mock_db_connection, sample_result_data, sample_vote_tally_with_tie):
     """Test that getWinner returns first option in case of tie"""
     from flask_app.models.resultsModel import Result
     
     with patch('flask_app.models.resultsModel.Vote.tallyVotesForEvent', return_value=sample_vote_tally_with_tie):
         result = Result(sample_result_data)
-        winner = result.getWinner()
+        winner = result.getWinners()
         
         # Should return first option with highest votes (Option A)
         assert winner is not None
@@ -144,13 +144,13 @@ def test_getWinner_returns_first_in_case_of_tie(mock_db_connection, sample_resul
         assert winner['votes'] == 10
 
 
-def test_getWinner_returns_none_when_no_votes(mock_db_connection, sample_result_data, empty_vote_tally):
+def test_getWinners_returns_none_when_no_votes(mock_db_connection, sample_result_data, empty_vote_tally):
     """Test that getWinner returns None when there are no votes"""
     from flask_app.models.resultsModel import Result
     
     with patch('flask_app.models.resultsModel.Vote.tallyVotesForEvent', return_value=empty_vote_tally):
         result = Result(sample_result_data)
-        winner = result.getWinner()
+        winner = result.getWinners()
         
         assert winner is None
 

@@ -183,6 +183,7 @@ def register():
     password = request.form.get('password', '')
     phone = request.form.get('phone', '').strip()
     
+    '''
     # Validate using centralized validators
     errors = []
     
@@ -210,6 +211,9 @@ def register():
     error = validate_phone(phone)
     if error:
         errors.append(error)
+    '''
+    # Validate all registration fields at once
+    errors = validate_all_registration_fields(first_name, last_name, email, password, phone)
     
     # Check if email already exists (custom validation)
     existing_user = User.getUserByEmail({'email': email})
