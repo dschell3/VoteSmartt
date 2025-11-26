@@ -286,10 +286,16 @@ class Events:
     def isCreatedBy(self, user) -> bool:
         """Check if this event was created by the given user."""
         if not user:
+            print(f"[isCreatedBy] No user provided, returning False")
             return False
         try:
-            return int(self.created_byFK) == int(user.user_id)
-        except (ValueError, TypeError):
+            self_id = int(self.created_byFK)
+            user_id = int(user.user_id)
+            result = self_id == user_id
+            print(f"[isCreatedBy] self.created_byFK={self_id}, user.user_id={user_id}, result={result}")
+            return result
+        except (ValueError, TypeError) as e:
+            print(f"[isCreatedBy] Exception: {e}, returning False")
             return False
 
     def can_manage_event(self, event) -> bool:
