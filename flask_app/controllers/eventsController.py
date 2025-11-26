@@ -367,7 +367,8 @@ def singleEvent(event_id):
     try:
         cur_user = get_current_user()
         if cur_user:
-            is_event_creator = event.is_created_by(cur_user)
+            is_event_creator = event.isCreatedBy(cur_user)
+            print(f"[singleEvent] user_id={getattr(cur_user, 'user_id', None)}, event.created_byFK={event.created_byFK}, is_event_creator={is_event_creator}")
     except Exception:
         pass
 
