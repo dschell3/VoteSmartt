@@ -588,7 +588,7 @@ def editEventPost(event_id):
     # Parse for logical checks
     start_dt = parse_datetime(normalized_start)
     end_dt = parse_datetime(normalized_end)
-    now = datetime.now(timezone.utc)
+    now = get_now_pacific()
 
     # Enforce temporal rules based on status
     if not error_message:

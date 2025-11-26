@@ -3,7 +3,7 @@ from flask_app import app
 from flask_app.models.userModels import User
 from flask_app.models.optionModels import Option
 from flask_app.models.voteModels import Vote
-from flask_app.models.eventsModels import Events
+from flask_app.models.eventsModels import Events, compute_status
 from flask_app.utils.helpers import require_login, require_voter, get_current_user
 
 @app.route('/vote/cast', methods=['POST'])
@@ -66,7 +66,7 @@ def cast_vote():
         return redirect(f"/event/{event_id}")
     
     # Ensure event is open for voting
-    if Events.compute_status(event.start_time, event.end_time) != "Open":
+    if compute_status(event.start_time, event.end_time) != "Open":
         flash("Voting is closed for this event.", "error")
         return redirect(f"/event/{event_id}")
 
@@ -146,7 +146,7 @@ def delete_vote():
         return redirect(f"/event/{event_id}")
 
     # Ensure event is still open for voting
-    if Events.compute_status(event.start_time, event.end_time) != "Open":
+    if compute_status(event.start_time, event.end_time) != "Open":
         flash("This event has closed; votes cannot be retracted.", "error")
         return redirect(f"/event/{event_id}")
 
