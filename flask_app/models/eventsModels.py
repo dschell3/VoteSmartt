@@ -287,7 +287,10 @@ class Events:
         """Check if this event was created by the given user."""
         if not user:
             return False
-        return self.created_byFK == user.user_id
+        try:
+            return int(self.created_byFK) == int(user.user_id)
+        except (ValueError, TypeError):
+            return False
 
     def can_manage_event(self, event) -> bool:
         """Check if user can manage this event (creator or admin)."""
