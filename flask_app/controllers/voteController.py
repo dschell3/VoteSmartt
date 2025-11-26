@@ -61,7 +61,7 @@ def cast_vote():
         return redirect('/eventList')
     
     # Event creators are treated as admins for their events and cannot vote
-    if event.is_created_by(user):
+    if event.isCreatedBy(user):
         flash("Event creators cannot vote on their own events.", "error")
         return redirect(f"/event/{event_id}")
     
