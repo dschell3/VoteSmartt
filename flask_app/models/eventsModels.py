@@ -169,6 +169,7 @@ class Events:
             events.append(cls(row))
         return events
 
+    '''
     @classmethod
     def getOpenEvents(cls):
         """Get currently open events using timezone-adjusted comparison."""
@@ -183,8 +184,8 @@ class Events:
         data = {'now': now_in_storage_tz}
         result = connectToMySQL(cls.db).query_db(query, data)
         return [cls(row) for row in result] if result else []
-    
-    # TODO - Needs to be tested, Update UML class diagram to show otional limit param
+    '''
+
     @classmethod
     def getUpcoming(cls, limit=None):
         """Get future events by comparing against timezone-adjusted current time.
@@ -216,7 +217,7 @@ class Events:
         result = connectToMySQL(cls.db).query_db(query, data)
         return [cls(row) for row in result] if result else []
 
-
+    '''
     @classmethod
     def getAllClosed(cls):
         """Get closed events using timezone-adjusted comparison."""
@@ -231,7 +232,8 @@ class Events:
         data = {'now': now_in_storage_tz}
         result = connectToMySQL(cls.db).query_db(query, data)
         return [cls(row) for row in result] if result else []
-    
+    '''
+    '''
     @classmethod
     def getAllWithStatus(cls):
         """Get all events with computed status using timezone-adjusted comparison."""
@@ -251,7 +253,7 @@ class Events:
         data = {'now': now_in_storage_tz}
         result = connectToMySQL(cls.db).query_db(query, data)
         return [cls(row) for row in result] if result else []
-    
+    '''
     @classmethod
     def _get_utc_now_as_storage_timezone(cls):
         """
@@ -268,7 +270,6 @@ class Events:
         now_storage = now_utc + STORAGE_TIMEZONE_OFFSET
         return now_storage.replace(tzinfo=None)  # Return as naive datetime
     
-    # was at top of eventsController.py, moved here for reuse
     @staticmethod
     def compute_status(start_raw, end_raw):
         """Compute event status by converting stored Pacific times to UTC for comparison.
@@ -319,7 +320,6 @@ class Events:
         
         return 'Unknown'
 
-    # was at top of eventsController.py, moved here for reuse
     @staticmethod
     def parse_datetime(value):
         """Try to parse a DB value into a naive datetime. Return None if impossible."""

@@ -18,6 +18,7 @@ class Option:
         results = connectToMySQL(db).query_db(query, data)
         return [cls(row) for row in results]
     
+    '''
     @classmethod
     def getAll(cls):
         query = "SELECT * FROM `option`;"
@@ -26,7 +27,8 @@ class Option:
         for i in result:
             events.append(cls(i))
         return events
-    
+    '''
+
     @classmethod
     def create(cls, data):
         query = '''
@@ -73,5 +75,4 @@ class Option:
         """
         query = "DELETE FROM `option` WHERE option_id = %(option_id)s;"
         return connectToMySQL(db).query_db(query, data)    
-    # Additional methods for updating or retrieving options can be added here as needed.
     

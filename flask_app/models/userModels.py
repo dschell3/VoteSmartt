@@ -1,10 +1,8 @@
 from flask_app.config.mysqlconnection import connectToMySQL
-from flask_app.utils.validators import (
-    validate_all_registration_fields, validate_email,
-    validate_name, validate_password, validate_phone )
+from datetime import datetime, timedelta
 import secrets
 import hashlib
-from datetime import datetime, timedelta
+
 db = "mydb"
 
 class User:
@@ -58,15 +56,6 @@ class User:
         (%(first_name)s, %(last_name)s, %(email)s, %(password)s, %(phone)s, NOW());
         '''
         return connectToMySQL(db).query_db(query, data)
-    
-    # TODO - Registration method for admin users
-    @classmethod
-    def register_admin(cls, data):
-        ...
-    
-    # TODO: Admin methods to promote users
-    # TODO: Admin method to delete users...how would this impact their previous votes?
-    # TODO: Admin should not be able to reset their own password via this method
 
     @classmethod
     def getUserByEmail(cls, data):
@@ -122,121 +111,6 @@ class User:
         """
         return connectToMySQL(db).query_db(query, data)
     
-    # refactor later to simplify/combine with resetPasswordByEmail and use the send_email in userController
-    @classmethod
-    def sendPasswordResetEmail(cls, data):
-        """Check if the email belongs to a registered user; if so, send a reset link."""
-        user = cls.getUserByEmail({'email': data['email']})
-        if not user:
-            # Return generic OK to avoid revealing whether email exists
-            return {"ok": True}
-
-        # TODO: Ask Jang how to implement email sending using existing app infrastructure
-        # TODO: use send_email function from userController
-        reset_link = f"http://localhost:5000/reset_password?email={data['email']}"
-        try:
-            from flask_app.controllers.userController import send_email
-            send_email(
-                to_address=data['email'],
-                subject="Password Reset Request",
-                body=f"Click the link below to reset your password:\n{reset_link}"
-            )
-            return {"ok": True}
-        except Exception as e:
-            # Fail gracefully to avoid leaking user existence and to prevent 500s in AJAX flow
-            print(f"Password reset email send failed: {e}")
-            return {"ok": True}
-
-    @classmethod
-    def _create_password_reset_token_for_user(cls, user):
-        """Create a secure token, store its SHA256 hash and expiry (30 minutes) on the user row.
-
-        Returns the raw token (string) on success. Raises on DB errors (so caller can fall back).
-        """
-        token = secrets.token_urlsafe(32)
-        token_hash = hashlib.sha256(token.encode()).hexdigest()
-        expires = (datetime.utcnow() + timedelta(minutes=30)).strftime('%Y-%m-%d %H:%M:%S')
-
-        query = """
-        UPDATE user
-        SET reset_token = %(reset_token)s, reset_token_expires = %(expires)s
-        WHERE user_id = %(user_id)s;
-        """
-        data = {'reset_token': token_hash, 'expires': expires, 'user_id': user.user_id}
-        connectToMySQL(db).query_db(query, data)
-        return token
-
-    @classmethod
-    def _verify_reset_token_for_user(cls, user, token):
-        """Verify provided raw token against stored hash and expiry. Returns True if valid."""
-        try:
-            query = "SELECT reset_token, reset_token_expires FROM user WHERE user_id = %(user_id)s;"
-            rows = connectToMySQL(db).query_db(query, {'user_id': user.user_id})
-            if not rows:
-                return False
-            row = rows[0]
-            stored_hash = row.get('reset_token')
-            expires = row.get('reset_token_expires')
-            if not stored_hash or not expires:
-                return False
-
-            token_hash = hashlib.sha256(token.encode()).hexdigest()
-
-            # Normalize expires to datetime
-            if isinstance(expires, str):
-                try:
-                    expires_dt = datetime.strptime(expires.split('.')[0], '%Y-%m-%d %H:%M:%S')
-                except Exception:
-                    return False
-            else:
-                expires_dt = expires
-
-            if datetime.utcnow() > expires_dt:
-                return False
-
-            return stored_hash == token_hash
-        except Exception:
-            return False
-
-    @classmethod
-    def resetPasswordWithToken(cls, data):
-        """Reset a user's password using a one-time token.
-
-        Expects data to contain 'email', 'token', and 'password' (already hashed).
-        Returns truthy on success, False on failure.
-        """
-        user = cls.getUserByEmail({'email': data.get('email')})
-        if not user:
-            return False
-
-        token = data.get('token')
-        if not token:
-            return False
-
-        valid = cls._verify_reset_token_for_user(user, token)
-        if not valid:
-            return False
-
-        # Update password and clear token fields
-        try:
-            query = """
-            UPDATE user
-            SET password = %(password)s, reset_token = NULL, reset_token_expires = NULL
-            WHERE user_id = %(user_id)s;
-            """
-            return connectToMySQL(db).query_db(query, {'password': data['password'], 'user_id': user.user_id})
-        except Exception:
-            # Fall back to best-effort password update
-            return cls.updatePassword({'user_id': user.user_id, 'password': data['password']})
-
-    @classmethod
-    def resetPasswordByEmail(cls, data):
-        """Directly update the user's password if the email exists.
-        Expects data['password'] to ALREADY be hashed."""
-        user = cls.getUserByEmail({'email': data['email']})
-        if not user:
-            return False
-        return cls.updatePassword({'user_id': user.user_id, 'password': data['password']})
 
     # ===== PASSWORD RESET TOKEN FLOW =====
     @classmethod
@@ -312,28 +186,3 @@ class User:
             """
         )
         return bool(connectToMySQL(db).query_db(query, {'token_hash': token_hash}))
-
-
-    # ===== INPUT VALIDATION METHODS ===== 
-    @staticmethod
-    def validatePassword(password: str) -> bool:
-        """Return True if the password meets minimum security requirements."""
-        error = validate_password(password)
-        return error is None
-
-    @staticmethod
-    def validateEmail(email: str) -> bool:
-        """return True if the email format is valid."""
-        error = validate_email(email)
-        return error is None
-
-    @staticmethod
-    def validatePhone(phone: str) -> bool:
-        """return True if the phone number format is valid."""
-        error = validate_phone(phone)
-        return error is None
-    
-    # TODO - Static method to validate names (first/last) ?
-    # e.g., non-empty, reasonable length, no invalid characters
-
-    # TODO - Static method to normalize phone number format for storage/display?
