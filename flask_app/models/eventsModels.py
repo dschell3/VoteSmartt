@@ -18,7 +18,7 @@ Database Table: event
     - description (VARCHAR(255))
     - start_time (DATETIME)
     - end_time (DATETIME)
-    - created_at (VARCHAR(45))
+    - created_at (DATETIME)
     - created_byFK (INT, FK -> user.user_id)
     - status (VARCHAR(45))
 

@@ -16,13 +16,12 @@ Class Relationships:
     - Result --uses-- Option: Indirectly through vote tally (option_id, option_text)
     - Event 1--1 Result: One result summary per event (computed on demand)
 
-VoteSmartt Usage:
+VoteSmartt Rules:
     - Results are displayed after an event's status becomes 'Closed'
     - The singleEvent template uses Result to show voting outcomes
     - Supports tie detection (multiple winners with equal votes)
 '''
 
-from flask_app.config.mysqlconnection import connectToMySQL
 from flask_app.models.voteModels import Vote
 
 db = "mydb"
