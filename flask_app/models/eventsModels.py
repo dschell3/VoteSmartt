@@ -1,6 +1,6 @@
 """
 ==============================================================================
-Events Model - Database operations for voting events
+Events Model - represents operations for voting events
 ==============================================================================
 
 This module handles all database operations related to voting events including
@@ -25,7 +25,6 @@ Database Table: event
 Related Tables:
     - user (via created_byFK foreign key)
     - option (options/candidates belong to events)
-==============================================================================
 """
 
 from flask_app.config.mysqlconnection import connectToMySQL
@@ -152,12 +151,12 @@ class Events:
     # DB identifier for mySQL connection
     db = db
 
-    """
-    Creates an Events object by mapping database column values to
-    instance attributes. This constructor is typically called when
-    retrieving events from the database.
-    """
+    
     def __init__(self, data):
+        """
+        Creates an Events object by mapping database column values to
+        instance attributes. 
+        """
         self.event_id = data['event_id']
         self.title = data['title']
         self.description = data['description']
@@ -456,28 +455,5 @@ class Events:
             return result
         except (ValueError, TypeError) as e:
             return False    # On error, treat as not created by user
-
-    def can_manage_event(self, event) -> bool:
-        """
-        Management permission is granted if the user is either:
-        1. An administrator (isAdmin = 1), OR
-        2. The creator of the event
-        
-        Note: This method is typically called on a User object, but is
-        included here for cases where an Events instance needs to check
-        permissions. See User.can_manage_event() for the primary implementation.
-        
-        Args:
-            event: Events object to check management permission for.
-        
-        Returns:
-            bool: True if this user can manage the event, False otherwise.
-        Check if user can manage this event (creator or admin).
-        """
-        if not hasattr(self, 'isAdmin'):            # Ensure isAdmin attribute exists
-            return False
-        if self.isAdmin:                            # Admin users can always manage
-            return True
-        return event.created_byFK == self.user_id   # Creator can manage
 
 
