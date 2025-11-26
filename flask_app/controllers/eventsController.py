@@ -1,6 +1,6 @@
 from flask import flash, url_for, redirect, session, render_template, request
 from flask_app import app
-from flask_app.models.eventsModels import Events, compute_status, _parse_datetime
+from flask_app.models.eventsModels import Events, compute_status, parse_datetime 
 from flask_app.models.optionModels import Option
 from flask_app.models.voteModels import Vote
 from flask_app.models.resultsModel import Result
@@ -459,7 +459,7 @@ def singleEvent(event_id):
 def _fmt_local_dt(raw_val):
     """Format a DB datetime or string to HTML datetime-local value (YYYY-MM-DDTHH:MM)."""
     try:
-        dt = Events.parse_datetime(raw_val)
+        dt = parse_datetime(raw_val)
         return dt.strftime('%Y-%m-%dT%H:%M') if dt else ''
     except Exception:
         return ''
@@ -628,8 +628,8 @@ def editEventPost(event_id):
     normalized_end = _normalize_full(end_time, end_time_local) if can_end else (event.end_time or '')
 
     # Parse for logical checks
-    start_dt = Events.parse_datetime(normalized_start)
-    end_dt = Events.parse_datetime(normalized_end)
+    start_dt = parse_datetime(normalized_start)
+    end_dt = parse_datetime(normalized_end)
     now = datetime.now(timezone.utc)
 
     # CRITICAL FIX: Make parsed datetimes timezone-aware for comparison
@@ -655,7 +655,7 @@ def editEventPost(event_id):
             error_message = 'Start time cannot be in the past'
         if status == 'Open':
             # Only end time is editable; ensure it's in the future and after original start
-            orig_start = Events.parse_datetime(event.start_time)
+            orig_start = parse_datetime(event.start_time)
             # Make orig_start timezone-aware too
             if orig_start and orig_start.tzinfo is None:
                 orig_start = orig_start.replace(tzinfo=timezone.utc)
