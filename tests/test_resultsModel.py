@@ -116,7 +116,7 @@ def test_calculate_handles_zero_votes_gracefully(mock_db_connection, sample_resu
 # ============================================================================
 
 def test_getWinners_returns_option_with_most_votes(mock_db_connection, sample_result_data, sample_vote_tally):
-    """Test that getWinner returns the option with the highest vote count"""
+    """Test that getWinners returns the option with the highest vote count"""
     from flask_app.models.resultsModel import Result
     
     with patch('flask_app.models.resultsModel.Vote.tallyVotesForEvent', return_value=sample_vote_tally):
@@ -131,7 +131,7 @@ def test_getWinners_returns_option_with_most_votes(mock_db_connection, sample_re
 
 
 def test_getWinners_returns_first_in_case_of_tie(mock_db_connection, sample_result_data, sample_vote_tally_with_tie):
-    """Test that getWinner returns first option in case of tie"""
+    """Test that getWinners returns first option in case of tie"""
     from flask_app.models.resultsModel import Result
     
     with patch('flask_app.models.resultsModel.Vote.tallyVotesForEvent', return_value=sample_vote_tally_with_tie):
@@ -145,7 +145,7 @@ def test_getWinners_returns_first_in_case_of_tie(mock_db_connection, sample_resu
 
 
 def test_getWinners_returns_none_when_no_votes(mock_db_connection, sample_result_data, empty_vote_tally):
-    """Test that getWinner returns None when there are no votes"""
+    """Test that getWinners returns None when there are no votes"""
     from flask_app.models.resultsModel import Result
     
     with patch('flask_app.models.resultsModel.Vote.tallyVotesForEvent', return_value=empty_vote_tally):
@@ -256,7 +256,7 @@ def test_result_complete_workflow(mock_db_connection, sample_result_data, sample
         assert all('percentage' in row for row in result.rows)
         
         # Verify winner
-        winner = result.getWinner()
+        winner = result.getWinners()
         assert winner['option_text'] == 'Option A'
         
         # Verify total votes
@@ -285,7 +285,7 @@ def test_result_with_single_option(mock_db_connection, sample_result_data):
         
         # Should handle single option correctly
         assert result.getTotalVotes() == 7
-        assert result.getWinner()['option_text'] == 'Only Option'
+        assert result.getWinners()['option_text'] == 'Only Option'
         assert result.getWinnerPercentage() == 100.0
 
 
