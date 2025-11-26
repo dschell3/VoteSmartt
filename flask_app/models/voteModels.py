@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask_app.models.eventsModels import Events
+from flask_app.models.eventsModels import Events, compute_status
 from flask_app.config.mysqlconnection import connectToMySQL
 
 db = "mydb"
@@ -60,7 +60,7 @@ class Vote:
         
         votes = []
         for row in result:
-            status = Events.compute_status(row['start_time'], row['end_time'])
+            status = compute_status(row['start_time'], row['end_time'])
             votes.append({
                 'vote_id': row['vote_id'],
                 'event_name': row['event_name'],
@@ -199,6 +199,6 @@ class Vote:
     @staticmethod
     def isEditable(event: 'Events') -> bool:
         # Determine if the vote can be edited based on the event's status.
-        return Events.compute_status(event.start_time, event.end_time) == "Open"
+        return compute_status(event.start_time, event.end_time) == "Open"
 
     
