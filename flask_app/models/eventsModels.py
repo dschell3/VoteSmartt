@@ -244,19 +244,6 @@ class Events:
         result = connectToMySQL(db).query_db(query, {'now': now})
         return [cls(row) for row in result] if result else []
 
-    # =========================================================================
-    # STATIC METHODS - Expose module functions for backwards compatibility
-    # =========================================================================
-
-    @staticmethod
-    def compute_status(start_raw, end_raw):
-        """Compute event status. Delegates to module-level function."""
-        return compute_status(start_raw, end_raw)
-
-    @staticmethod
-    def parse_datetime(value):
-        """Parse datetime. Delegates to module-level function."""
-        return parse_datetime(value)
 
     # =========================================================================
     # INSTANCE METHODS
