@@ -141,7 +141,7 @@ def delete_vote():
         return redirect('/eventList')
     
     # This check is mostly defensive since creators shouldn't have votes to delete
-    if event.is_created_by(user):
+    if event.isCreatedBy(user):
         flash("Event creators cannot vote on their own events.", "error")
         return redirect(f"/event/{event_id}")
 
