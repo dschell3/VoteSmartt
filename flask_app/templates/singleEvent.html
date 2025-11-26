@@ -199,7 +199,7 @@
                                     <div class="text-sm font-semibold text-slate-900">{{ r.title }}</div>
                                     <div class="text-xs text-slate-500 mt-1">{{ r.description[:80] }}{% if r.description|length > 80 %}...{% endif %}</div>
                                 </div>
-                                <div class="shrink-0 text-xs text-slate-400">{{ r.status or '—' }}</div>
+                                <div class="shrink-0 text-xs text-slate-400">{{ r.computed_status or r.status or '—' }}</div>
                             </div>
                         </a>
                         {% endfor %}
