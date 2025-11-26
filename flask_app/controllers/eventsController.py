@@ -1,6 +1,6 @@
 from flask import flash, url_for, redirect, session, render_template, request
 from flask_app import app
-from flask_app.models.eventsModels import Events, compute_status, parse_datetime 
+from flask_app.models.eventsModels import Events, compute_status, parse_datetime, get_now_pacific
 from flask_app.models.optionModels import Option
 from flask_app.models.voteModels import Vote
 from flask_app.models.resultsModel import Result
@@ -73,38 +73,17 @@ def createEventRoute():
     # Priority 4: Date validation (if all dates are provided)
     elif start_time_local and end_time_local:
         try:
-            # Accept full datetime (preferred) and date-only as fallback
-            def _parse_dt(val: str):
-                v = (val or '').strip()
-                # Replace 'T' with space for normalization
-                v = v.replace('T', ' ')
-                fmts = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d']
-                for f in fmts:
-                    try:
-                        dt = datetime.strptime(v, f)
-                        # DON'T make timezone-aware here - keep as naive local time
-                        return dt
-                    except Exception:
-                        continue
-                return None
-
-            start_dt = _parse_dt(start_time_local)
-            end_dt = _parse_dt(end_time_local)
+            # Use centralized parse_datetime from model
+            start_dt = parse_datetime(start_time_local)
+            end_dt = parse_datetime(end_time_local)
             if not start_dt or not end_dt:
                 raise ValueError('Invalid datetime format')
 
-            # Convert local times to UTC for comparison with server time
-            from datetime import timedelta
-            pacific_offset = timedelta(hours=-8)
-            
-            # Treat as Pacific time and convert to UTC
-            start_dt_aware = start_dt.replace(tzinfo=timezone(pacific_offset))
-            start_dt_utc = start_dt_aware.astimezone(timezone.utc)
-            
-            now_utc = datetime.now(timezone.utc)
+            # Use centralized get_now_pacific - all times are naive Pacific
+            now = get_now_pacific()
 
             # Check if start time is in the past
-            if start_dt_utc < now_utc:
+            if start_dt < now:
                 error_message = 'Start time cannot be in the past'
 
             if not error_message:
@@ -113,7 +92,7 @@ def createEventRoute():
 
             # 10-year sanity window
             if not error_message:
-                if start_dt.year > now_utc.year + 10 or end_dt.year > now_utc.year + 10:
+                if start_dt.year > now.year + 10 or end_dt.year > now.year + 10:
                     error_message = 'Event dates cannot be more than 10 years in the future'
 
         except ValueError:
@@ -138,35 +117,14 @@ def createEventRoute():
     # === DEBUGGING: Print the exact validation error ===
     if error_message:
         print(f"[VALIDATION ERROR] {error_message}")
-        print(f"[VALIDATION ERROR] start_time_local value: {start_time_local}")  # ✅ CORRECT
-        print(f"[VALIDATION ERROR] end_time_local value: {end_time_local}")      # ✅ CORRECT
-        # Also print what datetime was parsed
-        try:
-            def _parse_dt(val: str):
-                v = (val or '').strip()
-                v = v.replace('T', ' ')  # Add this line
-                fmts = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d']
-                for f in fmts:
-                    try:
-                        return datetime.strptime(v, f)
-                    except Exception:
-                        continue
-                return None
-            
-            start_dt = _parse_dt(start_time_local)  # ✅ CORRECT - use start_time_local
-            now = datetime.now(timezone.utc)
-            print(f"[VALIDATION ERROR] Parsed start_dt: {start_dt}")
-            print(f"[VALIDATION ERROR] Server now(): {now}")
-            if start_dt:
-                # Convert to UTC for comparison
-                from datetime import timedelta
-                pacific_offset = timedelta(hours=-8)
-                start_dt_aware = start_dt.replace(tzinfo=timezone(pacific_offset))
-                start_dt_utc = start_dt_aware.astimezone(timezone.utc)
-                print(f"[VALIDATION ERROR] start_dt_utc < now? {start_dt_utc < now}")
-                print(f"[VALIDATION ERROR] Difference: {(now - start_dt_utc).total_seconds()} seconds")
-        except Exception as e:
-            print(f"[VALIDATION ERROR] Could not parse for debugging: {e}")
+        print(f"[VALIDATION ERROR] start_time_local: {start_time_local}")
+        print(f"[VALIDATION ERROR] end_time_local: {end_time_local}")
+        start_dt = parse_datetime(start_time_local)
+        now = get_now_pacific()
+        print(f"[VALIDATION ERROR] Parsed start_dt: {start_dt}")
+        print(f"[VALIDATION ERROR] Server now (Pacific): {now}")
+        if start_dt:
+            print(f"[VALIDATION ERROR] start_dt < now? {start_dt < now}")
         
         flash(error_message, 'error')
         return redirect('/admin2')
@@ -632,12 +590,6 @@ def editEventPost(event_id):
     end_dt = parse_datetime(normalized_end)
     now = datetime.now(timezone.utc)
 
-    # CRITICAL FIX: Make parsed datetimes timezone-aware for comparison
-    if start_dt and start_dt.tzinfo is None:
-        start_dt = start_dt.replace(tzinfo=timezone.utc)
-    if end_dt and end_dt.tzinfo is None:
-        end_dt = end_dt.replace(tzinfo=timezone.utc)
-
     # Enforce temporal rules based on status
     if not error_message:
         if can_start and not start_dt:
@@ -656,10 +608,6 @@ def editEventPost(event_id):
         if status == 'Open':
             # Only end time is editable; ensure it's in the future and after original start
             orig_start = parse_datetime(event.start_time)
-            # Make orig_start timezone-aware too
-            if orig_start and orig_start.tzinfo is None:
-                orig_start = orig_start.replace(tzinfo=timezone.utc)
-            
             if can_end and end_dt:
                 if orig_start and end_dt <= orig_start:
                     error_message = 'End time must be after start time'
