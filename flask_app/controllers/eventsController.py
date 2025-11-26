@@ -227,28 +227,6 @@ def createEventRoute():
     else:
         return redirect('/admin2')
 
-    # Persist candidate names (descriptions deferred per choice C)
-    # NOTE: valid_candidates was built during validation; we ignore candidate_descs for now.
-    if new_event_id:
-        # Deduplicate while preserving order
-        seen = set()
-        ordered_unique = []
-        for c in valid_candidates:
-            if c not in seen:
-                seen.add(c)
-                ordered_unique.append(c)
-        try:
-            for cand in ordered_unique:
-                Option.create({'option_text': cand, 'option_event_id': new_event_id})
-        except Exception as e:
-            # Non‑fatal: event exists even if candidate insertion partially fails
-            print(f"Candidate insertion error for event {new_event_id}: {e}")
-            flash('Event created but some candidates failed to save.', 'error')
-    else:
-        print("[createEventRoute] No new_event_id; skipping candidate persistence.")
-    
-    return redirect(url_for('eventList'))
-
 @app.route('/eventList')
 def eventList():
     """Display list of all events, sorted by status and start time"""
