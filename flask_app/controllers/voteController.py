@@ -17,11 +17,6 @@ Model Dependencies:
     - Option: Validates option belongs to event (getByEventId)
     - compute_status: Determines if event is Open/Waiting/Closed
 
-Helper Dependencies:
-    - require_login: Ensures user is authenticated
-    - require_voter: Ensures user is not an admin (admins cannot vote)
-    - get_current_user: Retrieves current User object from session
-
 Business Rules Enforced:
     - User must be logged in to vote
     - Admins (isAdmin=1) cannot cast votes
