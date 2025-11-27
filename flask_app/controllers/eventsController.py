@@ -1,3 +1,53 @@
+'''
+==============================================================================
+Events Controller - Handles HTTP routes for event/election management
+==============================================================================
+
+This module provides Flask route handlers for creating, viewing, editing, and
+deleting voting events (polls, surveys, elections, competitions) within the
+VoteSmartt system. It also handles candidate/option management for events.
+
+Routes (organized by category):
+
+    EVENT CREATION ROUTES:
+        - GET  /admin2              : Display event creation form
+        - POST /createEventRoute    : Process new event creation with candidates
+
+    EVENT LISTING & VIEWING ROUTES:
+        - GET  /eventList           : Display all events sorted by status/time
+        - GET  /events              : Legacy alias, redirects to /eventList
+        - GET  /event/<event_id>    : Display single event with voting/results
+
+    EVENT EDIT ROUTES:
+        - GET  /events/<id>/edit    : Display edit form (fields vary by status)
+        - POST /events/<id>/edit    : Process event updates and candidate changes
+
+    EVENT DELETE ROUTES:
+        - POST /events/<id>/delete  : Delete event (creator/admin only)
+
+Model Dependencies:
+    - Events: Event CRUD operations, status computation, creator info
+    - Option: Candidate/option management for events
+    - Vote: Check existing user votes for pre-selection
+    - Result: Calculate and display voting results after event closes
+
+Business Rules Enforced:
+    - All event routes require authentication (no anonymous access)
+    - Only event creators (or admins) can edit/delete their events
+    - Event editability varies by status:
+        * Waiting: All fields editable (title, description, times, candidates)
+        * Open: Only end_time and description editable (voting in progress)
+        * Closed: Only description editable (historical record)
+    - Events require at least 2 candidates/options for voting
+    - Event creators cannot vote on their own events
+    - Results only display after event status is 'Closed'
+
+Timezone Handling:
+    - Frontend sends local Pacific timezone via datetime-local inputs
+    - Backend stores and compares times in Pacific timezone
+    - Status computed server-side using get_now_pacific() for consistency
+'''
+
 from flask import flash, url_for, redirect, session, render_template, request
 from flask_app import app
 from flask_app.models.eventsModels import Events, compute_status, parse_datetime, get_now_pacific
@@ -7,9 +57,18 @@ from flask_app.models.resultsModel import Result
 from flask_app.utils.helpers import require_login, get_current_user, get_user_session_data
 from flask_app.utils.validators import validate_event_title, validate_event_description, validate_candidate_name
 
+# =============================================================================
+# EVENT CREATION ROUTES - Create new voting events
+# =============================================================================
+
 @app.route('/admin2')
 def adminPage():
-    # Require login to access the event creation page and pass session user data
+    """
+    Display the event creation form page.
+    
+    Redirects:
+        - /login: If user is not authenticated
+    """
     redirect_url = require_login()
     if redirect_url:
         return redirect(redirect_url)
@@ -20,13 +79,33 @@ def adminPage():
 
 @app.route('/createEventRoute', methods=['POST'])
 def createEventRoute():
-    # 001 - Added comprehensive server-side validation for form submission
-    # Ensure user is logged in
+    """
+    Handle new event creation with comprehensive validation.
+    
+    Process:
+        1. Verify user is logged in
+        2. Extract and sanitize form data (title, description, times, candidates)
+        3. Validate fields in priority order (show only first error):
+           a. Event title (required, max 45 chars)
+           b. Start time (required, must be future)
+           c. End time (required, must be after start)
+           d. Candidates (minimum 2 required, each validated)
+        4. Normalize datetime strings to 'YYYY-MM-DD HH:MM:SS' format
+        5. Compute initial event status from times
+        6. Create event record in database
+        7. Create associated candidate/option records
+        8. Deduplicate candidates while preserving order
+    
+    Redirects:
+        - /admin2: On validation errors (with flash messages)
+        - /eventList: On successful creation
+    """
+    # 1. Ensure user is logged in
     redirect_url = require_login()
     if redirect_url:
         return redirect(redirect_url)
         
-    # Server-side validation - Now receiving LOCAL times directly
+    # 2. Get form data
     title = request.form.get('title', '').strip()
     description = request.form.get('description', '').strip()
     start_time_local = request.form.get('start_time', '').strip()  # LOCAL time from datetime-local
@@ -36,25 +115,25 @@ def createEventRoute():
     # Build candidate list early so it's always available (avoid elif-chain scoping issues)
     valid_candidates = [c.strip() for c in candidate if (c or '').strip()]
     
-    # Validation - check in priority order and show only the most important error
+    # 3. Validation - check in priority order and show only the most important error
     error_message = None
     
     # Priority 1: Event name - Use centralized validator
     error_message = validate_event_title(title)
 
-    # Priority 1.5: Event description validation
+    # Priority 2: Event description validation
     if not error_message and description:
         error_message = validate_event_description(description)
 
-    # Priority 2: Start date (if name is OK)
+    # Priority 3: Start date (if name is OK)
     elif not start_time_local:
         error_message = 'Please select a start date'
     
-    # Priority 3: End date (if name and start date are OK)
+    # Priority 4: End date (if name and start date are OK)
     elif not end_time_local:
         error_message = 'Please select an end date'
     
-    # Priority 4: Date validation (if all dates are provided)
+    # Priority 5: Date validation (if all dates are provided)
     elif start_time_local and end_time_local:
         try:
             # Use centralized parse_datetime from model
@@ -82,11 +161,11 @@ def createEventRoute():
         except ValueError:
             error_message = 'Invalid date format'
         
-    # Priority 5: Description length (optional field, only check if provided)
+    # Priority 6: Description length (optional field, only check if provided)
     if not error_message and description and len(description) > 1000:
         error_message = 'Event description is too long (maximum 1000 characters)'
 
-    # Priority 6: Candidates (always validated once earlier checks pass)
+    # Priority 7: Candidates (always validated once earlier checks pass)
     if not error_message:
         if len(valid_candidates) < 2:
             error_message = 'Please add at least 2 candidates'
@@ -103,10 +182,8 @@ def createEventRoute():
         flash(error_message, 'error')
         return redirect('/admin2')
     
-    # Build normalized full datetime strings (YYYY-MM-DD HH:MM:SS)
-    # Normalize datetime format (from datetime-local) - Keep in LOCAL timezone
+    # 4. Normalize datetime format (from datetime-local) - Keep in LOCAL timezone
     def normalize_datetime_local(val: str):
-        """Normalize datetime-local format to 'YYYY-MM-DD HH:MM:SS' without timezone conversion"""
         if not val:
             return ''
         # datetime-local format: YYYY-MM-DDTHH:MM
@@ -118,7 +195,7 @@ def createEventRoute():
     normalized_start = normalize_datetime_local(start_time_local)
     normalized_end = normalize_datetime_local(end_time_local)
 
-    # All validation passed, create the event using normalized times
+    # 5. All validation passed, create the event data dictionary
     data = {
         'title': title,
         'description': description,
@@ -134,7 +211,7 @@ def createEventRoute():
     except Exception:
         data['status'] = 'Unknown'
 
-    # Create the event and capture its new ID so we can persist candidates
+    # 6. Create the event and capture its new ID so we can persist candidates
     new_event_id = None
     try:
         new_event_id = Events.createEvent(data)        
@@ -143,7 +220,7 @@ def createEventRoute():
         flash('Error creating event. Please try again.', 'error')
         return redirect('/admin2')
     
-    # Persist candidate names 
+    # 7. Persist candidate names 
     if new_event_id:
         # Deduplicate while preserving order
         seen = set()
@@ -160,15 +237,24 @@ def createEventRoute():
     else:
         flash('Event was not created - please check the logs.', 'error')
 
-    # Only redirect to event list if we successfully created the event
+    # 8. Only redirect to event list if we successfully created the event
     if new_event_id:
         return redirect(url_for('eventList'))
     else:
         return redirect('/admin2')
 
+# =============================================================================
+# EVENT LISTING & VIEWING ROUTES - Display events
+# =============================================================================
+
 @app.route('/eventList')
 def eventList():
-    """Display list of all events, sorted by status and start time"""
+    """
+    Display list of all events sorted by status and start time.
+ 
+    Redirects:
+        - /login: If user is not authenticated
+    """
     redirect_url = require_login()
     if redirect_url:
         return redirect(redirect_url)
@@ -180,9 +266,139 @@ def eventList():
 
 @app.route('/events')
 def legacyEventsAlias():
-    """Backward-compatible alias for old /events links -> redirect to eventList."""
+    """
+    Backward-compatible alias for old /events links.
+    
+    Redirects:
+        - /eventList: to prevent 404 errors from old bookmarks or links.
+    """
     return redirect(url_for('eventList'))
 
+@app.route("/event/<int:event_id>")
+def singleEvent(event_id):
+    """
+    Display a single event with voting interface or results.
+    
+    Process:
+        1. Verify user is logged in
+        2. Fetch event details with creator information
+        3. Gather event recommendations (other open/upcoming events)
+        4. Fetch all options/candidates for this event
+        5. Compute event status (Open/Waiting/Closed)
+        6. Check if current user is the event creator
+        7. Check if user has existing vote (for pre-selection)
+        8. If event is closed, calculate and display results with winner
+    
+    Args:
+        event_id (int): ID of the event to display
+    
+    Redirects:
+        - /login: If user is not authenticated
+    """
+    # 1. Verify user is logged in
+    redirect_url = require_login()
+    if redirect_url:
+        return redirect(redirect_url)
+    
+    # Get current user
+    user_data = get_user_session_data()
+    
+    # 2. Get event object with creator details
+    event = Events.getOne({"event_id": event_id})
+    
+    # Handle the case the event doesn't exists
+    if not event:
+        return render_template('singleEvent.html', event=None, **user_data)
+    
+    # 3. Gather recommendations (simple next 3 upcoming events excluding current)
+    try:
+        recs = Events.getRecommendations({ 'event_id': event_id })
+    except Exception:
+        recs = []
+
+    # compute statuses for recommendations
+    for r in recs:
+        try:
+            r.status = compute_status(r.start_time, r.end_time)
+        except Exception:
+            r.status = 'Unknown'
+    
+    # Only recommend events that are currently open or upcoming
+    try:
+        recs = [r for r in recs if getattr(r, 'status', None) in ('Open', 'Waiting')]
+    except Exception:
+        # If anything goes wrong during filtering, keep original list (safe fallback)
+        pass
+
+    # If there are no recommendations after filtering, fall back to latest 3 events
+    if not recs:
+        try:
+            all_events = Events.getAllWithCreators() or []
+            # Exclude current event and take up to 3
+            fallback = [e for e in all_events if getattr(e, 'event_id', None) != event_id][:3]
+            recs = fallback
+        except Exception:
+            recs = recs or []
+    # 4. Get all the options for this event
+    try:
+        options = Option.getByEventId({'event_id': event_id}) or []
+    except Exception:
+        options = []
+
+    # 5. Check if event is open for voting? (Waiting, Open, Closed)
+    try:
+        status = compute_status(event.start_time, event.end_time)
+    except Exception:
+        status = 'Unknown'
+    is_open = (status == 'Open')
+
+    # 6. Check if the current user is the event creator
+    cur_user = None
+    is_event_creator = False
+    try:
+        cur_user = get_current_user()
+        if cur_user:
+            is_event_creator = event.isCreatedBy(cur_user)
+    except Exception:
+        pass
+
+    # 7. Check if user has already voted (UI)
+    # Event creators should not have votes, but we check anyway
+    selected_option_id = None
+    try:
+        if cur_user and not is_event_creator:  # Only check votes for non-creators
+            existing = Vote.getByUserAndEvent({'user_id': cur_user.user_id, 'event_id': event_id})
+            if existing:
+                selected_option_id = existing.vote_option_id
+    except Exception:
+        selected_option_id = None
+
+    # 8. if event is closed, compute + display winner results
+    result = None
+    if not is_open:
+        try:
+            result = Result({'event_id': event_id})
+        except Exception:
+            result = None
+
+    return render_template(
+        'singleEvent.html',
+        event=event,
+        recommendations=recs,
+        options=options,
+        is_open=is_open,
+        event_status=status,
+        selected_option_id=selected_option_id,
+        tallies=result.rows if not is_open and result else [], 
+        winner_option_ids=result.getWinnerOptionIds() if not is_open and result else [], 
+        total_votes=result.getTotalVotes() if not is_open and result else 0, 
+        is_event_creator=is_event_creator,
+        **user_data
+    ) 
+
+# =============================================================================
+# EVENT DELETE ROUTES - Remove events
+# =============================================================================
 
 @app.route("/events/<int:event_id>/delete", methods=['POST'])
 def deleteEvent(event_id):
@@ -227,104 +443,7 @@ def deleteEvent(event_id):
     return redirect(url_for('eventList'))
 
 
-@app.route("/event/<int:event_id>")
-def singleEvent(event_id):
-    redirect_url = require_login()
-    if redirect_url:
-        return redirect(redirect_url)
-    user_data = get_user_session_data()
-    event = Events.getOne({"event_id": event_id})
-    if not event:
-        return render_template('singleEvent.html', event=None, **user_data)
-    # gather recommendations (simple next 3 upcoming events excluding current)
-    try:
-        recs = Events.getRecommendations({ 'event_id': event_id })
-    except Exception:
-        recs = []
 
-    # compute statuses for recommendations
-    for r in recs:
-        try:
-            r.status = compute_status(r.start_time, r.end_time)
-        except Exception:
-            r.status = 'Unknown'
-    # Only recommend events that are currently open or upcoming
-    try:
-        recs = [r for r in recs if getattr(r, 'status', None) in ('Open', 'Waiting')]
-    except Exception:
-        # If anything goes wrong during filtering, keep original list (safe fallback)
-        pass
-
-    # If there are no recommendations after filtering, fall back to latest 3 events
-    # (preserve creator info and computed status). Exclude the current event.
-    if not recs:
-        try:
-            all_events = Events.getAllWithCreators() or []
-            # Exclude current event and take up to 3
-            fallback = [e for e in all_events if getattr(e, 'event_id', None) != event_id][:3]
-            recs = fallback
-        except Exception:
-            recs = recs or []
-    # options for this event
-    try:
-        options = Option.getByEventId({'event_id': event_id}) or []
-    except Exception:
-        options = []
-
-    # is event open for voting? (single status compute)
-    try:
-        status = compute_status(event.start_time, event.end_time)
-    except Exception:
-        status = 'Unknown'
-    is_open = (status == 'Open')
-
-    # Get current user and check if they're the event creator
-    cur_user = None
-    is_event_creator = False
-    try:
-        cur_user = get_current_user()
-        if cur_user:
-            is_event_creator = event.isCreatedBy(cur_user)
-    except Exception:
-        pass
-
-    # existing vote for this user (to preselect / allow update)
-    # Event creators should not have votes, but we check anyway
-    selected_option_id = None
-    try:
-        if cur_user and not is_event_creator:  # Only check votes for non-creators
-            existing = Vote.getByUserAndEvent({'user_id': cur_user.user_id, 'event_id': event_id})
-            if existing:
-                selected_option_id = existing.vote_option_id
-    except Exception:
-        selected_option_id = None
-
-    # tallies if not open (show results) and compute winner ids (support ties)
-    tallies = []
-    winner_option_ids = []
-    if not is_open:
-        try:
-            result = Result({'event_id': event_id})
-            tallies = result.rows  # Already includes percentages
-            winner_option_ids = result.getWinnerOptionIds()
-        except Exception:
-            tallies = []
-            winner_option_ids = []
-
-    return render_template(
-        'singleEvent.html',
-        event=event,
-        recommendations=recs,
-        options=options,
-        is_open=is_open,
-        event_status=status,
-        selected_option_id=selected_option_id,
-        tallies=result.rows if not is_open else [], 
-        winner_option_ids=result.getWinnerOptionIds() if not is_open else [], 
-        total_votes=result.getTotalVotes() if not is_open else 0, 
-        is_event_creator=is_event_creator,
-        **user_data
-    ) 
 
 
 # ==========================
