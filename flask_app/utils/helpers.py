@@ -48,21 +48,6 @@ def get_current_user():
     return User.getUserByID({'user_id': user_id})
 
 
-def require_admin():
-    """
-    Check if current user is an admin. Returns True if user should be BLOCKED.
-    
-    Returns:
-        True if user is NOT admin (should be blocked)
-        False if user IS admin (allowed to proceed)
-    """
-    user = get_current_user()
-    if not user or not user.can_manage_events():
-        flash("Access denied. Administrators only.", "error")
-        return True
-    return False
-
-
 def require_voter():
     """
     Check if current user is a voter (not admin). Returns True if should be BLOCKED.
@@ -106,13 +91,3 @@ def get_user_session_data():
         'user_id': user.user_id,
         'created_at': user.created_at
     }
-
-
-def is_logged_in():
-    """
-    Simple check if anyone is logged in.
-    
-    Returns:
-        True if user_id exists in session, False otherwise
-    """
-    return 'user_id' in session
