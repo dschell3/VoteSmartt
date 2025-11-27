@@ -244,7 +244,7 @@ def createEventRoute():
         return redirect('/admin2')
 
 # =============================================================================
-# EVENT LISTING & VIEWING ROUTES - Display events
+# EVENT LIST & VIEWING ROUTES - Display events
 # =============================================================================
 
 @app.route('/eventList')
@@ -402,35 +402,48 @@ def singleEvent(event_id):
 
 @app.route("/events/<int:event_id>/delete", methods=['POST'])
 def deleteEvent(event_id):
-    """Delete an event then redirect safely.
-
-    Improvements:
-    - Use named route redirect (eventList) for consistency.
-    - Graceful handling if user object or permissions method not present.
-    - Avoid redirecting to hard-coded /events (not defined) to prevent 404.
-    - Minimize branching; single exit redirect.
     """
+    Delete an event and redirect safely.
+    
+    Process:
+        1. Verify user is logged in
+        2. Get current user object
+        3. Verify event exists
+        4. Check user has permission (creator or admin)
+        5. Delete event from database (cascades to options/votes)
+    
+    Args:
+        event_id (int): ID of the event to delete
+    
+    Redirects:
+        - /eventList: Always (with success or error flash message)
+        - /login: If user is not authenticated
+    """
+    # 1. Verify user is logged in
     redirect_url = require_login()
     if redirect_url:
         return redirect(redirect_url)
 
+    # 2. Get current user object
     user = None
     try:
         user = get_current_user()
     except Exception:
         user = None
 
+    # 3. Verify event exists
     event = Events.getOne({"event_id": event_id})
     if not event:
         flash("Event not found.", "error")
         return redirect(url_for('eventList'))
 
-    # Permission check
+    # 4. Permission check
     if not user or not user.can_manage_event(event):
         flash("You can only delete events that you created.", "error")
         return redirect(url_for('eventList'))
-
+    
     try:
+        # 5. Delete event from DB
         result = Events.deleteEvent({"event_id": event_id})
         if result:
             flash(f"Event '{event.title}' deleted.", "success")
@@ -442,16 +455,19 @@ def deleteEvent(event_id):
 
     return redirect(url_for('eventList'))
 
-
-
-
-
-# ==========================
-# Minimal EDIT routes (GET/POST) reusing existing template and validation
-# ==========================
+# =============================================================================
+# HELPER FUNCTIONS - Internal utilities for edit routes
+# =============================================================================
 
 def _fmt_local_dt(raw_val):
-    """Format a DB datetime or string to HTML datetime-local value (YYYY-MM-DDTHH:MM)."""
+    """
+    Format a DB datetime or string to HTML datetime-local value (YYYY-MM-DDTHH:MM).
+    
+    Args:
+        raw_val: DateTime object or string from database
+    Returns:
+        str: Formatted string 'YYYY-MM-DDTHH:MM' or empty string on error
+    """
     try:
         dt = parse_datetime(raw_val)
         return dt.strftime('%Y-%m-%dT%H:%M') if dt else ''
@@ -460,13 +476,19 @@ def _fmt_local_dt(raw_val):
 
 
 def _normalize_full(val_date_only: str, val_local: str):
-    """Normalize posted datetime values to 'YYYY-MM-DD HH:MM:SS'. 
-    
-    Prefers val_date_only (UTC from hidden field) to ensure proper timezone handling.
-    The hidden field contains UTC time converted by JavaScript, while val_local 
-    contains the user's local timezone which we DON'T want to use directly.
     """
-    # CRITICAL: Prefer UTC value (val_date_only) over local timezone (val_local)
+    Normalize posted datetime values to 'YYYY-MM-DD HH:MM:SS' format.
+    Handles timezone conversion by preferring the UTC value over 
+    local timezone values. This ensures consistent server-side
+    time handling regardless of user's browser timezone.
+    
+    Args:
+        val_date_only (str): UTC value from hidden form field (preferred)
+        val_local (str): Local timezone value from datetime-local input
+    Returns:
+        str: Normalized datetime string 'YYYY-MM-DD HH:MM:SS' or empty string
+    """
+    # Prefer UTC value (val_date_only) over local timezone (val_local)
     raw = (val_date_only or '').strip() or (val_local or '').strip()
     if not raw:
         return ''
@@ -480,37 +502,57 @@ def _normalize_full(val_date_only: str, val_local: str):
 
 @app.route('/events/<int:event_id>/edit')
 def editEventGet(event_id):
-    """Render edit page reusing eventForms.html with edit_mode."""
+    """
+    Display the event edit form with pre-populated values.
+    
+    Process:
+        1. Verify user is logged in
+        2. Get current user object
+        3. Verify event exists
+        4. Check user has permission (creator or admin)
+        5. Determine which fields are editable based on event status
+        6. Pre-populate form with current values
+        7. Load existing candidates for display
+    
+    Args:
+        event_id (int): ID of the event to edit
+    
+    Redirects:
+        - /eventList: If event not found or no permission
+        - /login: If user is not authenticated
+    """
+    # 1. Verify user is logged in
     redirect_url = require_login()
     if redirect_url:
         return redirect(redirect_url)
 
+    # 2. Get current user object
     user = None
     try:
         user = get_current_user()
     except Exception:
         user = None
 
+    # 3. Verify event exists
     event = Events.getOne({"event_id": event_id})
     if not event:
         flash("Event not found.", "error")
         return redirect(url_for('eventList'))
 
-    # Permission: creator or admin
+    # 4. Permission: creator or admin
     if not user or not user.can_manage_event(event):
         flash("You can only edit events that you created.", "error")
         return redirect(url_for('eventList'))
 
-    # Get editable fields based on event status
+    # 5. Get editable fields based on event status
     editable = event.get_editable_fields()
-
     user_data = get_user_session_data()
     
-    # Prefill strings for datetime-local inputs
+    # 6. Prefill strings for datetime-local inputs
     prefill_start_local = _fmt_local_dt(event.start_time)
     prefill_end_local = _fmt_local_dt(event.end_time)
 
-    # Load existing options/candidates for this event
+    # 7. Load existing options/candidates for this event
     existing_options = []
     try:
         existing_options = Option.getByEventId({'event_id': event_id})
@@ -534,17 +576,45 @@ def editEventGet(event_id):
 
 @app.route('/events/<int:event_id>/edit', methods=['POST'])
 def editEventPost(event_id):
-    """Handle edit submission with minimal validation and field restrictions by status."""
+    """
+    Handle event edit submission with status-aware validation.
+    
+    Process:
+        1. Verify user is logged in
+        2. Get current user and verify permissions
+        3. Determine which fields are editable based on status
+        4. Validate only editable fields
+        5. Apply status-specific temporal rules:
+           - Waiting: Start can't be in past
+           - Open: End must be in future and after start
+           - Closed: Keep all times unchanged
+        6. Update event record
+        7. If status is 'Waiting', process candidate changes:
+           - Update existing candidates (by ID)
+           - Add new candidates (no ID)
+           - Delete removed candidates (in DB but not in form)
+    
+    Args:
+        event_id (int): ID of the event to update
+
+    Redirects:
+        - /events/<id>/edit: On validation errors
+        - /eventList: On successful update
+        - /login: If user is not authenticated
+    """
+    # 1. Verify user is logged in
     redirect_url = require_login()
     if redirect_url:
         return redirect(redirect_url)
 
+    # 2. Get current user object
     user = None
     try:
         user = get_current_user()
     except Exception:
         user = None
 
+    # Validate event exists
     event = Events.getOne({"event_id": event_id})
     if not event:
         flash("Event not found.", "error")
@@ -555,7 +625,7 @@ def editEventPost(event_id):
         flash("You can only edit events that you created.", "error")
         return redirect(url_for('eventList'))
 
-    # Get editable fields and status
+    # 3. Get + Check which fields are editable based on status
     editable = event.get_editable_fields()
     status = editable['status']
     can_title = editable['title']
@@ -571,15 +641,16 @@ def editEventPost(event_id):
     start_time_local = request.form.get('start_time_local', '').strip()
     end_time_local = request.form.get('end_time_local', '').strip()
 
-    # Basic validation similar to create, but skip candidates and adjust by status
+    # 4. Validate only editable fields
     error_message = None
 
-    # Title/desc validation using centralized validators
+    # Title validation using centralized validators
     if can_title:
         error_message = validate_event_title(title)
     else:
         title = event.title
 
+    # Description validation - optional
     if not error_message and can_desc and description:
         error_message = validate_event_description(description)
     elif not can_desc:
@@ -600,12 +671,13 @@ def editEventPost(event_id):
             error_message = 'Please select a start date'
         if not error_message and can_end and not end_dt:
             error_message = 'Please select an end date'
-
+    
+    # Time range validation
     if not error_message and start_dt and end_dt:
         if end_dt <= start_dt:
             error_message = 'End time cannot be before or equal to start time'
 
-    # Additional rules by status
+    # 5. Status-specific rules
     if not error_message:
         if status == 'Waiting' and start_dt and start_dt < now:
             error_message = 'Start time cannot be in the past'
@@ -622,12 +694,13 @@ def editEventPost(event_id):
             title = event.title
             normalized_start = event.start_time
             normalized_end = event.end_time
-
+    
+    # If validation failed, redirect back to edit form
     if error_message:
         flash(error_message, 'error')
         return redirect(url_for('editEventGet', event_id=event_id))
 
-    # Persist update
+    # 6. Update event record
     data = {
         'event_id': event_id,
         'title': title,
@@ -643,7 +716,7 @@ def editEventPost(event_id):
         flash('Error updating event. Please try again.', 'error')
         return redirect(url_for('editEventGet', event_id=event_id))
 
-    # ===== CANDIDATE/OPTION MANAGEMENT (only for "Waiting" status) =====
+    # 7. ===== CANDIDATE/OPTION MANAGEMENT (only for "Waiting" status) =====
     # Only allow candidate editing if event is still in "Waiting" status
     if status == 'Waiting':
         try:
@@ -652,7 +725,6 @@ def editEventPost(event_id):
             submitted_candidate_ids = request.form.getlist('candidate_ids[]')
             
             # Clean up candidate data (strip whitespace, remove empty entries)
-            # CRITICAL FIX: Zip candidates with IDs to maintain proper pairing
             valid_candidates = []
             valid_ids = []
 
