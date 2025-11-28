@@ -58,7 +58,7 @@ def require_voter():
         False if user is voter (allowed to vote)
     """
     user = get_current_user()
-    if not user or not user.can_cast_vote():
+    if not user or not user.canCastVote():
         flash("Administrators cannot vote on events.", "error")
         return True
     return False

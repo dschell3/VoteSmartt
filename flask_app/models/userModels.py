@@ -78,7 +78,7 @@ class User:
     # ROLE-BASED CAPABILITY METHODS - Permission checks, user level
     # =========================================================================
     
-    def can_cast_vote(self) -> bool:       
+    def canCastVote(self) -> bool:       
         """
         Checks if user is allowed to cast votes. They are not admin.
         
@@ -87,7 +87,7 @@ class User:
         """
         return not self.is_admin
 
-    def can_manage_event(self, event) -> bool:
+    def canManageEvent(self, event) -> bool:
         """
         Check if user can manage a specific event (edit/delete).
         Event management is allowed for:

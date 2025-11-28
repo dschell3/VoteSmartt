@@ -384,7 +384,7 @@ class Events:
     # INSTANCE METHODS - Operations on individual event objects
     # =========================================================================
 
-    def get_editable_fields(self) -> dict:
+    def getEditableFields(self) -> dict:
         """
         Implements business rules for field editability:
             - Waiting (not started): All fields editable
@@ -428,7 +428,7 @@ class Events:
                 
         except Exception as e:
             # Log error but return defaults
-            print(f"[ERROR] get_editable_fields failed: {e}")
+            print(f"[ERROR] getEditableFields failed: {e}")
         
         return editable
 

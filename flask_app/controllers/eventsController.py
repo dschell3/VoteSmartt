@@ -438,7 +438,7 @@ def deleteEvent(event_id):
         return redirect(url_for('eventList'))
 
     # 4. Permission check
-    if not user or not user.can_manage_event(event):
+    if not user or not user.canManageEvent(event):
         flash("You can only delete events that you created.", "error")
         return redirect(url_for('eventList'))
     
@@ -540,12 +540,12 @@ def editEventGet(event_id):
         return redirect(url_for('eventList'))
 
     # 4. Permission: creator or admin
-    if not user or not user.can_manage_event(event):
+    if not user or not user.canManageEvent(event):
         flash("You can only edit events that you created.", "error")
         return redirect(url_for('eventList'))
 
     # 5. Get editable fields based on event status
-    editable = event.get_editable_fields()
+    editable = event.getEditableFields()
     user_data = get_user_session_data()
     
     # 6. Prefill strings for datetime-local inputs
@@ -621,12 +621,12 @@ def editEventPost(event_id):
         return redirect(url_for('eventList'))
 
     # Permission check
-    if not user or not user.can_manage_event(event):
+    if not user or not user.canManageEvent(event):
         flash("You can only edit events that you created.", "error")
         return redirect(url_for('eventList'))
 
     # 3. Get + Check which fields are editable based on status
-    editable = event.get_editable_fields()
+    editable = event.getEditableFields()
     status = editable['status']
     can_title = editable['title']
     can_desc = editable['description']
