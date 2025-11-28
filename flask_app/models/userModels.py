@@ -292,13 +292,13 @@ class User:
 
         # Generate token
         raw_token = secrets.token_urlsafe(32)
-        # Store the hash
+        # Store the hash - encode to bytes -> encrypt to hash object -> convert to hexadec str
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
 
         # Determine experation time
         expires_at = datetime.utcnow() + timedelta(minutes=ttl_minutes)
         
-        # Insert token record
+        # Insert token_hash into the db
         query = (
             """
             INSERT INTO password_reset_token
@@ -341,7 +341,7 @@ class User:
         if not raw_token:
             return None
         
-        # Hash the token to match against the stored hash
+        # Hash the token in the same process to match against the stored hash
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
         # Look up the token, to ensure its unused + not expired
         query = (
@@ -377,7 +377,7 @@ class User:
             return False
         # Hash token to match the stored value
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
-        # Mark token as used by setting used_at timestamp
+        # Mark token as used to prevent reuse
         query = (
             """
             UPDATE password_reset_token
