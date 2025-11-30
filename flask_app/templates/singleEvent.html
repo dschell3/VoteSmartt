@@ -17,6 +17,18 @@
 .winner-outline { outline:2px solid #22c55e; outline-offset:2px; border-color:#22c55e; }
 .welcome-banner { margin:4px 0 22px; padding:2px 0; }
 .welcome-banner h2 { font-size:1.55rem; font-weight:700; letter-spacing:.5px; color:#0b3b7a; }
+/* Celebration styles for finished results */
+.celebration-banner { background: linear-gradient(90deg,#06b6d4 0%,#3b82f6 100%); color: white; padding:12px 16px; border-radius:10px; display:flex; align-items:center; gap:12px; box-shadow:0 10px 30px rgba(59,130,246,0.12); }
+.celebration-banner h3 { margin:0; font-size:1.125rem; font-weight:700; }
+.winner-card { display:flex; gap:16px; align-items:center; padding:18px; border-radius:12px; background: linear-gradient(180deg,#ffffff 0%, #f8fafc 100%); box-shadow:0 10px 30px rgba(2,6,23,0.06); border:2px solid rgba(34,197,94,0.08); }
+.winner-badge { background:linear-gradient(90deg,#10b981,#06b6d4); color:white; padding:8px 12px; border-radius:999px; font-weight:700; font-size:0.95rem; }
+.winner-name { font-size:1.25rem; font-weight:800; color:#0b3b7a; }
+.winner-percent { font-size:1.25rem; font-weight:900; color:#0b3b7a; }
+.result-bar { height:10px; background:#e6eefc; border-radius:999px; overflow:hidden; }
+.result-bar > .fill { height:100%; background:linear-gradient(90deg,#7c3aed,#6366f1); width:0%; transition:width 900ms cubic-bezier(.2,.9,.2,1); }
+.small-option { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px; border-radius:8px; background:#fff; border:1px solid #eef2ff; }
+.pulse-glow { box-shadow: 0 0 0 0 rgba(34,197,94,0.35); animation: pulse 2.2s infinite; }
+@keyframes pulse { 0% { box-shadow:0 0 0 0 rgba(34,197,94,0.35);} 70% { box-shadow:0 0 0 18px rgba(34,197,94,0);} 100% { box-shadow:0 0 0 0 rgba(34,197,94,0);} }
 @media (min-width: 640px){ .welcome-banner h2 { font-size:1.65rem; } }
 @media (min-width: 1024px) { .event-grid { display:grid; grid-template-columns: 1fr 360px; gap:28px } }
 {% endblock %}
@@ -71,7 +83,7 @@
                         <li><strong>Start:</strong> <span id="detailStart">&mdash;</span></li>
                         <li><strong>End:</strong> <span id="detailEnd">&mdash;</span></li>
                         <li><strong>Status:</strong> <span id="detailStatus">&mdash;</span></li>
-                        <li><strong>Created at:</strong> {{ event.created_at or '—' }}</li>
+                        <li><strong>Created at:</strong> {{ created_at_display if created_at_display is defined else (event.created_at or '—') }}</li>
                     </ul>
                 </div>
 
@@ -125,31 +137,57 @@
                         {% if not options %}
                             <div class="text-sm text-slate-500">No options available for voting.</div>
                         {% else %}
+                            {# Compute the selected option text for a clearer UI when user already voted #}
+                            {% set selected_text = '' %}
+                            {% for o in options %}
+                                {% if selected_option_id == o.option_id %}
+                                    {% set selected_text = o.option_text %}
+                                {% endif %}
+                            {% endfor %}
+
+                            {# Show a clear banner when the current user has already voted #}
+                            {% if selected_option_id %}
+                                <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3" role="status" aria-live="polite">
+                                    <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <div>
+                                        <div class="font-medium text-green-800">You voted</div>
+                                        <div class="text-sm text-green-700">Your current vote: <span class="font-semibold">{{ selected_text }}</span></div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
                             <form action="/vote/cast" method="post" class="space-y-3">
                                 <input type="hidden" name="event_id" value="{{ event.event_id }}" />
                                 <div class="vote-stack">
                                     {% for o in options %}
                                     <label class="vote-option {{ 'vote-option--selected' if selected_option_id==o.option_id else '' }}">
                                         <input type="radio" class="mt-1" name="option_id" value="{{ o.option_id }}" {{ 'checked' if selected_option_id==o.option_id }} />
-                                        <div class="font-medium text-slate-800">{{ o.option_text }}</div>
+                                        <div class="font-medium text-slate-800">
+                                            {{ o.option_text }}
+                                            {% if selected_option_id == o.option_id %}
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Your vote</span>
+                                            {% endif %}
+                                        </div>
                                     </label>
                                     {% endfor %}
                                 </div>
                                 <div class="flex items-center gap-3 pt-2">
                                     <button type="submit" class="cta-primary">{{ 'Update Vote' if selected_option_id else 'Submit Vote' }}</button>
                                     {% if selected_option_id %}
-                                    <!-- Avoid nested forms: use HTML5 formaction to post to delete endpoint -->
-                                    <button type="submit"
+                                    <!-- Use a custom modal to confirm retracting a vote -->
+                                    <button type="button"
+                                            id="retract-vote-btn"
                                             class="cta-ghost"
-                                            formmethod="post"
-                                            formaction="/vote/delete"
-                                            onclick="return confirm('Retract your vote?');">
+                                            data-selected-text="{{ selected_text }}"
+                                            aria-haspopup="dialog">
                                         Retract Vote
                                     </button>
                                     {% endif %}
                                 </div>
                                 {% if selected_option_id %}
-                                <div class="text-xs text-slate-500">You have voted already. You can update or retract while the event remains open.</div>
+                                <div class="text-sm text-slate-600 mt-2">You have already voted. You can update your choice or retract your vote while the event remains open.</div>
                                 {% endif %}
                             </form>
                         {% endif %}
@@ -160,17 +198,61 @@
                         {% if not tallies %}
                             <div class="text-sm text-slate-500">No votes yet.</div>
                         {% else %}
-                            <div class="vote-stack" role="list">
+                            {# Compute total votes for percentages using the sum filter (works with list of dicts/objects) #}
+                            {% set total_votes = tallies|sum(attribute='votes') %}
+
+                            {# Celebration banner and highlighted winner #}
+                            <div class="celebration-banner mb-4" role="status" aria-live="polite">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3"/></svg>
+                                <div>
+                                    <h3 class="text-white">Voting finished — results are in!</h3>
+                                    <div class="text-sm text-white/90">Total votes: {{ total_votes }}</div>
+                                </div>
+                            </div>
+
+                            {% if total_votes > 0 and winner_option_ids %}
+                                {# pick first winner for hero display (ties will show first winner) #}
+                                {% set primary_winner = None %}
                                 {% for t in tallies %}
-                                <div class="vote-option {{ 'winner-outline' if winner_option_ids and t.option_id in winner_option_ids }}" role="listitem">
-                                    <div class="flex justify-between w-full">
+                                    {% if t.option_id in winner_option_ids %}
+                                        {% if not primary_winner %}
+                                            {% set primary_winner = t %}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if primary_winner %}
+                                    <div class="winner-card mb-4 pulse-glow" id="winner-card">
+                                        <div class="winner-badge">Winner</div>
+                                        <div>
+                                            <div class="winner-name">{{ primary_winner.option_text }}</div>
+                                            <div class="text-sm text-slate-600">{{ primary_winner.votes }} vote{{ 's' if primary_winner.votes != 1 }}</div>
+                                        </div>
+                                        <div class="ml-auto text-right">
+                                            {% set pct = (primary_winner.votes * 100.0 / total_votes) if total_votes else 0 %}
+                                            <div class="winner-percent">{{ (pct|round(0)|int) }}%</div>
+                                            <div class="text-xs text-slate-400">of total</div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+
+                            {# List options with bars underneath the winner card #}
+                            <div class="space-y-3">
+                                {% for t in tallies %}
+                                        {% set pct = (t.votes * 100.0 / total_votes) if total_votes else 0 %}
+                                    <div class="small-option" role="listitem">
                                         <div>
                                             <div class="font-medium text-slate-800">{{ t.option_text }}</div>
                                             <div class="text-xs text-slate-500 mt-1">{{ t.votes }} vote{{ 's' if t.votes != 1 }}</div>
                                         </div>
-                                        <div class="text-xl font-bold text-indigo-600">{{ t.votes }}</div>
+                                        <div style="min-width:160px; max-width:260px; width:40%">
+                                            <div class="result-bar" aria-hidden="true">
+                                                <div class="fill" data-percent="{{ (pct|round(1)) }}" style="width:0%"></div>
+                                            </div>
+                                            <div class="text-xs text-slate-400 text-right mt-1">{{ (pct|round(0)|int) }}%</div>
+                                        </div>
                                     </div>
-                                </div>
                                 {% endfor %}
                             </div>
                         {% endif %}
@@ -211,6 +293,15 @@
                     {% endif %}
                 </div>
             </div>
+            {% if is_open %}
+            <div class="event-card mt-4" id="voting-countdown-card">
+                <h4 class="text-lg font-semibold">Time left to vote</h4>
+                <div class="mt-3 text-center">
+                    <div id="sidebar-countdown" class="text-2xl font-bold text-indigo-600">—:—:—</div>
+                    <div class="text-sm text-slate-500 mt-1">Ends <span id="sidebar-end-time">—</span></div>
+                </div>
+            </div>
+            {% endif %}
         </aside>
     </div>
 
@@ -231,6 +322,35 @@
         </div>
     </div>
 </div>
+<!-- Retract Vote Modal -->
+<div id="retract-modal" class="fixed inset-0 hidden items-center justify-center z-50">
+    <div class="absolute inset-0 bg-black/50" id="retract-overlay"></div>
+    <div class="relative bg-white rounded-lg shadow-2xl w-full max-w-lg mx-4">
+        <div class="p-6">
+            <div class="flex items-start justify-between">
+                <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 1010 10A10 10 0 0012 2z"/>
+                    </svg>
+                    <div>
+                        <h3 class="text-lg font-semibold text-red-700">Confirm retract vote</h3>
+                        <p id="retract-modal-message" class="text-sm text-slate-600 mt-1">Are you sure you want to retract your vote?</p>
+                    </div>
+                </div>
+                <button id="retract-close" class="text-sm text-slate-600">Close</button>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button id="retract-cancel" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Cancel</button>
+                <button id="retract-confirm" type="button" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Yes, retract my vote</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden retract form submitted by modal -->
+<form id="retract-form" action="/vote/delete" method="post" style="display:none;">
+    <input type="hidden" name="event_id" value="{{ event.event_id }}" />
+</form>
 {% endblock %}
 
 {% block extra_js %}
@@ -285,8 +405,77 @@
             tick();
             setInterval(tick,1000);
 
+            // ===== Sidebar countdown (shows only when the countdown element exists) =====
+            try {
+                const sidebarEl = document.getElementById('sidebar-countdown');
+                const sidebarEndEl = document.getElementById('sidebar-end-time');
+                if (sidebarEndEl) {
+                    const end = tryParse(endRaw);
+                    sidebarEndEl.textContent = (window.TimeUtils && TimeUtils.formatSingle) ? TimeUtils.formatSingle(endRaw) : (end ? dayjs(end).format('MMM D, YYYY h:mm A') : '—');
+                }
+
+                const end = tryParse(endRaw);
+                if (sidebarEl && end) {
+                    function updateSidebar() {
+                        const now = dayjs();
+                        const diff = end.diff(now);
+                        if (diff <= 0) {
+                            sidebarEl.textContent = 'Voting ended';
+                            clearInterval(sidebarInterval);
+                            return;
+                        }
+                        // Use TimeUtils.humanDuration when available, otherwise fallback to HH:MM:SS
+                        if (window.TimeUtils && TimeUtils.humanDuration) {
+                            sidebarEl.textContent = TimeUtils.humanDuration(diff);
+                        } else {
+                            const s = Math.floor(diff/1000);
+                            const hh = String(Math.floor(s/3600)).padStart(2,'0');
+                            const mm = String(Math.floor((s%3600)/60)).padStart(2,'0');
+                            const ss = String(s%60).padStart(2,'0');
+                            sidebarEl.textContent = `${hh}:${mm}:${ss}`;
+                        }
+                    }
+                    updateSidebar();
+                    const sidebarInterval = setInterval(updateSidebar, 1000);
+                }
+            } catch (err) {
+                console.warn('Sidebar countdown init failed', err);
+            }
+
             // Set results bar widths when present
             // Removed pie-chart + bar width logic per simplified spec
+        });
+        // ===== Results celebration: animate bars and confetti when results present =====
+        document.addEventListener('DOMContentLoaded', function(){
+            try {
+                // Animate result bars
+                const fills = document.querySelectorAll('.result-bar .fill');
+                fills.forEach(function(el, idx){
+                    const pct = parseFloat(el.getAttribute('data-percent') || '0');
+                    // small delay per row for pleasant stagger
+                    setTimeout(()=>{ el.style.width = Math.min(100, pct) + '%'; }, idx * 120);
+                });
+
+                // If there's a winner card, fire confetti once
+                const winner = document.getElementById('winner-card');
+                if (winner) {
+                    // load canvas-confetti from CDN and fire a couple bursts
+                    (function loadConfetti(cb){
+                        var s = document.createElement('script');
+                        s.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js';
+                        s.async = true;
+                        s.onload = cb;
+                        s.onerror = function(){ console.warn('Confetti library failed to load'); };
+                        document.head.appendChild(s);
+                    })(function(){
+                        try {
+                            // multiple bursts
+                            confetti({ particleCount: 60, spread: 50, origin: { y: 0.6 } });
+                            setTimeout(()=> confetti({ particleCount: 40, spread: 60, origin: { y: 0.6 } }), 350);
+                        } catch (e) { console.warn('Confetti failed', e); }
+                    });
+                }
+            } catch (err) { console.warn('Results celebration init failed', err); }
         });
         // ===== User List modal logic (creator only) =====
         document.addEventListener('DOMContentLoaded', function(){
@@ -350,6 +539,49 @@
 
             // Small helper to escape HTML
             function escapeHtml(str){ return String(str||'').replace(/[&"'<>]/g, function(s){ return ({'&':'&amp;','"':'&quot;',"'":'&#39;','<':'&lt;','>':'&gt;'})[s]; }); }
+        });
+
+        // ===== Retract vote modal behavior =====
+        document.addEventListener('DOMContentLoaded', function(){
+            const retractBtn = document.getElementById('retract-vote-btn');
+            const modal = document.getElementById('retract-modal');
+            const overlay = document.getElementById('retract-overlay');
+            const closeBtn = document.getElementById('retract-close');
+            const cancelBtn = document.getElementById('retract-cancel');
+            const confirmBtn = document.getElementById('retract-confirm');
+            const messageEl = document.getElementById('retract-modal-message');
+            const form = document.getElementById('retract-form');
+
+            if (!retractBtn || !modal || !form) return;
+
+            function openModal() {
+                const selectedText = retractBtn.getAttribute('data-selected-text') || '';
+                if (messageEl) {
+                    const safeText = selectedText ? ` Are you sure you want to retract your vote for "${selectedText}"? This cannot be undone.` : ' Are you sure you want to retract your vote? This cannot be undone.';
+                    messageEl.textContent = safeText;
+                }
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = '';
+            }
+
+            retractBtn.addEventListener('click', openModal);
+            overlay && overlay.addEventListener('click', closeModal);
+            closeBtn && closeBtn.addEventListener('click', closeModal);
+            cancelBtn && cancelBtn.addEventListener('click', closeModal);
+
+            confirmBtn && confirmBtn.addEventListener('click', function(){
+                // Submit the hidden form to retract vote
+                try { form.submit(); } catch (err) { console.error('Failed to submit retract form', err); }
+            });
+            // Escape closes
+            document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeModal(); });
         });
     </script>
     {# Chart removed #}

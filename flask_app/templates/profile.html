@@ -146,14 +146,10 @@ document.addEventListener('DOMContentLoaded',()=>{
                 <i data-lucide="bar-chart-3" class="w-5 h-5 text-blue-600"></i>
                 Voting Dashboard
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <div class="bg-white rounded-xl p-6 text-center border border-corporate-slate-200 transition-all duration-200 hover:border-corporate-slate-300 hover:shadow-md">
                     <div class="text-3xl font-bold text-blue-600 mb-2">{{ user_stats.total_votes if user_stats and user_stats.total_votes else 'N/A' }}</div>
                     <div class="text-sm text-corporate-slate-500 font-medium">Total Votes Cast</div>
-                </div>
-                <div class="bg-white rounded-xl p-6 text-center border border-corporate-slate-200 transition-all duration-200 hover:border-corporate-slate-300 hover:shadow-md">
-                    <div class="text-3xl font-bold text-blue-600 mb-2">{{ user_stats.participation_rate if user_stats and user_stats.participation_rate else 'N/A' }}%</div>
-                    <div class="text-sm text-corporate-slate-500 font-medium">Participation Rate</div>
                 </div>
                 <div class="bg-white rounded-xl p-6 text-center border border-corporate-slate-200 transition-all duration-200 hover:border-corporate-slate-300 hover:shadow-md">
                     <div class="text-3xl font-bold text-blue-600 mb-2">{{ user_stats.events_participated if user_stats and user_stats.events_participated else 'N/A' }}</div>

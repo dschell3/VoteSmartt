@@ -406,9 +406,22 @@ def singleEvent(event_id):
         except Exception:
             result = None
 
+    # Format created_at for display in 12-hour clock with AM/PM
+    try:
+        created_raw = getattr(event, 'created_at', None)
+        created_dt = parse_datetime(created_raw)
+        if created_dt:
+            # Example: Nov 29, 2025 10:31:43 PM
+            created_at_display = created_dt.strftime('%b %d, %Y %I:%M:%S %p')
+        else:
+            created_at_display = created_raw or '—'
+    except Exception:
+        created_at_display = getattr(event, 'created_at', '—') or '—'
+
     return render_template(
         'singleEvent.html',
         event=event,
+        created_at_display=created_at_display,
         recommendations=recs,
         options=options,
         is_open=is_open,
@@ -419,7 +432,7 @@ def singleEvent(event_id):
         total_votes=result.getTotalVotes() if not is_open and result else 0, 
         is_event_creator=is_event_creator,
         **user_data
-    ) 
+    )
 
 
 @app.route('/users/list')
