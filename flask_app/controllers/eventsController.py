@@ -177,6 +177,16 @@ def createEventRoute():
                 if cand_error:
                     error_message = cand_error
                     break
+            
+            # Check for duplicate candidates (case-insensitive)
+            if not error_message:
+                seen = set()
+                for cand in valid_candidates:
+                    cand_lower = cand.lower()
+                    if cand_lower in seen:
+                        error_message = f'Duplicate candidate "{cand}" is not allowed. Each candidate must have a unique name.'
+                        break
+                    seen.add(cand_lower)
 
     # If there's a validation error, show only one message
     if error_message:
@@ -814,6 +824,15 @@ def editEventPost(event_id):
             if len(valid_candidates) < 2:
                 flash('Events must have at least 2 candidates. Please add more candidates before saving.', 'error')
                 return redirect(url_for('editEventGet', event_id=event_id))
+            
+            # Check for duplicate candidates (case-insensitive)
+            seen_names = set()
+            for cand_name in valid_candidates:
+                cand_lower = cand_name.lower()
+                if cand_lower in seen_names:
+                    flash(f'Duplicate candidate "{cand_name}" is not allowed. Each candidate must have a unique name.', 'error')
+                    return redirect(url_for('editEventGet', event_id=event_id))
+                seen_names.add(cand_lower)
             
 
             # Get existing options from database
