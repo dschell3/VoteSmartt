@@ -879,6 +879,12 @@ document.addEventListener('DOMContentLoaded', function() {
             this.candidatesList.addEventListener('click', (e) => {
                 if (e.target.classList.contains('remove-candidate')) {
                     e.target.closest('.bg-white').remove();
+                    // Clear any candidates error after removal
+                    const candidatesError = document.getElementById('candidates-error');
+                    if (candidatesError) {
+                        candidatesError.classList.add('hidden');
+                        candidatesError.innerHTML = '';
+                    }
                 } else if (e.target.classList.contains('edit-candidate')) {
                     this.editCandidate(e.target);
                 }
@@ -925,6 +931,20 @@ document.addEventListener('DOMContentLoaded', function() {
             this.nameInput.classList.remove('border-red-500');
             
             // Update existing candidate or add new one based on modal state
+            // Check for duplicate candidate names (case-insensitive) before adding/updating
+            const duplicateIndex = this.findDuplicateIndex(name, this.modal.dataset.editingIndex);
+            if (duplicateIndex !== -1) {
+                // Show inline candidates error and keep the modal open for correction
+                const candidatesError = document.getElementById('candidates-error');
+                if (candidatesError) {
+                    candidatesError.innerHTML = 'Voting options are the same — please change one of the options to something else';
+                    candidatesError.classList.remove('hidden');
+                }
+                this.nameInput.classList.add('border-red-500');
+                this.nameInput.focus();
+                return;
+            }
+
             if (this.modal.dataset.editingIndex) {
                 this.updateCandidate(this.modal.dataset.editingIndex, name);
                 delete this.modal.dataset.editingIndex;
@@ -959,6 +979,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             this.candidatesList.appendChild(candidateCard);
+            // Clear any previous candidates error now that a candidate was added
+            const candidatesError = document.getElementById('candidates-error');
+            if (candidatesError) {
+                candidatesError.classList.add('hidden');
+                candidatesError.innerHTML = '';
+            }
+        },
+        
+        // Return index of existing candidate with same name (case-insensitive) or -1 if none
+        findDuplicateIndex(name, editingIndex) {
+            if (!name) return -1;
+            const normalized = name.trim().toLowerCase();
+            const cards = Array.from(this.candidatesList.children);
+            for (let i = 0; i < cards.length; i++) {
+                // If editingIndex provided, allow replacing the same index
+                if (typeof editingIndex !== 'undefined' && editingIndex !== null && String(editingIndex) === String(i)) continue;
+                const existing = cards[i].querySelector('input[name="candidates[]"]').value.trim().toLowerCase();
+                if (existing === normalized) return i;
+            }
+            return -1;
         },
         
         editCandidate(button) {
@@ -978,6 +1018,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.querySelector('input[name="candidates[]"]').value = name;
                 const paragraph = card.querySelector('p');
                 paragraph.textContent = name;
+                // Clear any candidates error after updating
+                const candidatesError = document.getElementById('candidates-error');
+                if (candidatesError) {
+                    candidatesError.classList.add('hidden');
+                    candidatesError.innerHTML = '';
+                }
             }
         }
     };
@@ -1020,6 +1066,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('❌ Validation failed - form not submitted');
                 return;
             }
+
+            // Final duplicate check for candidate names before submission
+            const duplicateFound = (function(){
+                const candidateInputs = document.querySelectorAll('#candidates-list input[name="candidates[]"]');
+                const seen = new Set();
+                for (let i = 0; i < candidateInputs.length; i++) {
+                    const val = candidateInputs[i].value.trim().toLowerCase();
+                    if (!val) continue;
+                    if (seen.has(val)) {
+                        const candidatesError = document.getElementById('candidates-error');
+                        if (candidatesError) {
+                            candidatesError.innerHTML = 'Voting options are the same — please change one of the options to something else';
+                            candidatesError.classList.remove('hidden');
+                        }
+                        console.log('❌ Duplicate candidate names detected - blocking submit');
+                        return true; // duplicate found
+                    }
+                    seen.add(val);
+                }
+                return false;
+            })();
+
+            if (duplicateFound) return; // Block submission
 
             // No UTC conversion - submit times in local timezone
             console.log('✅ Submitting form with local times');

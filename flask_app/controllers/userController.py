@@ -506,7 +506,7 @@ def forgot_password_request():
     
     # Record throttle timestamp on success path as well (regardless of whether email exists)
     session['forgot_last_ts'] = now_ts
-    return redirect("/login")
+    return redirect("/")
 
 @app.route("/forgotRoute", methods=['POST'])
 def forgot_password_request_alias():
@@ -567,40 +567,47 @@ def reset_password_submit():
 
     # 2. Validate all fields
     if not token or not new_password or not confirm_password:
+        print(f"[RESET] Missing field(s) - token:{bool(token)} new_password:{bool(new_password)} confirm:{bool(confirm_password)}")
         flash("All fields are required", "error")
         return redirect(request.referrer or '/')
 
     # 3. Verify passwords match
     if new_password != confirm_password:
+        print(f"[RESET] Passwords do not match")
         flash("Passwords do not match", "error")
         return redirect(request.referrer or '/')
 
     # 4. Validate pw strength using centralized validator (detailed message)
     pw_error = validate_password(new_password)
     if pw_error:
+        print(f"[RESET] Password validation failed: {pw_error}")
         flash(pw_error, "error")
         return redirect(request.referrer or '/')
 
     # 5. Verify token again to prevent reuse and race conditions
     info = User.verifyPasswordResetToken(token)
     if not info:
+        print(f"[RESET] Token verification failed for token: {token}")
         flash("The reset link is invalid or has expired.", "error")
-        return redirect('/forgot_password')
+        return redirect('/')
 
     # 6. Disallow reusing current password
     try:
         if bcrypt.check_password_hash(info['password'], new_password):
+            print(f"[RESET] New password matches current password for user_id={info.get('user_id')}")
             flash("New password cannot be the same as your current password.", "error")
             return redirect(request.referrer or '/')
-    except Exception:
+    except Exception as e:
+        print(f"[RESET] Error checking existing password hash: {e}")
         pass
 
     # 7. Hash and update pw
     pw_hash = bcrypt.generate_password_hash(new_password)
     ok = User.updatePassword({'user_id': info['user_id'], 'password': pw_hash})
     if not ok:
+        print(f"[RESET] User.updatePassword returned falsy for user_id={info.get('user_id')}")
         flash("Failed to update password. Please try again.", "error")
-        return redirect('/forgot_password')
+        return redirect('/')
 
     # 8. Consume token
     User.consumePasswordResetToken(token)
