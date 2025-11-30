@@ -670,7 +670,7 @@ def update_profile():
     }
     
     # Update user data
-    try:
+    """try:
         success = User.updateProfile(data)
         if success:
             flash("Profile updated successfully!", "success")
@@ -679,7 +679,14 @@ def update_profile():
     except Exception as e:
         flash("Failed to update profile. Please try again.", "error")
         print(f"Profile update error: {e}")
-    
+    """
+    try:
+        User.updateProfile(data)  # assume success unless exception thrown
+        flash("Profile updated successfully!", "success")
+    except Exception as e:
+        flash("Failed to update profile. Please try again.", "error")
+        print(f"Profile update error: {e}")
+
     return redirect("/profile")
 
 @app.route('/change_password', methods=['POST']) 

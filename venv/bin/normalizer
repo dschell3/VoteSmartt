@@ -1,4 +1,4 @@
-#!/Users/singhcodes/Desktop/project-golf-electronic-voting/venv/bin/python3.12
+#!/Users/lum.derek/project-golf-electronic-voting/venv/bin/python
 import sys
 from charset_normalizer.cli.normalizer import cli_detect
 if __name__ == '__main__':
