@@ -132,4 +132,17 @@ class Option:
         """
         query = "DELETE FROM `option` WHERE option_id = %(option_id)s;"
         return connectToMySQL(db).query_db(query, data)    
+
+    @classmethod
+    def deleteByEventId(cls, data):
+        """Delete all options that belong to a specific event.
+
+        Args:
+            data (dict): Must contain 'event_id'
+
+        Returns:
+            bool|int: Result of the delete query (driver-specific). True/number of rows deleted on success.
+        """
+        query = "DELETE FROM `option` WHERE option_event_id = %(event_id)s;"
+        return connectToMySQL(db).query_db(query, data)
     

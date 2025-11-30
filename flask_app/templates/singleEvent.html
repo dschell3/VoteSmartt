@@ -186,6 +186,9 @@
                 <div class="flex flex-col gap-3">
                     <a href="/contact" class="cta-ghost text-center">Contact Us</a>
                     <a href="#ballot" class="cta-ghost text-center">Voting Information</a>
+                    {% if is_event_creator %}
+                    <button id="user-list-btn" class="cta-ghost text-center">User List</button>
+                    {% endif %}
                 </div>
             </div>
             <div class="event-card">
@@ -213,6 +216,21 @@
 
     {% endif %}
 </main>
+<!-- User List Modal -->
+<div id="user-list-modal" class="fixed inset-0 hidden items-center justify-center z-50">
+    <div class="absolute inset-0 bg-black/50" id="user-list-overlay"></div>
+    <div class="relative bg-white rounded-lg shadow-2xl w-full max-w-2xl mx-4">
+        <div class="p-6">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold">All Users</h3>
+                <button id="user-list-close" class="text-sm text-slate-600">Close</button>
+            </div>
+            <div id="user-list-content" class="mt-4 max-h-96 overflow-auto text-sm text-slate-700">
+                <div class="text-center text-slate-400">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -269,6 +287,69 @@
 
             // Set results bar widths when present
             // Removed pie-chart + bar width logic per simplified spec
+        });
+        // ===== User List modal logic (creator only) =====
+        document.addEventListener('DOMContentLoaded', function(){
+            const btn = document.getElementById('user-list-btn');
+            const modal = document.getElementById('user-list-modal');
+            const overlay = document.getElementById('user-list-overlay');
+            const closeBtn = document.getElementById('user-list-close');
+            const content = document.getElementById('user-list-content');
+            if (!btn || !modal) return; // not creator or no modal
+
+            async function openUserList() {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+                content.innerHTML = '<div class="text-center text-slate-400">Loading...</div>';
+                try {
+                    const resp = await fetch('/users/list', { credentials: 'same-origin' });
+                    if (!resp.ok) {
+                        content.innerHTML = `<div class="text-red-600">Failed to load users (status ${resp.status})</div>`;
+                        return;
+                    }
+                    const json = await resp.json();
+                    if (!json.ok) {
+                        content.innerHTML = `<div class="text-red-600">${json.error || 'Failed to load users'}</div>`;
+                        return;
+                    }
+                    const users = json.users || [];
+                    if (!users.length) {
+                        content.innerHTML = '<div class="text-center text-slate-500">No users found.</div>';
+                        return;
+                    }
+                    // Build a simple table
+                    const rows = users.map(u => `
+                        <div class="p-3 border-b border-slate-100 flex items-center justify-between">
+                            <div>
+                                <div class="font-medium">${escapeHtml(u.first_name || '')} ${escapeHtml(u.last_name || '')}</div>
+                                <div class="text-xs text-slate-500">${escapeHtml(u.email || '')}</div>
+                            </div>
+                            <div class="text-xs text-slate-400">Joined: ${escapeHtml(u.created_at || '')}</div>
+                        </div>
+                    `).join('');
+                    content.innerHTML = `<div class="divide-y divide-slate-100">${rows}</div>`;
+                } catch (err) {
+                    console.error('User list fetch error', err);
+                    content.innerHTML = '<div class="text-red-600">Error loading users. See console for details.</div>';
+                }
+            }
+
+            function closeUserList() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = '';
+            }
+
+            btn.addEventListener('click', openUserList);
+            overlay.addEventListener('click', closeUserList);
+            closeBtn.addEventListener('click', closeUserList);
+
+            // Escape closes
+            document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeUserList(); });
+
+            // Small helper to escape HTML
+            function escapeHtml(str){ return String(str||'').replace(/[&"'<>]/g, function(s){ return ({'&':'&amp;','"':'&quot;',"'":'&#39;','<':'&lt;','>':'&gt;'})[s]; }); }
         });
     </script>
     {# Chart removed #}

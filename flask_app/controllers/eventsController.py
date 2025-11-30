@@ -55,6 +55,7 @@ from flask_app.models.optionModels import Option
 from flask_app.models.voteModels import Vote
 from flask_app.models.resultsModel import Result
 from flask_app.utils.helpers import require_login, get_current_user, get_user_session_data
+from flask_app.models.userModels import User
 from flask_app.utils.validators import validate_event_title, validate_event_description, validate_candidate_name
 
 # =============================================================================
@@ -179,6 +180,12 @@ def createEventRoute():
 
     # If there's a validation error, show only one message
     if error_message:
+        # Debug logging for validation failures to aid development
+        try:
+            print(f"[CREATE EVENT] Validation error: {error_message}")
+            print(f"[CREATE EVENT] Submitted title='{title}' start='{start_time_local}' end='{end_time_local}' candidates={valid_candidates}")
+        except Exception:
+            pass
         flash(error_message, 'error')
         return redirect('/admin2')
     
@@ -214,9 +221,13 @@ def createEventRoute():
     # 6. Create the event and capture its new ID so we can persist candidates
     new_event_id = None
     try:
-        new_event_id = Events.createEvent(data)        
+        new_event_id = Events.createEvent(data)
+        print(f"[CREATE EVENT] Events.createEvent returned: {new_event_id}")
         flash('Event created successfully!', 'success')
     except Exception as e:        
+        print(f"[CREATE EVENT] Exception creating event: {e}")
+        import traceback
+        traceback.print_exc()
         flash('Error creating event. Please try again.', 'error')
         return redirect('/admin2')
     
@@ -231,8 +242,12 @@ def createEventRoute():
                 ordered_unique.append(c)
         try:
             for cand in ordered_unique:
-                Option.create({'option_text': cand, 'option_event_id': new_event_id})
+                opt_id = Option.create({'option_text': cand, 'option_event_id': new_event_id})
+                print(f"[CREATE EVENT] Created option id={opt_id} text='{cand}' for event {new_event_id}")
         except Exception as e:
+            print(f"[CREATE EVENT] Exception creating options: {e}")
+            import traceback
+            traceback.print_exc()
             flash('Event created but some candidates failed to save.', 'error')
     else:
         flash('Event was not created - please check the logs.', 'error')
@@ -396,6 +411,38 @@ def singleEvent(event_id):
         **user_data
     ) 
 
+
+@app.route('/users/list')
+def usersList():
+    """
+    Return a JSON list of users. Requires login.
+    Used by the single event page to show a modal with all users (creator-only button).
+    """
+    redirect_url = require_login()
+    if redirect_url:
+        return redirect(redirect_url)
+
+    try:
+        rows = User.getAllUsers() or []
+        # Return JSON-friendly structure (avoid exposing passwords)
+        users = []
+        for r in rows:
+            users.append({
+                'user_id': r.get('user_id'),
+                'first_name': r.get('first_name'),
+                'last_name': r.get('last_name'),
+                'email': r.get('email'),
+                'phone': r.get('phone'),
+                'created_at': r.get('created_at'),
+                'isAdmin': r.get('isAdmin')
+            })
+        from flask import jsonify
+        return jsonify({'ok': True, 'users': users})
+    except Exception as e:
+        print(f"[USERS LIST] Error fetching users: {e}")
+        from flask import jsonify
+        return jsonify({'ok': False, 'error': 'Failed to load users'}), 500
+
 # =============================================================================
 # EVENT DELETE ROUTES - Remove events
 # =============================================================================
@@ -443,7 +490,15 @@ def deleteEvent(event_id):
         return redirect(url_for('eventList'))
     
     try:
-        # 5. Delete event from DB
+        # 5a. Delete dependent options first to satisfy FK constraints
+        try:
+            Option.deleteByEventId({'event_id': event_id})
+            print(f"[DELETE EVENT] Deleted options for event {event_id}")
+        except Exception as opt_err:
+            # Log but continue to attempt event deletion; DB may prevent deletion if options remain
+            print(f"[DELETE EVENT] Failed to delete options for event {event_id}: {opt_err}")
+
+        # 5b. Delete event from DB
         result = Events.deleteEvent({"event_id": event_id})
         if result:
             flash(f"Event '{event.title}' deleted.", "success")
