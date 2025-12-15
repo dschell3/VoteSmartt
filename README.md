@@ -99,10 +99,6 @@ Role: QA/Test Engineer, Responsibilities: Test plans, unit/integration testing, 
   You can also set a fixed port (e.g. for Docker) by editing `server.py` to use a constant.
 
 <!-- For developers -->
- Once done with the setup and a page is showing up on the browser reach out to project manager to setup git branches.
- We will have to share a database server so everyone can access it instead of it being on each developers computer.
- We can use aiven to host a shared MySQL database. Database engineer will have to work with developers to get the backend connected to the database.
-
 ## Project Timeline
 | Phase | Target Completion |
 |------|-------------------|
@@ -111,7 +107,6 @@ Role: QA/Test Engineer, Responsibilities: Test plans, unit/integration testing, 
 | Implementation | Week 8 |
 | Testing and Integration | Week 9 |
 | Final Deployment | Week 10 |
-
 
 ## Voting Flow (Backend Summary)
 Routes:
@@ -150,10 +145,9 @@ server.py: starts your Flask app; goes in the project root too.
 
 ## Database Engineer Tasks
 
-### 1. Aiven MySQL Database Already Created
+### 1. Aiven MySQL Database
 - The database `votesystemdb` has been set up on Aiven.
 - Connection credentials:
-
 
 - **Note:** The `ca.pem` file is in the project folder (`flask_app/config/ca.pem`) so all developers can use it.
 
