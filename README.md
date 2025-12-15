@@ -1,7 +1,20 @@
 # Project Golf – Electronic Voting System
 A secure Electronic Voting System developed by Team Project Golf for CSC-131 (Fall 2025). The application is built with Flask (Python) and MySQL following the Waterfall Model to ensure a structured, documentation-driven development process.
 
-https://project-golf-electronic-voting.onrender.com/
+## My Role: Lead Designer / Backend Programmer
+- Implemented the models, controllers, and utils folders of the codebase
+- Created all the UML class documentation (Use-Case and Class Diagrams)
+
+## Team
+- Jang Singh - Project Manager
+- Derek Lum - Database Engineer
+- Yucheng Yu - Frontend Developer
+- Arav Parmar - UI/UX Designer
+- Jarrett Sprenger - QA Engineer
+- Cesar Perez - Analyst
+- Alex - Backend Developer
+
+Original repository: https://github.com/Jsingh651/project-golf-electronic-voting
 
 ## Project Overview
 
@@ -42,14 +55,14 @@ This project strictly follows the Waterfall model, ensuring each phase is fully 
 5. Deployment – Deploy final system on a local or cloud environment.
 6. Maintenance – Post-deployment fixes and documentation updates.
 
-## Team Members and Roles
-Name: Jang Singh & Derek, Role: Project Manager & Documentation Lead, Responsibilities: Schedule, organize meetings, manage GitHub, prepare documentation
-Name: Ceaser, Role: Analyst, Responsibilities: Project documentation, collaborate with project manager and designer
-Name: Darren & Arav, Role: Designer, Responsibilities: UI/UX design
-Name: Yucheng Yu & Ceaser, Role: Frontend Developer, Responsibilities: HTML/CSS/JS templates
-Name: Alex & Darren, Role: Backend Developer, Responsibilities: Flask routes, database models, authentication logic
-Name: Derek, Role: Database Engineer, Responsibilities: MySQL schema, ERD, query optimization
-Name: Jarret, Role: QA/Test Engineer, Responsibilities: Test plans, unit/integration testing, bug reporting
+## Roles
+Role: Project Manager & Documentation Lead, Responsibilities: Schedule, organize meetings, manage GitHub, prepare documentation
+Role: Analyst, Responsibilities: Project documentation, collaborate with project manager and designer
+Role: Designer, Responsibilities: UI/UX design
+Role: Frontend Developer, Responsibilities: HTML/CSS/JS templates
+Role: Backend Developer, Responsibilities: Flask routes, database models, authentication logic
+Role: Database Engineer, Responsibilities: MySQL schema, ERD, query optimization
+Role: QA/Test Engineer, Responsibilities: Test plans, unit/integration testing, bug reporting
 <!-- Can change the above upon request -->
 
 
