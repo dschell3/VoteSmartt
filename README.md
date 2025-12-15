@@ -3,7 +3,7 @@ A secure Electronic Voting System developed by Team Project Golf for CSC-131 (Fa
 
 ## My Role: Lead Designer / Backend Programmer
 - Implemented the models, controllers, and utils folders of the codebase
-- Created all the UML class documentation (Use-Case and Class Diagrams)
+- Created the UML class documentation (Use-Case and Class Diagrams)
 
 ## Team
 - Jang Singh - Project Manager
