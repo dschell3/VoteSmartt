@@ -1,16 +1,40 @@
 import pymysql.cursors
+import os
+from urllib.parse import urlparse
 
-DB_CONFIG = {
-    'host': 'avinadmin-projectgolf.l.aivencloud.com',
-    'port': 19352,
-    'user': 'avnadmin',
-    'password': '***REMOVED***',
-    'db': 'mydb', 
-    'charset': 'utf8mb4',
-    'cursorclass': pymysql.cursors.DictCursor,
-    'autocommit': True,
-    'ssl': {'ca': 'flask_app/config/ca.pem'}  
-}
+def get_db_config():
+    """Parse database configuration from environment variable or use defaults."""
+    database_url = os.environ.get('CLEARDB_DATABASE_URL')
+    
+    if database_url:
+        # Parse the URL: mysql://user:password@host:port/database
+        parsed = urlparse(database_url)
+        
+        return {
+            'host': parsed.hostname,
+            'port': parsed.port or 3306,
+            'user': parsed.username,
+            'password': parsed.password,
+            'db': parsed.path.lstrip('/'),  # Remove leading slash
+            'charset': 'utf8mb4',
+            'cursorclass': pymysql.cursors.DictCursor,
+            'autocommit': True,
+            'ssl': {'ssl': True}  # Aiven requires SSL
+        }
+    else:
+        # Fallback for local development
+        return {
+            'host': 'localhost',
+            'port': 3306,
+            'user': 'root',
+            'password': 'rootroot',
+            'db': 'votesmartt',
+            'charset': 'utf8mb4',
+            'cursorclass': pymysql.cursors.DictCursor,
+            'autocommit': True,
+        }
+
+DB_CONFIG = get_db_config()
 
 class MySQLConnection:
     def __init__(self, db=None):
