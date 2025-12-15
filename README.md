@@ -28,9 +28,8 @@ Results Page: Displays election results only after voting closes, with vote coun
 User Dashboard: Overview of active elections and available user actions.
 
 ## Administrator-Facing Pages
-Admin Login Page: Secure login for administrators.
 Event Creation Page: Allows administrators to create polls, surveys, elections, and competitions.
-User Management Page: Enables administrators to view all registered users and their respective roles. Administrators cannot generate or edit votes.
+User Management Page: Enables administrators to view all registered users in their event. Administrators cannot generate or edit votes.
 
 ## Group and Informational Pages
 About Page: Includes team member bios with education, skills, experience, and awards.
