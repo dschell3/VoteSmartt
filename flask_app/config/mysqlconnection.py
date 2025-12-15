@@ -39,8 +39,6 @@ DB_CONFIG = get_db_config()
 class MySQLConnection:
     def __init__(self, db=None):
         config = DB_CONFIG.copy()
-        if db:
-            config['db'] = db
         self.connection = pymysql.connect(**config)
 
     def query_db(self, query, data=None):
