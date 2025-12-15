@@ -97,48 +97,6 @@ Name: Jarret, Role: QA/Test Engineer, Responsibilities: Test plans, unit/integra
 | Final Deployment | Week 10 |
 
 
-## Documentation
-## Migrations & Diagnostics
-Scripts have been organized under `scripts/`:
-
-```
-scripts/
-  migrations/
-    create_option_table.py          # Idempotent creation of the `option` table
-    migrate_fk_vote_to_option.py    # Idempotent fix for vote.vote_option_id foreign key
-    docs/sql/migrations/2025-11-11_fix_vote_fk.sql  # Raw SQL (use only if FK still points to `choices`)
-  diagnostics/
-    inspect_schema.py               # Lists key tables and foreign keys
-    list_event_option_counts.py     # Recent events with candidate counts
-```
-
-Usage examples:
-
-Create option table (safe to run multiple times):
-```
-python scripts/migrations/create_option_table.py
-```
-
-Fix foreign key if legacy schema pointed to `choices`:
-```
-python scripts/migrations/migrate_fk_vote_to_option.py
-```
-
-Schema inspection:
-```
-python scripts/diagnostics/inspect_schema.py
-```
-
-Event / option counts:
-```
-python scripts/diagnostics/list_event_option_counts.py
-```
-
-Manual foreign-key smoke test (development only):
-```
-python tests/manual/test_fk_insert.py
-```
-
 ## Voting Flow (Backend Summary)
 Routes:
 - `POST /vote/cast`  Submit or update the user's vote for an open event.
