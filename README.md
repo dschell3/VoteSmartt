@@ -1,6 +1,8 @@
 # Project Golf – Electronic Voting System
 A secure Electronic Voting System developed by Team Project Golf for CSC-131 (Fall 2025). The application is built with Flask (Python) and MySQL following the Waterfall Model to ensure a structured, documentation-driven development process.
 
+https://votesmartt.onrender.com/
+
 ## My Role: Lead Designer / Backend Programmer
 - Implemented the models, controllers, and utils folders of the codebase
 - Created the UML class documentation (Use-Case and Class Diagrams)
