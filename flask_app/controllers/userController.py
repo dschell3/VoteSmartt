@@ -52,7 +52,7 @@ Security Features:
     - Generic messages to prevent email enumeration attacks
 '''
 
-from flask import request, flash, url_for, redirect, session, render_template
+from flask import request, flash, url_for, redirect, session, render_template, jsonify
 from flask_app import app
 from flask_app.models.eventsModels import Events
 from flask_app.models.userModels import User
@@ -179,6 +179,22 @@ def homepage():
     """
     user_data = get_user_session_data()
     return render_template('homepage.html', **user_data)
+
+# keeps free tier connections active on Aiven, Render
+@app.route('/health')
+def health_check():
+    """
+    Health check endpoint that verifies database connectivity.
+    Used by UptimeRobot to keep Aiven database from hibernating.
+    """
+    from flask_app.config.mysqlconnection import connectToMySQL
+    try:
+        result = connectToMySQL('mydb').query_db("SELECT 1 as status;")
+        if result:
+            return jsonify({"status": "healthy", "database": "connected"}), 200
+        return jsonify({"status": "unhealthy", "database": "query failed"}), 500
+    except Exception as e:
+        return jsonify({"status": "unhealthy", "database": str(e)}), 500
 
 # =============================================================================
 # PUBLIC PAGE ROUTES - ABOUT & CREDITS 
