@@ -9,6 +9,7 @@ https://votesmartt.onrender.com/
 
 ## Team
 - Jang Singh - Project Manager
+- Darren Schell - Lead Programmer/Designer
 - Derek Lum - Database Engineer
 - Yucheng Yu - Frontend Developer
 - Arav Parmar - UI/UX Designer
