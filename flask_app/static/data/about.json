@@ -28,8 +28,8 @@
       "professionalSkills": ["Public speaking","Technical communication","Planning and coordination"],
       "technicalSkills": ["Python","C++","MySQL","Flask","Git","UML"],
       "awards": ["CRC Dean’s List (2023–2024)"],
-      "workExperience": ["IT experience","Small business owner","Volunteered as tutor and at food bank"],
-      "github": "",
+      "workExperience": [],
+      "github": "https://github.com/dschell3",
       "linkedin": ""
     },
     {
